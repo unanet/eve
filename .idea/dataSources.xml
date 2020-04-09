@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
+    <data-source source="LOCAL" name="prod-eve-db" uuid="e673e209-33a4-4569-9a4d-59f5c0b0868c">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://eve.unanet.io:5432/eve-api</jdbc-url>
+    </data-source>
+  </component>
+</project>
