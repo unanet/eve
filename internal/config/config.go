@@ -3,7 +3,7 @@ package config
 import (
 	"github.com/kelseyhightower/envconfig"
 
-	"gitlab.unanet.io/devops/eve/internal/log"
+	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
 var (
@@ -13,16 +13,16 @@ var (
 type Config struct {
 	log.Config
 	Port       int    `default:"8080"`
-	DBHost     string `required:"true"`
-	DBUsername string `required:"true"`
-	DBPassword string `required:"true"`
+	DBHost     string `default:"localhost"`
+	DBPort     string `default:"5432"`
+	DBUsername string `default:"eve-api"`
+	DBPassword string `default:"eve-api"`
 	DBName     string `default:"eve-api"`
 }
 
 func init() {
 	err := envconfig.Process("EVE", &Values)
 	if err != nil {
-		log.Logger.Panic("Unable to Load Config", err)
-		panic(err)
+		log.Logger.WithField("error", err).Panic("Unable to Load Config")
 	}
 }

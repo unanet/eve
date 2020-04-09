@@ -1,4 +1,4 @@
-package error
+package errors
 
 // RestError represents a Rest HTTP Error that can be returned from a controller
 type RestError struct {

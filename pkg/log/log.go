@@ -8,11 +8,12 @@ import (
 )
 
 type Config struct {
-	logLevel string `default:"info"`
+	LogLevel string `default:"info"`
 }
 
 var (
-	Logger *logrus.Logger
+	Logger     *logrus.Logger
+	httpLogger *logrus.Logger
 )
 
 func init() {
@@ -22,12 +23,15 @@ func init() {
 	// log the error after the logger is loaded.
 
 	Logger = logrus.New()
+	httpLogger = logrus.New()
 	Logger.SetFormatter(&logrus.JSONFormatter{})
-	level, err := logrus.ParseLevel(strings.ToLower(c.logLevel))
+	httpLogger.SetFormatter(&logrus.JSONFormatter{DisableTimestamp: true})
+	level, err := logrus.ParseLevel(strings.ToLower(c.LogLevel))
 	if err != nil {
 		level = logrus.InfoLevel
 	}
 	Logger.SetLevel(level)
+	httpLogger.SetLevel(level)
 	if configErr != nil {
 		Logger.Error("Logger Config failed to Load", configErr)
 	}
