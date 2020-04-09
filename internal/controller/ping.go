@@ -1,8 +1,8 @@
-package ping
+package controller
 
 import "github.com/gin-gonic/gin"
 
-func Setup(g *gin.RouterGroup) {
+func PingSetup(g *gin.RouterGroup) {
 	g.GET("/ping", ping)
 }
 
@@ -11,5 +11,3 @@ func ping(c *gin.Context) {
 		"message": "pong",
 	})
 }
-
-
