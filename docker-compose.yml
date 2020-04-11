@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  pipeline_db:
+    image: postgres:11.4
+    container_name: pipeline_db
+    ports:
+      - "5432:5432"
+    networks:
+      - back-tier
+    environment:
+      - POSTGRES_USER=eve-api
+      - POSTGRES_PASSWORD=eve-api
+
+networks:
+  back-tier:

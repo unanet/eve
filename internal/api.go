@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/render"
+
 	"github.com/go-chi/chi"
 	chiMiddleware "github.com/go-chi/chi/middleware"
-	"github.com/go-chi/render"
 
 	eveErrors "gitlab.unanet.io/devops/eve/internal/errors"
 	"gitlab.unanet.io/devops/eve/internal/handlers/ping"

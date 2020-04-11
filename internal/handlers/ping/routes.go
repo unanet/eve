@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.unanet.io/devops/eve/internal/errors"
-
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+
+	"gitlab.unanet.io/devops/eve/internal/errors"
 )
 
 func Routes() *chi.Mux {
