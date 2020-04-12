@@ -5,12 +5,13 @@ import (
 
 	"gitlab.unanet.io/devops/eve/internal/api"
 	"gitlab.unanet.io/devops/eve/pkg/log"
+	"gitlab.unanet.io/devops/eve/pkg/mux"
 )
 
 func main() {
-	app, err := api.NewApp()
+	api, err := mux.NewApi(api.Controllers)
 	if err != nil {
-		log.Logger.Panic("Failed to Load Api App", zap.Error(err))
+		log.Logger.Panic("Failed to Create Api App", zap.Error(err))
 	}
-	app.Start()
+	api.Start()
 }

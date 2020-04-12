@@ -1,4 +1,4 @@
-package api
+package mux
 
 import (
 	"context"
@@ -9,43 +9,29 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-chi/chi"
 	"go.uber.org/zap"
 
+	"gitlab.unanet.io/devops/eve/internal/config"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/metrics"
-
-	"gitlab.unanet.io/devops/eve/internal/config"
-
-	"github.com/go-chi/chi"
-
-	"gitlab.unanet.io/devops/eve/internal/controller/ping"
-	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/middleware"
-	"gitlab.unanet.io/devops/eve/pkg/mux"
 )
 
-type App struct {
+type Api struct {
 	r           chi.Router
-	Controllers []mux.EveController
-	Artifactory *artifactory.Client
+	controllers []EveController
 	server      *http.Server
 	mServer     *http.Server
 	done        chan bool
 	sigChannel  chan os.Signal
 }
 
-func NewApp() (*App, error) {
-	client, err := artifactory.NewClient(config.Values.ArtifactoryConfig)
-	if err != nil {
-		return nil, err
-	}
+func NewApi(controllers []EveController) (*Api, error) {
 	router := chi.NewMux()
-	return &App{
-		r: router,
-		Controllers: []mux.EveController{
-			ping.New(),
-		},
-		Artifactory: client,
+	return &Api{
+		r:           router,
+		controllers: controllers,
 		server: &http.Server{
 			ReadTimeout:  time.Duration(5) * time.Second,
 			WriteTimeout: time.Duration(30) * time.Second,
@@ -59,7 +45,7 @@ func NewApp() (*App, error) {
 }
 
 // Handle SIGNALS
-func (a *App) sigHandler() {
+func (a *Api) sigHandler() {
 	for {
 		sig := <-a.sigChannel
 		switch sig {
@@ -72,7 +58,7 @@ func (a *App) sigHandler() {
 	}
 }
 
-func (a *App) gracefulShutdown() {
+func (a *Api) gracefulShutdown() {
 	// Pause the Context for `ShutdownTimeoutSecs` config value
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(120)*time.Second)
 	defer cancel()
@@ -91,7 +77,7 @@ func (a *App) gracefulShutdown() {
 	close(a.done)
 }
 
-func (a *App) Start() {
+func (a *Api) Start() {
 	a.setup()
 	a.mServer = metrics.StartMetricsServer(a.done)
 
@@ -106,9 +92,9 @@ func (a *App) Start() {
 	log.Logger.Info("Eve-API Shutdown")
 }
 
-func (a *App) setup() {
+func (a *Api) setup() {
 	middleware.SetupMiddleware(a.r, 60*time.Second)
-	for _, c := range a.Controllers {
+	for _, c := range a.controllers {
 		c.Setup(a.r)
 	}
 }
