@@ -4,13 +4,22 @@ import (
 	"strings"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 var (
 	Logger *zap.Logger
-)
+
+	statLogLevelCount = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "log_level_total",
+			Help: "Number of log statements, differentiated by log level.",
+		},
+		[]string{"level"})
+	)
 
 type Config struct {
 	LogLevel       string `split_words:"true" default:"info"`
@@ -58,7 +67,13 @@ func newLogger(sn string, ll string) *zap.Logger {
 		},
 	}
 
-	logger, err := cfg.Build()
+	logger, err := cfg.Build(zap.WrapCore(func(core zapcore.Core) zapcore.Core {
+		return zapcore.RegisterHooks(core, func(e zapcore.Entry) error {
+			statLogLevelCount.WithLabelValues(e.Level.String()).Inc()
+			return nil
+		})
+	}))
+
 	if err != nil {
 		panic(err)
 	}

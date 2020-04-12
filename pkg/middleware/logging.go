@@ -5,14 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"go.uber.org/zap/zapcore"
-
-	"gitlab.unanet.io/devops/eve/pkg/metrics"
+	"gitlab.unanet.io/devops/eve/pkg/log"
 
 	"github.com/go-chi/chi/middleware"
 	"go.uber.org/zap"
-
-	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
 type LogEntry struct {
@@ -56,10 +52,6 @@ func (l *LogEntryConstructor) NewLogEntry(r *http.Request) middleware.LogEntry {
 	entry := &LogEntry{
 		logger: l.logger.With(logFields...),
 	}
-	zapcore.RegisterHooks(entry.logger.Core(), func(e zapcore.Entry) error {
-		metrics.StatLogLevelCount.WithLabelValues(e.Level.String()).Inc()
-		return nil
-	})
 
 	l.logger.With(incomingRequestFields...).Info("Incoming HTTP Request")
 

@@ -4,10 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"go.uber.org/zap/zapcore"
-
-	"gitlab.unanet.io/devops/eve/pkg/log"
-
 	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -61,36 +57,15 @@ var (
 			Help:    "time spent processing an http request in milliseconds",
 			Buckets: prometheus.ExponentialBuckets(0.1, 2, 18),
 		}, []string{"uri", "method", "protocol"})
-
-	StatLogLevelCount = promauto.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "log_level_total",
-			Help: "Number of log statements, differentiated by log level.",
-		},
-		[]string{"level"})
 )
 
 func StartMetrics() {
 	var c Config
 	configErr := envconfig.Process("EVE", &c)
 	if configErr != nil {
-		c.PromPort = 3000
+		c.PromPort = defaultPort
 	}
-
-	// TODO: Assuming that this only need to be on the Root logger and not also on the http logger
-	zapcore.RegisterHooks(log.Logger.Core(), func(e zapcore.Entry) error {
-		StatLogLevelCount.WithLabelValues(e.Level.String()).Inc()
-		return nil
-	})
-
-	log.Logger.Info("testing....")
 
 	http.Handle("/metrics", promhttp.Handler())
 	go http.ListenAndServe(fmt.Sprintf(":%v", c.PromPort), nil)
 }
-
-//// Fire runs the prometheus counter
-//func (h *PrometheusHook) Fire(e zapcore.Entry) error {
-//	h.counter.WithLabelValues(e.Level.String()).Inc()
-//	return nil
-//}
