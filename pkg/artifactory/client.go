@@ -15,12 +15,6 @@ import (
 
 const (
 	userAgent = "eve-artifactory"
-
-	MediaTypePlain = "text/plain"
-	MediaTypeXml   = "application/xml"
-
-	MediaTypeJson = "application/json"
-	MediaTypeForm = "application/x-www-form-urlencoded"
 )
 
 type Config struct {
@@ -30,20 +24,12 @@ type Config struct {
 }
 
 type Client struct {
-	// HTTP Client used to communicate with the API.
-	client *http.Client
-
-	// Base URL for API requests. BaseURL should always be specified with a trailing slash.
-	BaseURL *url.URL
-
-	// User agent used when communicating with the Artifactory API.
-	UserAgent string
-
-	// Api key used for authenticating with Artifactory API.
-	ApiKey string
+	client    *http.Client
+	baseURL   *url.URL
+	userAgent string
+	apiKey    string
 }
 
-// NewClient creates a Client from a provided base url for an Artifactory instance and a service Client
 func NewClient(config Config) (*Client, error) {
 	var httpClient = &http.Client{
 		Timeout: config.ArtifactoryTimeout,
@@ -59,33 +45,27 @@ func NewClient(config Config) (*Client, error) {
 		baseEndpoint.Path += "/"
 	}
 
-	c := &Client{client: httpClient, BaseURL: baseEndpoint, UserAgent: userAgent, ApiKey: config.ArtifactoryApiKey}
+	c := &Client{client: httpClient, baseURL: baseEndpoint, userAgent: userAgent, apiKey: config.ArtifactoryApiKey}
 	return c, nil
 }
 
-func (c *Client) GetLatestVersion(ctx context.Context, repository string, path string, version string) error {
+func (c *Client) GetLatestVersion(ctx context.Context, repository string, path string, version string) (VersionResponse, error) {
+	var vr VersionResponse
 	r, err := c.request(http.MethodGet, fmt.Sprintf("versions/%s/%s?version=%s", repository, path, version), nil)
 	if err != nil {
-		return err
+		return vr, err
 	}
 
-	var respString string
-	resp, err := c.do(ctx, r, &respString)
+	_, err = c.do(ctx, r, &vr)
 	if err != nil {
-		return err
+		return vr, err
 	}
-	fmt.Println(resp)
-	//bodyBytes, err := ioutil.ReadAll(resp.Body)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//bodyString := string(bodyBytes)
-	//fmt.Printf("%v", bodyString)
-	return nil
+
+	return vr, nil
 }
 
 func (c *Client) request(method, urlStr string, body io.Reader) (*http.Request, error) {
-	u, err := c.BaseURL.Parse(path.Join(c.BaseURL.Path, urlStr))
+	u, err := c.baseURL.Parse(path.Join(c.baseURL.Path, urlStr))
 	if err != nil {
 		return nil, err
 	}
@@ -95,10 +75,10 @@ func (c *Client) request(method, urlStr string, body io.Reader) (*http.Request, 
 		return nil, err
 	}
 
-	req.Header.Set("X-JFrog-Art-Api", c.ApiKey)
+	req.Header.Set("X-JFrog-Art-Api", c.apiKey)
 
-	if c.UserAgent != "" {
-		req.Header.Set("User-Agent", c.UserAgent)
+	if c.userAgent != "" {
+		req.Header.Set("User-Agent", c.userAgent)
 	}
 
 	return req, nil
@@ -113,7 +93,7 @@ func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*htt
 
 	defer resp.Body.Close()
 
-	if s := resp.StatusCode; 200 > s && s > 299 {
+	if s := resp.StatusCode; 200 > s || s > 299 {
 		return resp, unmarshalError(resp)
 	}
 
@@ -121,13 +101,13 @@ func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*htt
 		return resp, err
 	}
 
-	switch v.(type) {
-	case string:
-		bodyBytes, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
+	switch vu := v.(type) {
+	case *string:
+		bodyBytes, serr := ioutil.ReadAll(resp.Body)
+		if serr != nil {
+			return nil, serr
 		}
-		v = string(bodyBytes)
+		*vu = string(bodyBytes)
 	default:
 		err = json.NewDecoder(resp.Body).Decode(v)
 		if err == io.EOF {
@@ -143,12 +123,12 @@ func commonErrors(ctx context.Context, err error) error {
 	// the context's error is probably more useful.
 	select {
 	case <-ctx.Done():
-		ctx.Err()
+		return ctx.Err()
 	default:
 	}
 
 	if e, ok := err.(*url.Error); ok {
-		if url2, err := url.Parse(e.URL); err == nil {
+		if url2, uerr := url.Parse(e.URL); uerr == nil {
 			e.URL = url2.String()
 			return e
 		}

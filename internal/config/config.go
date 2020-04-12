@@ -3,10 +3,10 @@ package config
 import (
 	"fmt"
 
-	"gitlab.unanet.io/devops/eve/pkg/artifactory"
-
 	"github.com/kelseyhightower/envconfig"
+	"go.uber.org/zap"
 
+	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
@@ -20,12 +20,12 @@ type ArtifactoryConfig = artifactory.Config
 type Config struct {
 	LogConfig
 	ArtifactoryConfig
-	Port       int    `default:"8080"`
-	DBHost     string `default:"localhost"`
-	DBPort     int    `default:"5432"`
-	DBUsername string `default:"eve-api"`
-	DBPassword string `default:"eve-api"`
-	DBName     string `default:"eve-api"`
+	Port       int    `split_words:"true" default:"8080"`
+	DBHost     string `split_words:"true" default:"localhost"`
+	DBPort     int    `split_words:"true" default:"5432"`
+	DBUsername string `split_words:"true" default:"eve-api"`
+	DBPassword string `split_words:"true" default:"eve-api"`
+	DBName     string `split_words:"true" default:"eve-api"`
 }
 
 func (c Config) DbConnectionString() string {
@@ -39,6 +39,6 @@ func (c Config) MigrationConnectionString() string {
 func init() {
 	err := envconfig.Process("EVE", &Values)
 	if err != nil {
-		log.Logger.WithField("error", err).Panic("Unable to Load Config")
+		log.Logger.Panic("Unable to Load Config", zap.Error(err))
 	}
 }

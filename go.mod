@@ -15,8 +15,8 @@ require (
 	github.com/mattes/migrate v3.0.1+incompatible
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/sirupsen/logrus v1.5.0
-	github.com/stretchr/testify v1.4.0 // indirect
+	github.com/prometheus/client_golang v1.5.1
+	go.uber.org/zap v1.14.1
 	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
 	golang.org/x/text v0.3.2 // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
