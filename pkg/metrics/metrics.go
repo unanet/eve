@@ -3,11 +3,15 @@ package metrics
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/zap"
+
+	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
 const (
@@ -33,11 +37,11 @@ var (
 			Help: "The time the server spends processing a request in milliseconds",
 		}, []string{"uri", "method", "protocol"})
 
-	StatAuditCount = promauto.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "audit_total",
-			Help: "The total number of audit events",
-		}, []string{"event"})
+	//StatAuditCount = promauto.NewCounterVec(
+	//	prometheus.CounterOpts{
+	//		Name: "audit_total",
+	//		Help: "The total number of audit events",
+	//	}, []string{"event"})
 
 	StatHTTPRequestCount = promauto.NewCounterVec(
 		prometheus.CounterOpts{
@@ -59,13 +63,32 @@ var (
 		}, []string{"uri", "method", "protocol"})
 )
 
-func StartMetrics() {
+func StartMetricsServer(done chan bool) *http.Server {
 	var c Config
 	configErr := envconfig.Process("EVE", &c)
 	if configErr != nil {
 		c.PromPort = defaultPort
 	}
 
-	http.Handle("/metrics", promhttp.Handler())
-	go http.ListenAndServe(fmt.Sprintf(":%v", c.PromPort), nil)
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	server := &http.Server{
+		ReadTimeout:  time.Duration(5) * time.Second,
+		WriteTimeout: time.Duration(30) * time.Second,
+		IdleTimeout:  time.Duration(90) * time.Second,
+		Addr:         fmt.Sprintf(":%d", c.PromPort),
+		Handler:      mux,
+	}
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Logger.Panic("Failed to Start Metrics Server", zap.Error(err))
+		}
+
+		<-done
+		log.Logger.Info("Eve Metrics Server Shutdown")
+	}()
+
+	return server
 }
