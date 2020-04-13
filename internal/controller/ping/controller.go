@@ -9,6 +9,7 @@ import (
 
 	"gitlab.unanet.io/devops/eve/internal/controller"
 	"gitlab.unanet.io/devops/eve/pkg/eveerrs"
+	"gitlab.unanet.io/devops/eve/pkg/mux"
 )
 
 type Controller struct {
@@ -40,5 +41,6 @@ func (c Controller) internalError(w http.ResponseWriter, r *http.Request) {
 func (c Controller) ping(w http.ResponseWriter, r *http.Request) {
 	render.Respond(w, r, render.M{
 		"message": "pong",
+		"version": mux.Version,
 	})
 }

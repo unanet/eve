@@ -43,8 +43,10 @@ build:
 	docker pull ${BUILD_IMAGE}
 	$(docker-exec) go build ./...
 	$(docker-exec) go test -tags !local ./...
-	$(docker-exec) go build -o ./bin/eve-api ./cmd/eve-api/main.go
-	$(docker-exec) go build -o ./bin/eve-scheduler ./cmd/eve-scheduler/main.go
+	$(docker-exec) go build -ldflags="-X 'gitlab.unanet.io/devops/eve/pkg/mux.Version=${VERSION}'" \
+		-o ./bin/eve-api ./cmd/eve-api/main.go
+	$(docker-exec) go build -ldflags="-X 'gitlab.unanet.io/devops/eve/pkg/mux.Version=${VERSION}'" \
+		-o ./bin/eve-scheduler ./cmd/eve-scheduler/main.go
 
 dist: build
 	docker pull unanet-docker.jfrog.io/alpine-base
