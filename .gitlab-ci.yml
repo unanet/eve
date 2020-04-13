@@ -1,8 +1,9 @@
 stages:
-  - build
+  - test
+  - dist
 
 Dist:
-  stage: build
+  stage: dist
   script:
     - make dist
   tags:
@@ -10,10 +11,10 @@ Dist:
   only:
     - master
 
-Build:
-  stage: build
+Test:
+  stage: test
   script:
-    - make build
+    - make test
   tags:
     - linux
   except:

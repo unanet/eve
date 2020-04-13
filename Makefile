@@ -36,17 +36,20 @@ docker-exec = docker run --rm \
 	-w /src \
 	${BUILD_IMAGE}
 
-.PHONY: build dist
+.PHONY: build dist test
 
 build:
-	mkdir -p bin
 	docker pull ${BUILD_IMAGE}
-	$(docker-exec) go build ./...
-	$(docker-exec) go test -tags !local ./...
+	mkdir -p bin
 	$(docker-exec) go build -ldflags="-X 'gitlab.unanet.io/devops/eve/pkg/mux.Version=${VERSION}'" \
 		-o ./bin/eve-api ./cmd/eve-api/main.go
 	$(docker-exec) go build -ldflags="-X 'gitlab.unanet.io/devops/eve/pkg/mux.Version=${VERSION}'" \
 		-o ./bin/eve-scheduler ./cmd/eve-scheduler/main.go
+
+test:
+	docker pull ${BUILD_IMAGE}
+	$(docker-exec) go build ./...
+	$(docker-exec) go test -tags !local ./...
 
 dist: build
 	docker pull unanet-docker.jfrog.io/alpine-base
