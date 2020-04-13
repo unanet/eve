@@ -5,17 +5,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/pkg/log"
-)
-
-const (
-	defaultPort = 3000
 )
 
 var (
@@ -63,13 +58,7 @@ var (
 		}, []string{"uri", "method", "protocol"})
 )
 
-func StartMetricsServer(done chan bool) *http.Server {
-	var c Config
-	configErr := envconfig.Process("EVE", &c)
-	if configErr != nil {
-		c.PromPort = defaultPort
-	}
-
+func StartMetricsServer(done chan bool, port int) *http.Server {
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 
@@ -77,7 +66,7 @@ func StartMetricsServer(done chan bool) *http.Server {
 		ReadTimeout:  time.Duration(5) * time.Second,
 		WriteTimeout: time.Duration(30) * time.Second,
 		IdleTimeout:  time.Duration(90) * time.Second,
-		Addr:         fmt.Sprintf(":%d", c.PromPort),
+		Addr:         fmt.Sprintf(":%d", port),
 		Handler:      mux,
 	}
 

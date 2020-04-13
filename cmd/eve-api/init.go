@@ -14,7 +14,7 @@ import (
 func init() {
 	m, err := migrate.New(
 		"file://migrations",
-		config.Values.MigrationConnectionString(),
+		config.Values().MigrationConnectionString(),
 	)
 
 	if err != nil {

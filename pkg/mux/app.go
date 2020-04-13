@@ -12,7 +12,6 @@ import (
 	"github.com/go-chi/chi"
 	"go.uber.org/zap"
 
-	"gitlab.unanet.io/devops/eve/internal/config"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/metrics"
 	"gitlab.unanet.io/devops/eve/pkg/middleware"
@@ -29,18 +28,20 @@ type Api struct {
 	mServer     *http.Server
 	done        chan bool
 	sigChannel  chan os.Signal
+	config      *Config
 }
 
-func NewApi(controllers []EveController) (*Api, error) {
+func NewApi(controllers []EveController, c Config) (*Api, error) {
 	router := chi.NewMux()
 	return &Api{
 		r:           router,
+		config:      &c,
 		controllers: controllers,
 		server: &http.Server{
 			ReadTimeout:  time.Duration(5) * time.Second,
 			WriteTimeout: time.Duration(30) * time.Second,
 			IdleTimeout:  time.Duration(90) * time.Second,
-			Addr:         fmt.Sprintf(":%d", config.Values.Port),
+			Addr:         fmt.Sprintf(":%d", c.Port),
 			Handler:      router,
 		},
 		done:       make(chan bool),
@@ -83,7 +84,7 @@ func (a *Api) gracefulShutdown() {
 
 func (a *Api) Start() {
 	a.setup()
-	a.mServer = metrics.StartMetricsServer(a.done)
+	a.mServer = metrics.StartMetricsServer(a.done, a.config.MetricsPort)
 
 	signal.Notify(a.sigChannel, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	go a.sigHandler()
