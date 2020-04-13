@@ -26,7 +26,14 @@ func client(t *testing.T) *artifactory.Client {
 }
 
 func TestClient_GetLatestVersion(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping testing in short mode")
+	}
 	resp, err := client(t).GetLatestVersion(context.TODO(), "docker", "eve-api", "0.1.0.*")
 	assert.NoError(t, err)
 	assert.Contains(t, resp.Version, "0.1.0")
 }
+
+//func TestClient_CopyArtifactVersion(t *testing.T) {
+//	resp, err := client(t).CopyArtifact(context.TODO(), "repository", "src_path", "dest_repository", "dest_path")
+//}
