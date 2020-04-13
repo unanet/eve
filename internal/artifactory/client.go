@@ -118,9 +118,9 @@ func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*htt
 	return resp, err
 }
 
-func (c *Client) CopyArtifact(ctx context.Context, sRepo string, sPath string, dRepo string, dPath string) (interface{}, interface{}) {
-
-}
+//func (c *Client) CopyArtifact(ctx context.Context, sRepo string, sPath string, dRepo string, dPath string) (interface{}, interface{}) {
+//
+//}
 
 func commonErrors(ctx context.Context, err error) error {
 	// If we got an error, and the context has been canceled,
