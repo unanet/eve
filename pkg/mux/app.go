@@ -18,6 +18,10 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/middleware"
 )
 
+var (
+	Version = "unset"
+)
+
 type Api struct {
 	r           chi.Router
 	controllers []EveController
