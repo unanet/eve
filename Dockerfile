@@ -2,7 +2,7 @@ FROM unanet-docker.jfrog.io/alpine-base
 
 ENV EVE_PORT 8080
 ENV EVE_METRICS_PORT 3000
-ENV EVE_SERVICE_NAME eve-bot
+ENV EVE_SERVICE_NAME eve-api
 
 RUN apk --no-cache add ca-certificates
 ADD ./bin/eve-api /app/eve-api
