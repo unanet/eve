@@ -2,13 +2,11 @@ package artifactory
 
 import (
 	"fmt"
-	"net/http"
 )
 
 // ErrorResponse reports one or more errors caused by an API request.
 type ErrorResponse struct {
-	Response *http.Response `json:"-"`                // HTTP response that caused this error
-	Errors   []Status       `json:"errors,omitempty"` // Individual errors
+	Errors []Status `json:"errors,omitempty"` // Individual errors
 }
 
 // Status is the individual error provided by the API
@@ -21,7 +19,6 @@ func (e *Status) Error() string {
 	return fmt.Sprintf("%d error caused by %s", e.Status, e.Message)
 }
 
-func (r *ErrorResponse) Error() string {
-	return fmt.Sprintf("%v %v: %d %+v", r.Response.Request.Method, r.Response.Request.URL,
-		r.Response.StatusCode, r.Errors)
+func (r ErrorResponse) Error() string {
+	return fmt.Sprintf("Artifactory Errors: %+v", r.Errors)
 }

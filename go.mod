@@ -14,6 +14,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lib/pq v1.3.0
 	github.com/golang-migrate/migrate/v4 v4.10.0
+	github.com/dghubble/sling v1.3.0
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/prometheus/client_golang v1.5.1
 	github.com/stretchr/testify v1.4.0

@@ -52,7 +52,7 @@ func newLogger(sn string, ll string) *zap.Logger {
 		DisableCaller:    true,
 		OutputPaths:      []string{"stdout"},
 		ErrorOutputPaths: []string{"stderr"},
-		InitialFields:    map[string]interface{}{"service": sn},
+		InitialFields:    map[string]interface{}{"app": sn},
 		EncoderConfig: zapcore.EncoderConfig{
 			MessageKey: "message",
 
