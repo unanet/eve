@@ -1,6 +1,21 @@
 version: "3.7"
 
 services:
+#  pipeline-api:
+#    image: unanet-docker.jfrog.io/eve-api:0.1.0
+#    container_name: eve_api
+#    environment:
+#      - EVE_ARTIFACTORY_API_KEY=${EVE_ARTIFACTORY_API_KEY}
+#      - EVE_ARTIFACTORY_BASE_URL=${EVE_ARTIFACTORY_BASE_URL}
+#      - EVE_SERVICE_NAME=eve-api
+#    ports:
+#      - "8080:8080"
+#      - "3000:3000"
+#    links:
+#      - pipeline_db:eve-api
+#    depends_on:
+#      - pipeline_db
+
   pipeline_db:
     image: postgres:11.4
     container_name: pipeline_db

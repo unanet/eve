@@ -19,11 +19,11 @@ var (
 			Help: "Number of log statements, differentiated by log level.",
 		},
 		[]string{"level"})
-	)
+)
 
 type Config struct {
-	LogLevel       string `split_words:"true" default:"info"`
-	LogServiceName string `split_words:"true" default:"eve"`
+	LogLevel    string `split_words:"true" default:"info"`
+	ServiceName string `split_words:"true" default:"eve"`
 }
 
 func logLevel(cfgLevel string) zap.AtomicLevel {
@@ -84,7 +84,7 @@ func newLogger(sn string, ll string) *zap.Logger {
 func init() {
 	var c Config
 	configErr := envconfig.Process("EVE", &c)
-	Logger = newLogger(c.LogServiceName, c.LogLevel)
+	Logger = newLogger(c.ServiceName, c.LogLevel)
 
 	if configErr != nil {
 		Logger.Error("Logger Config failed to Load", zap.Error(configErr))

@@ -40,11 +40,13 @@ docker-exec = docker run --rm \
 
 build:
 	docker pull ${BUILD_IMAGE}
+	docker pull unanet-docker.jfrog.io/alpine-base
 	mkdir -p bin
 	$(docker-exec) go build -ldflags="-X 'gitlab.unanet.io/devops/eve/pkg/mux.Version=${VERSION}'" \
 		-o ./bin/eve-api ./cmd/eve-api/main.go
 	$(docker-exec) go build -ldflags="-X 'gitlab.unanet.io/devops/eve/pkg/mux.Version=${VERSION}'" \
 		-o ./bin/eve-scheduler ./cmd/eve-scheduler/main.go
+	docker build . -t ${IMAGE_NAME}:${PATCH_VERSION}
 
 test:
 	docker pull ${BUILD_IMAGE}
@@ -52,8 +54,6 @@ test:
 	$(docker-exec) go test -tags !local ./...
 
 dist: build
-	docker pull unanet-docker.jfrog.io/alpine-base
-	docker build . -t ${IMAGE_NAME}:${PATCH_VERSION}
 	docker push ${IMAGE_NAME}:${PATCH_VERSION}
 	curl --fail -H "X-JFrog-Art-Api:${JFROG_API_KEY}" \
 		-X PUT \
