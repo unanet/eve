@@ -7,8 +7,6 @@ import (
 	// adds pg as a sql driver
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	_ "github.com/mattes/migrate/database/postgres"
-	_ "github.com/mattes/migrate/source/file"
 	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/pkg/log"

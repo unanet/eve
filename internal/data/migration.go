@@ -3,10 +3,10 @@ package data
 import (
 	"strings"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
-	"github.com/mattes/migrate"
-	_ "github.com/mattes/migrate/database/postgres"
-	_ "github.com/mattes/migrate/source/file"
 
 	"gitlab.unanet.io/devops/eve/internal/config"
 	"gitlab.unanet.io/devops/eve/pkg/log"
@@ -44,9 +44,9 @@ type MigrationLogger struct {
 func (m MigrationLogger) Printf(format string, v ...interface{}) {
 	format = strings.TrimSuffix(format, "\n")
 	if m.debug {
-		log.Logger.Sugar().With("migration", "mattes").Debugf(format, v...)
+		log.Logger.Sugar().With("migration", "postgres").Debugf(format, v...)
 	} else {
-		log.Logger.Sugar().With("migration", "mattes").Infof(format, v...)
+		log.Logger.Sugar().With("migration", "postgres").Infof(format, v...)
 	}
 }
 

@@ -13,9 +13,8 @@ require (
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lib/pq v1.3.0
-	github.com/mattes/migrate v3.0.1+incompatible
+	github.com/golang-migrate/migrate/v4 v4.10.0
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
-	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.5.1
 	github.com/stretchr/testify v1.4.0
 	go.uber.org/zap v1.14.1
