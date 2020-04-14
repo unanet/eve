@@ -18,5 +18,4 @@ Test:
   tags:
     - linux
   except:
-    - master
     - tags
