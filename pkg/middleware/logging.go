@@ -17,7 +17,7 @@ type LogEntry struct {
 
 func (l *LogEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{}) {
 	l.logger.Info("Outgoing HTTP Response",
-		zap.Int("http_status", status),
+		zap.Int("status", status),
 		zap.Int("resp_bytes_length", bytes),
 		zap.Float64("elapsed_ms", float64(elapsed.Nanoseconds())/1000000.0))
 }
@@ -59,6 +59,13 @@ func (l *LogEntryConstructor) NewLogEntry(r *http.Request) middleware.LogEntry {
 }
 
 func Log(r *http.Request) *zap.Logger {
-	entry := middleware.GetLogEntry(r).(*LogEntry)
-	return entry.logger
+	v := r.Context().Value(middleware.LogEntryCtxKey)
+	if v == nil {
+		return log.Logger
+	}
+	if entry, ok := v.(LogEntry); ok {
+		return entry.logger
+	} else {
+		return log.Logger
+	}
 }
