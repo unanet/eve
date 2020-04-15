@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/internal/artifactory"
+	"gitlab.unanet.io/devops/eve/internal/gitlab"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/mux"
 )
@@ -20,11 +21,13 @@ var (
 type LogConfig = log.Config
 type ArtifactoryConfig = artifactory.Config
 type MuxConfig = mux.Config
+type GitlabConfig = gitlab.Config
 
 type Config struct {
 	LogConfig
 	ArtifactoryConfig
 	MuxConfig
+	GitlabConfig
 	DBHost     string `split_words:"true" default:"localhost"`
 	DBPort     int    `split_words:"true" default:"5432"`
 	DBUsername string `split_words:"true" default:"eve-api"`

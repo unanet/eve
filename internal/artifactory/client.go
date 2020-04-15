@@ -59,7 +59,7 @@ func (c *Client) GetLatestVersion(ctx context.Context, repository string, path s
 	if http.StatusOK == resp.StatusCode {
 		return &success, nil
 	} else {
-		return nil, &failure
+		return nil, failure
 	}
 }
 
@@ -79,7 +79,7 @@ func (c *Client) MoveArtifact(ctx context.Context, srcRepo, srcPath, destRepo, d
 	if http.StatusOK == resp.StatusCode {
 		return &success, nil
 	} else {
-		return nil, &failure
+		return nil, failure
 	}
 }
 
@@ -99,6 +99,6 @@ func (c *Client) CopyArtifact(ctx context.Context, srcRepo, srcPath, destRepo, d
 	if http.StatusOK == resp.StatusCode {
 		return &success, nil
 	} else {
-		return nil, &failure
+		return nil, failure
 	}
 }
