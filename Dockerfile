@@ -5,7 +5,6 @@ ENV EVE_METRICS_PORT 3000
 ENV EVE_SERVICE_NAME eve-api
 
 ADD ./bin/eve-api /app/eve-api
-ADD ./bin/eve-scheduler /app/eve-scheduler
 ADD ./migrations /app/migrations
 WORKDIR /app
 CMD ["/app/eve-api"]
