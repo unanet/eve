@@ -1,139 +1,64 @@
-DROP TYPE IF EXISTS artifact_type;
-CREATE TYPE artifact_type AS ENUM (
-    'docker',
-    'tar',
-    'zip'
-    );
-
 DROP TYPE IF EXISTS feed_type;
 CREATE TYPE feed_type AS ENUM (
-    'generic',
-    'docker'
+    'docker',
+    'generic'
     );
 
+DROP TYPE IF EXISTS artifact_type;
+CREATE TYPE artifact_type AS ENUM (
+    'docker-init',
+    'docker-app',
+    'generic-tar',
+    'generic-zip'
+    );
+
+DROP TYPE IF EXISTS provider_group;
+CREATE TYPE provider_group AS ENUM (
+    'unanet',
+    'clearview'
+    );
+
+
+CREATE TABLE feed (
+    id integer NOT NULL,
+    name character varying(25) NOT NULL,
+    promotion_order integer DEFAULT 0 NOT NULL,
+    feed_type feed_type
+);
+CREATE UNIQUE INDEX feed_name_uindex ON feed USING btree (name);
+
 CREATE TABLE artifact (
-    id int NOT NULL,
+    id integer NOT NULL,
     name character varying(50) NOT NULL,
-    group_id int NOT NULL,
     artifact_type artifact_type NOT NULL,
-    feed_type feed_type NOT NULL
+    provider_group provider_group NOT NULL,
+    function_pointer character varying(250),
+    metadata jsonb DEFAULT '{}'::json NOT NULL
 );
 
-CREATE SEQUENCE artifact_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
 
-ALTER SEQUENCE artifact_id_seq OWNED BY artifact.id;
-
-CREATE TABLE cloud_provider (
-    id integer NOT NULL,
-    name character varying(25) NOT NULL
-);
-
-CREATE SEQUENCE cloud_provider_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-ALTER SEQUENCE cloud_provider_id_seq OWNED BY cloud_provider.id;
-
-CREATE TABLE cloud_service (
+CREATE TABLE automation_job (
     id integer NOT NULL,
     name character varying(50) NOT NULL,
-    cloud_provider_id integer NOT NULL,
-    description character varying(250)
+    parameters jsonb DEFAULT '{}'::json NOT NULL
 );
-
-CREATE SEQUENCE cloud_service_id_seq
-    AS integer
+CREATE SEQUENCE automation_job_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
+ALTER SEQUENCE automation_job_id_seq OWNED BY automation_job.id;
 
-ALTER SEQUENCE cloud_service_id_seq OWNED BY cloud_service.id;
-
-CREATE TABLE cloud_service_role (
-    id int NOT NULL,
-    name character varying(50) NOT NULL,
-    description character varying(250)
-);
-
-CREATE SEQUENCE cloud_service_role_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-ALTER SEQUENCE cloud_service_role_id_seq OWNED BY cloud_service_role.id;
-
-CREATE TABLE cloud_service_instance (
-    id integer NOT NULL,
-    host character varying(50) NOT NULL,
-    port integer NOT NULL,
-    cloud_service_role_id integer NOT NULL,
-    cloud_service_id integer NOT NULL,
-    cloud_service_type_id integer NOT NULL
-);
-
-CREATE TABLE cloud_service_instance_context (
-    id integer NOT NULL,
-    name character varying(50),
-    cloud_service_instance_id integer NOT NULL,
-    environment_id integer,
-    customer_id integer
-);
-
-CREATE SEQUENCE cloud_service_instance_context_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-ALTER SEQUENCE cloud_service_instance_context_id_seq OWNED BY cloud_service_instance_context.id;
-
-CREATE SEQUENCE cloud_service_instance_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-ALTER SEQUENCE cloud_service_instance_id_seq OWNED BY cloud_service_instance.id;
-
-CREATE TABLE cloud_service_type (
-    id integer NOT NULL,
-    name character varying NOT NULL,
-    default_port integer NOT NULL
-);
-
-CREATE SEQUENCE cloud_service_type_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-ALTER SEQUENCE cloud_service_type_id_seq OWNED BY cloud_service_type.id;
 
 CREATE TABLE customer (
     id integer NOT NULL,
     name character varying(200) NOT NULL,
-    subdomain character varying(50) NOT NULL
+    subdomain character varying(50) NOT NULL,
+    metadata jsonb DEFAULT '{}'::json NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL
 );
-
 CREATE SEQUENCE customer_id_seq
     AS integer
     START WITH 1
@@ -141,157 +66,192 @@ CREATE SEQUENCE customer_id_seq
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
-
 ALTER SEQUENCE customer_id_seq OWNED BY customer.id;
+ALTER TABLE ONLY customer ALTER COLUMN id SET DEFAULT nextval('customer_id_seq'::regclass);
+CREATE UNIQUE INDEX customer_name_uindex ON customer USING btree (name);
+CREATE UNIQUE INDEX customer_subdomain_uindex ON customer USING btree (subdomain);
+
 
 CREATE TABLE environment (
     id integer NOT NULL,
     name character varying(25) NOT NULL
 );
+CREATE UNIQUE INDEX environment_name_uindex ON environment USING btree (name);
 
-CREATE SEQUENCE environment_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
 
-ALTER SEQUENCE environment_id_seq OWNED BY environment.id;
-
-CREATE TABLE k8s_cluster (
+CREATE TABLE cluster (
     id integer NOT NULL,
     name character varying(50) NOT NULL,
-    cloud_service_id integer NOT NULL
+    provider_group provider_group NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL
 );
+CREATE UNIQUE INDEX cluster_name_uindex ON cluster USING btree (name);
 
-CREATE SEQUENCE k8s_cluster_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
 
-ALTER SEQUENCE k8s_cluster_id_seq OWNED BY k8s_cluster.id;
-
-CREATE TABLE k8s_namespace (
+CREATE TABLE namespace (
     id integer NOT NULL,
     name character varying(50) NOT NULL,
     environment_id integer NOT NULL,
-    default_tag character varying(50),
-    k8s_cluster_id integer NOT NULL
+    domain character varying(200) NOT NULL,
+    default_version character varying(50),
+    explicit_deploy_only boolean DEFAULT false NOT NULL,
+    cluster_id integer NOT NULL,
+    metadata jsonb DEFAULT '{}'::json NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL
 );
-
-CREATE TABLE k8s_namespace_customer_map (
-    k8s_namespace_id integer NOT NULL,
-    customer_id integer NOT NULL
-);
-
-CREATE SEQUENCE k8s_namespace_id_seq
+CREATE SEQUENCE namespace_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
+ALTER SEQUENCE namespace_id_seq OWNED BY namespace.id;
+ALTER TABLE ONLY namespace ALTER COLUMN id SET DEFAULT nextval('namespace_id_seq'::regclass);
+CREATE UNIQUE INDEX namespace_name_uindex ON namespace USING btree (name);
+CREATE UNIQUE INDEX namespace_domain_uindex ON namespace USING btree (domain);
 
-ALTER SEQUENCE k8s_namespace_id_seq OWNED BY k8s_namespace.id;
 
-CREATE TABLE k8s_service (
+
+CREATE TABLE service (
     id integer NOT NULL,
-    k8s_namespace_id integer NOT NULL,
-    provisioned_tag character varying(250) NOT NULL,
-    docker_image_id integer NOT NULL,
-    current_docker_image_digest character varying(80),
-    current_tag character varying(50)
+    namespace_id integer NOT NULL,
+    artifact_id integer NOT NULL,
+    version character varying(50),
+    deployed_version character varying(50),
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL
 );
-
-CREATE SEQUENCE k8s_service_id_seq
+CREATE SEQUENCE service_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
+ALTER SEQUENCE service_id_seq OWNED BY service.id;
+ALTER TABLE ONLY service ALTER COLUMN id SET DEFAULT nextval('service_id_seq'::regclass);
 
-ALTER SEQUENCE k8s_service_id_seq OWNED BY k8s_service.id;
 
-ALTER TABLE ONLY artifact ALTER COLUMN id SET DEFAULT nextval('artifact_id_seq'::regclass);
-ALTER TABLE ONLY cloud_provider ALTER COLUMN id SET DEFAULT nextval('cloud_provider_id_seq'::regclass);
-ALTER TABLE ONLY cloud_service ALTER COLUMN id SET DEFAULT nextval('cloud_service_id_seq'::regclass);
-ALTER TABLE ONLY cloud_service_role ALTER COLUMN id set DEFAULT nextval('cloud_service_role_id_seq'::regclass);
-ALTER TABLE ONLY cloud_service_instance ALTER COLUMN id SET DEFAULT nextval('cloud_service_instance_id_seq'::regclass);
-ALTER TABLE ONLY cloud_service_instance_context ALTER COLUMN id SET DEFAULT nextval('cloud_service_instance_context_id_seq'::regclass);
-ALTER TABLE ONLY cloud_service_type ALTER COLUMN id SET DEFAULT nextval('cloud_service_type_id_seq'::regclass);
-ALTER TABLE ONLY customer ALTER COLUMN id SET DEFAULT nextval('customer_id_seq'::regclass);
-ALTER TABLE ONLY environment ALTER COLUMN id SET DEFAULT nextval('environment_id_seq'::regclass);
-ALTER TABLE ONLY k8s_cluster ALTER COLUMN id SET DEFAULT nextval('k8s_cluster_id_seq'::regclass);
-ALTER TABLE ONLY k8s_namespace ALTER COLUMN id SET DEFAULT nextval('k8s_namespace_id_seq'::regclass);
-ALTER TABLE ONLY k8s_service ALTER COLUMN id SET DEFAULT nextval('k8s_service_id_seq'::regclass);
+CREATE TABLE customer_namespace_map (
+    namespace_id integer NOT NULL,
+    customer_id integer NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL
+);
+create unique index customer_namespace_map_namespace_id_customer_id_uindex
+    on customer_namespace_map (namespace_id, customer_id);
+
+
+CREATE TABLE automation_job_service_map (
+    service_id integer NOT NULL,
+    automation_job_id integer NOT NULL,
+    parameters jsonb DEFAULT '{}'::json NOT NULL
+);
+create unique index automation_job_service_map_service_id_automation_job_id_uindex
+    on automation_job_service_map (service_id, automation_job_id);
+
+
+CREATE TABLE environment_feed_map (
+    environment_id int NOT NULL,
+    feed_id int NOT NULL
+);
+create unique index environment_feed_map_environment_id_feed_id_uindex
+    on environment_feed_map (environment_id, feed_id);
+
 
 /* ====================================== SEED DATA ============================================= */
 
-INSERT INTO cloud_provider (id, name) VALUES (1, 'AWS');
-INSERT INTO cloud_provider (id, name) VALUES (2, 'Azure');
-SELECT pg_catalog.setval('cloud_provider_id_seq', 2, true);
+INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (1, 'docker-int', 0, 'docker');
+INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (2, 'generic-int', 0, 'generic');
+INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (3, 'docker-qa', 1, 'docker');
+INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (4, 'generic-qa', 1, 'generic');
+INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (5, 'docker-stage', 2, 'docker');
+INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (6, 'generic-stage', 2, 'generic');
+INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (7, 'docker-prod', 3, 'docker');
+INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (8, 'generic-prod', 3, 'generic');
 
-INSERT INTO cloud_service_type (id, name, default_port) VALUES (1, 'mssql', 1433);
-INSERT INTO cloud_service_type (id, name, default_port) VALUES (2, 'oracle', 1521);
-INSERT INTO cloud_service_type (id, name, default_port) VALUES (3, 'postgres', 5432);
-INSERT INTO cloud_service_type (id, name, default_port) VALUES (4, 'memcache', 11211);
-SELECT pg_catalog.setval('cloud_service_type_id_seq', 4, true);
+INSERT INTO environment (id, name) VALUES(1, 'int');
+INSERT INTO environment (id, name) VALUES(2, 'qa');
+INSERT INTO environment (id, name) VALUES(3, 'demo');
+INSERT INTO environment (id, name) VALUES(4, 'stage');
+INSERT INTO environment (id, name) VALUES(5, 'prod');
 
-INSERT INTO cloud_service (id, name, cloud_provider_id, description) VALUES (1, 'rds', 1, 'Amazon Relational Database Service');
-INSERT INTO cloud_service (id, name, cloud_provider_id, description) VALUES (2, 'ads', 1, 'Azure Database Service');
-INSERT INTO cloud_service (id, name, cloud_provider_id, description) VALUES (3, 'elasticache', 1, 'Amazon Elastic Cache Service');
-SELECT pg_catalog.setval('cloud_service_id_seq', 3, true);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (1, 1);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (1, 2);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (2, 3);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (2, 4);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (3, 3);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (3, 4);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 5);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 6);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 7);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 8);
 
-INSERT INTO cloud_service_role (id, name, description) VALUES (1, 'unanet-db', 'Database for the Unanet Application');
-INSERT INTO cloud_service_role (id, name, description) VALUES (2, 'infocus-db', 'Database for the Infocus Application');
-INSERT INTO cloud_service_role (id, name, description) VALUES (3, 'exago-db', 'Database for the Exago Application');
-INSERT INTO cloud_service_role (id, name, description) VALUES (4, 'support-db', 'Database for the Clearview Support Application');
-SELECT pg_catalog.setval('cloud_service_role_id_seq', 4, true);
+/* ================== CLEARVIEW APPS ================== */
+INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (101, 'infocus-reports', 'generic-zip', 'clearview', 'https://unanet-cloudops.azurewebsites.net/api/');
+INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (102, 'infocus-cloud-client', 'docker-app', 'clearview', NULL);
+INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (103, 'infocus-documents', 'docker-app', 'clearview', NULL);
+INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (104, 'infocus-proxy', 'docker-app', 'clearview', NULL);
+INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (105, 'infocus-web', 'docker-app', 'clearview', NULL);
+INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (106, 'infocus-windows', 'docker-app', 'clearview', NULL);
 
-INSERT INTO cloud_service_instance(id, host, port, cloud_service_role_id, cloud_service_id, cloud_service_type_id) VALUES (1, 'unanet-db.int.unanet.io', 1521, 1, 1, 2);
-INSERT INTO cloud_service_instance(id, host, port, cloud_service_role_id, cloud_service_id, cloud_service_type_id) VALUES (2, 'unanet-db.qa.unanet.io', 1521, 1, 1, 2);
-INSERT INTO cloud_service_instance(id, host, port, cloud_service_role_id, cloud_service_id, cloud_service_type_id) VALUES (3, 'unanet-db.demo.unanet.io', 1521, 1, 1, 2);
-INSERT INTO cloud_service_instance(id, host, port, cloud_service_role_id, cloud_service_id, cloud_service_type_id) VALUES (4, 'exago-db.demo.unanet.io', 1521, 1, 1, 2);
-SELECT pg_catalog.setval('cloud_service_instance_id_seq', 4, true);
+/* ================== UNANET APPS ================== */
+INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (201, 'unanet', 'docker-app', 'unanet', NULL);
+INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (202, 'platform', 'docker-app', 'unanet', NULL);
+INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (203, 'exago', 'docker-app', 'unanet', NULL);
+INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (204, 'sql-migration-scripts', 'docker-init', 'unanet', NULL);
 
--- INSERT INTO artifact (id, name, artifact_type, feed_type) VALUES (1, 'Ems.Client.App', '{"is_core": "true"}', 'app', 'nuget', 'nupkg');
+INSERT INTO cluster(id, name, provider_group) VALUES (1, 'int-clearview-cluster', 'clearview');
+INSERT INTO cluster(id, name, provider_group) VALUES (2, 'qa-clearview-cluster', 'clearview');
+
+INSERT INTO namespace(id, name, environment_id, default_version, cluster_id, domain) VALUES (1, 'previous', 1, '2020.3', 1, 'previous.unanet.io');
+INSERT INTO namespace(id, name, environment_id, default_version, cluster_id, domain) VALUES (2, 'current', 1, '2020.2', 1, 'current.unanet.io');
+INSERT INTO namespace(id, name, environment_id, default_version, cluster_id, domain) VALUES (3, 'future', 1, '2020', 1, 'future.unanet.io');
+SELECT pg_catalog.setval('namespace_id_seq', 3, true);
+
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (1, 1, 101, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (2, 1, 102, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (3, 1, 103, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (4, 1, 104, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (5, 1, 105, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (6, 1, 106, NULL, NULL);
+
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (7, 2, 101, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (8, 2, 102, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (9, 2, 103, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (10, 2, 104, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (11, 2, 105, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (12, 2, 106, NULL, NULL);
+
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (13, 3, 101, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (14, 3, 102, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (15, 3, 103, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (16, 3, 104, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (17, 3, 105, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, version, deployed_version) VALUES (18, 3, 106, NULL, NULL);
+SELECT pg_catalog.setval('service_id_seq', 6, true);
+
+INSERT INTO customer(id, name, subdomain) VALUES (1, 'dev', 'dev');
+INSERT INTO customer(id, name, subdomain) VALUES (2, 'casco', 'casco');
+INSERT INTO customer(id, name, subdomain) VALUES (3, 'auto', 'auto');
+INSERT INTO customer(id, name, subdomain) VALUES (4, 'duke', 'duke');
+SELECT pg_catalog.setval('service_id_seq', 4, true);
 
 /* ====================================== END SEED DATA ============================================= */
 
-SELECT pg_catalog.setval('cloud_service_instance_context_id_seq', 1, false);
-SELECT pg_catalog.setval('cloud_service_instance_id_seq', 1, false);
-SELECT pg_catalog.setval('cloud_service_type_id_seq', 1, false);
-SELECT pg_catalog.setval('customer_id_seq', 1, false);
-SELECT pg_catalog.setval('environment_id_seq', 1, false);
-SELECT pg_catalog.setval('k8s_cluster_id_seq', 1, false);
-SELECT pg_catalog.setval('k8s_namespace_id_seq', 1, false);
-SELECT pg_catalog.setval('k8s_service_id_seq', 1, false);
+SELECT pg_catalog.setval('automation_job_id_seq', 1, false);
+
+ALTER TABLE ONLY feed
+    ADD CONSTRAINT feed_pk PRIMARY KEY (id);
+
+ALTER TABLE ONLY automation_job
+    ADD CONSTRAINT automation_job_pk PRIMARY KEY (id);
 
 ALTER TABLE ONLY artifact
     ADD CONSTRAINT artifact_pk PRIMARY KEY (id);
-
-ALTER TABLE ONLY cloud_provider
-    ADD CONSTRAINT cloud_provider_pk PRIMARY KEY (id);
-
-ALTER TABLE ONLY cloud_service_instance_context
-    ADD CONSTRAINT cloud_service_instance_context_pk PRIMARY KEY (id);
-
-ALTER TABLE ONLY cloud_service_instance
-    ADD CONSTRAINT cloud_service_instance_pk PRIMARY KEY (id);
-
-ALTER TABLE ONLY cloud_service
-    ADD CONSTRAINT cloud_service_pk PRIMARY KEY (id);
-
-ALTER TABLE ONLY cloud_service_role
-    ADD CONSTRAINT cloud_service_role_pk PRIMARY KEY (id);
-
-ALTER TABLE ONLY cloud_service_type
-    ADD CONSTRAINT cloud_service_type_pk PRIMARY KEY (id);
 
 ALTER TABLE ONLY customer
     ADD CONSTRAINT customer_pk PRIMARY KEY (id);
@@ -299,54 +259,42 @@ ALTER TABLE ONLY customer
 ALTER TABLE ONLY environment
     ADD CONSTRAINT environment_pk PRIMARY KEY (id);
 
-ALTER TABLE ONLY k8s_cluster
-    ADD CONSTRAINT k8s_cluster_pk PRIMARY KEY (id);
+ALTER TABLE ONLY cluster
+    ADD CONSTRAINT cluster_pk PRIMARY KEY (id);
 
-ALTER TABLE ONLY k8s_namespace
-    ADD CONSTRAINT k8s_namespace_pk PRIMARY KEY (id);
+ALTER TABLE ONLY namespace
+    ADD CONSTRAINT namespace_pk PRIMARY KEY (id);
 
-ALTER TABLE ONLY k8s_service
-    ADD CONSTRAINT k8s_service_pk PRIMARY KEY (id);
+ALTER TABLE ONLY service
+    ADD CONSTRAINT service_pk PRIMARY KEY (id);
 
-CREATE UNIQUE INDEX artifact_name_uindex ON artifact USING btree (name);
-CREATE UNIQUE INDEX cloud_service_role_name_uindex ON cloud_service_role USING btree (name);
-CREATE UNIQUE INDEX cloud_service_instance_host_uindex ON cloud_service_instance USING btree (host);
-CREATE UNIQUE INDEX cloud_provider_name_uindex ON cloud_provider USING btree (name);
-CREATE UNIQUE INDEX cloud_service_instance_context_name_uindex ON cloud_service_instance_context USING btree (name);
-CREATE UNIQUE INDEX cloud_service_name_uindex ON cloud_service USING btree (name);
-CREATE UNIQUE INDEX cloud_service_type_name_uindex ON cloud_service_type USING btree (name);
-CREATE UNIQUE INDEX customer_name_uindex ON customer USING btree (name);
-CREATE UNIQUE INDEX customer_subdomain_uindex ON customer USING btree (subdomain);
-CREATE UNIQUE INDEX environment_name_uindex ON environment USING btree (name);
-CREATE UNIQUE INDEX k8s_cluster_name_uindex ON k8s_cluster USING btree (name);
-CREATE UNIQUE INDEX k8s_namespace_name_uindex ON k8s_namespace USING btree (name);
 
-ALTER TABLE ONLY cloud_service
-    ADD CONSTRAINT cloud_service_cloud_provider_id_fk FOREIGN KEY (cloud_provider_id) REFERENCES cloud_provider(id);
+ALTER TABLE ONLY namespace
+    ADD CONSTRAINT namespace_environment_id_fk FOREIGN KEY (environment_id) REFERENCES environment(id);
 
-ALTER TABLE ONLY cloud_service_instance
-    ADD CONSTRAINT cloud_service_instance_cloud_service_type_id_fk FOREIGN KEY (cloud_service_type_id) REFERENCES cloud_service_type(id);
+ALTER TABLE ONLY namespace
+    ADD CONSTRAINT namespace_cluster_id_fk FOREIGN KEY (cluster_id) REFERENCES cluster(id);
 
-ALTER TABLE ONLY cloud_service_instance
-    ADD CONSTRAINT cloud_service_instance_cloud_service_role_id_fk FOREIGN KEY (cloud_service_role_id) REFERENCES cloud_service_role(id);
+ALTER TABLE ONLY service
+    ADD CONSTRAINT service_artifact_id_fk FOREIGN KEY (artifact_id) REFERENCES artifact(id);
 
-ALTER TABLE ONLY cloud_service_instance
-    ADD CONSTRAINT cloud_service_instance_cloud_service_id_fk FOREIGN KEY (cloud_service_id) REFERENCES cloud_service(id);
+ALTER TABLE ONLY service
+    ADD CONSTRAINT service_namespace_id_fk FOREIGN KEY (namespace_id) REFERENCES namespace(id);
 
-ALTER TABLE ONLY cloud_service_instance_context
-    ADD CONSTRAINT cloud_service_instance_context_cloud_service_instance_id_fk FOREIGN KEY (cloud_service_instance_id) REFERENCES cloud_service_instance(id);
+ALTER TABLE ONLY customer_namespace_map
+    ADD CONSTRAINT customer_namespace_map_customer_id_fk FOREIGN KEY (customer_id) REFERENCES customer(id);
 
-ALTER TABLE ONLY cloud_service_instance_context
-    ADD CONSTRAINT cloud_service_instance_context_customer_id_fk FOREIGN KEY (customer_id) REFERENCES customer(id);
+ALTER TABLE ONLY customer_namespace_map
+    ADD CONSTRAINT customer_namespace_map_namespace_id_fk FOREIGN KEY (namespace_id) REFERENCES namespace(id);
 
-ALTER TABLE ONLY cloud_service_instance_context
-    ADD CONSTRAINT cloud_service_instance_context_environment_id_fk FOREIGN KEY (environment_id) REFERENCES environment(id);
+ALTER TABLE ONLY automation_job_service_map
+    ADD CONSTRAINT automation_job_service_map_automation_job_id_fk FOREIGN KEY (automation_job_id) REFERENCES automation_job(id);
 
-ALTER TABLE ONLY k8s_cluster
-    ADD CONSTRAINT k8s_cluster_cloud_service_id_fk FOREIGN KEY (cloud_service_id) REFERENCES cloud_service(id);
+ALTER TABLE ONLY automation_job_service_map
+    ADD CONSTRAINT automation_job_service_map_service_id FOREIGN KEY (service_id) REFERENCES service(id);
 
-ALTER TABLE ONLY k8s_namespace
-    ADD CONSTRAINT k8s_namespace_environment_id_fk FOREIGN KEY (environment_id) REFERENCES environment(id);
+ALTER TABLE ONLY environment_feed_map
+    ADD CONSTRAINT environment_feed_map_environment_id FOREIGN KEY (environment_id) REFERENCES environment(id);
 
-ALTER TABLE ONLY k8s_namespace
-    ADD CONSTRAINT k8s_namespace_k8s_cluster_id_fk FOREIGN KEY (k8s_cluster_id) REFERENCES k8s_cluster(id);
+ALTER TABLE ONLY environment_feed_map
+    ADD CONSTRAINT environment_feed_map_feed_id FOREIGN KEY(feed_id) REFERENCES feed(id);

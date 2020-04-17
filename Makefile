@@ -44,8 +44,6 @@ build:
 	mkdir -p bin
 	$(docker-exec) go build -ldflags="-X 'gitlab.unanet.io/devops/eve/pkg/mux.Version=${VERSION}'" \
 		-o ./bin/eve-api ./cmd/eve-api/main.go
-	$(docker-exec) go build -ldflags="-X 'gitlab.unanet.io/devops/eve/pkg/mux.Version=${VERSION}'" \
-		-o ./bin/eve-scheduler ./cmd/eve-scheduler/main.go
 	docker build . -t ${IMAGE_NAME}:${PATCH_VERSION}
 
 test:
