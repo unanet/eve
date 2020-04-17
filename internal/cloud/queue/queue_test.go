@@ -1,3 +1,5 @@
+// +build local
+
 package queue_test
 
 import (
