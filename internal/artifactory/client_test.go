@@ -4,6 +4,7 @@ package artifactory_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -23,6 +24,20 @@ func client(t *testing.T) *artifactory.Client {
 	c = artifactory.NewClient(config.Values().ArtifactoryConfig)
 	require.NotNil(t, c)
 	return c
+}
+
+func TestClient_GetLatestVersion_UnanetDockerSuccess(t *testing.T) {
+	resp, err := client(t).GetLatestVersion(context.TODO(), "docker-int", "unanet/unanet", "20.2.0.*")
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	fmt.Println(resp.Version)
+}
+
+func TestClient_GetLatestVersion_UnanetGenericSuccess(t *testing.T) {
+	resp, err := client(t).GetLatestVersion(context.TODO(), "generic-int", "unanet/unanet", "20.2.0.*")
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	fmt.Println(resp.Version)
 }
 
 func TestClient_GetLatestVersion_Success(t *testing.T) {
@@ -50,4 +65,16 @@ func TestClient_CopyArtifact_Failure(t *testing.T) {
 	_, err := client(t).CopyArtifact(context.TODO(), "", "", "", "", true)
 	_, ok := err.(artifactory.ErrorResponse)
 	require.True(t, ok)
+}
+
+func TestClient_GetLatestVersionLessThan(t *testing.T) {
+	resp, err := client(t).GetLatestVersionLessThan(context.TODO(), "generic-int", "unanet/unanet", "0.3")
+	fmt.Println(resp)
+	require.NoError(t, err)
+}
+
+func TestClient_GetArtifactProperties_Success(t *testing.T) {
+	resp, err := client(t).GetArtifactProperties(context.TODO(), "docker-int", "unanet/unanet/20.2.0.1992")
+	require.NoError(t, err)
+	require.Equal(t, "20.2.0.1992", resp.Property("version"))
 }

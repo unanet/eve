@@ -22,3 +22,17 @@ func (e *Status) Error() string {
 func (r ErrorResponse) Error() string {
 	return fmt.Sprintf("Artifactory Errors: %+v", r.Errors)
 }
+
+type NotFoundError struct {
+	message string
+}
+
+func (e NotFoundError) Error() string {
+	return e.message
+}
+
+func NotFoundErrorf(format string, a ...interface{}) NotFoundError {
+	return NotFoundError{
+		message: fmt.Sprintf(format, a...),
+	}
+}
