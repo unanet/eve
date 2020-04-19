@@ -29,8 +29,3 @@ func init() {
 		render.DefaultResponder(w, r, v)
 	}
 }
-
-// This adds the logging automatically for outbound requests
-func init() {
-	http.DefaultTransport = DefaultTransport
-}

@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/vault/api"
 	"go.uber.org/zap"
 
+	"gitlab.unanet.io/devops/eve/pkg/httpe"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
@@ -46,7 +47,8 @@ type Config struct {
 
 func NewClient(config Config, arguments ...Argument) (*Client, error) {
 	client, err := api.NewClient(&api.Config{Address: config.VaultAddr, HttpClient: &http.Client{
-		Timeout: config.VaultTimeout,
+		Timeout:   config.VaultTimeout,
+		Transport: httpe.DefaultTransport,
 	}})
 	if err != nil {
 		return nil, err

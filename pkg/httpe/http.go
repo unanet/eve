@@ -1,4 +1,4 @@
-package middleware
+package httpe
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+
+	"gitlab.unanet.io/devops/eve/pkg/middleware"
 )
 
 var (
@@ -43,13 +45,13 @@ var DefaultLogRequest = func(req *http.Request) {
 	if cv, ok := ctx.Value(ContextKeyRequestStart).(*contextValue); ok {
 		fields = append(fields, zap.String("client_req_id", cv.reqID))
 	}
-	Log(req).Info("Outgoing HTTP Request", fields...)
+	middleware.Log(req).Info("Outgoing HTTP Request", fields...)
 }
 
 // Used if transport.LogResponse is not set.
 var DefaultLogResponse = func(resp *http.Response) {
 	ctx := resp.Request.Context()
-	logger := Log(resp.Request)
+	logger := middleware.Log(resp.Request)
 	fields := []zap.Field{
 		zap.Int("status", resp.StatusCode),
 		zap.String("uri", resp.Request.URL.String()),

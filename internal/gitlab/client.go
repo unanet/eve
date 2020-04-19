@@ -9,6 +9,7 @@ import (
 
 	"github.com/dghubble/sling"
 
+	"gitlab.unanet.io/devops/eve/pkg/httpe"
 	"gitlab.unanet.io/devops/eve/pkg/slinge"
 )
 
@@ -28,7 +29,8 @@ type Client struct {
 
 func NewClient(config Config) *Client {
 	var httpClient = &http.Client{
-		Timeout: config.GitlabTimeout,
+		Timeout:   config.GitlabTimeout,
+		Transport: httpe.DefaultTransport,
 	}
 
 	if !strings.HasSuffix(config.GitlabBaseUrl, "/") {

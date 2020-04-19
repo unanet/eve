@@ -33,6 +33,7 @@ CREATE TABLE artifact (
     artifact_type artifact_type NOT NULL,
     provider_group provider_group NOT NULL,
     function_pointer character varying(250),
+    customer_deployed boolean DEFAULT false NOT NULL,
     metadata jsonb DEFAULT '{}'::json NOT NULL
 );
 
@@ -114,7 +115,6 @@ CREATE UNIQUE INDEX namespace_name_uindex ON namespace USING btree (name);
 CREATE UNIQUE INDEX namespace_domain_uindex ON namespace USING btree (domain);
 
 
-
 CREATE TABLE service (
     id integer NOT NULL,
     namespace_id integer NOT NULL,
@@ -135,14 +135,35 @@ ALTER SEQUENCE service_id_seq OWNED BY service.id;
 ALTER TABLE ONLY service ALTER COLUMN id SET DEFAULT nextval('service_id_seq'::regclass);
 
 
+CREATE TABLE service_customer_deployment (
+    id integer NOT NULL,
+    service_id integer NOT NULL,
+    customer_id integer NOT NULL,
+    deployed_version character varying(50),
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL
+);
+CREATE SEQUENCE service_customer_deployment_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+ALTER SEQUENCE service_customer_deployment_id_seq OWNED BY service_customer_deployment.id;
+ALTER TABLE ONLY service_customer_deployment ALTER COLUMN id SET DEFAULT nextval('service_customer_deployment_id_seq'::regclass);
+CREATE UNIQUE INDEX service_customer_deployment_service_id_customer_id_index
+    ON service_customer_deployment (service_id, customer_id);
+
+
 CREATE TABLE customer_namespace_map (
     namespace_id integer NOT NULL,
     customer_id integer NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL
 );
-create unique index customer_namespace_map_namespace_id_customer_id_uindex
-    on customer_namespace_map (namespace_id, customer_id);
+CREATE UNIQUE INDEX customer_namespace_map_namespace_id_customer_id_uindex
+    ON customer_namespace_map (namespace_id, customer_id);
 
 
 CREATE TABLE automation_job_service_map (
@@ -150,16 +171,16 @@ CREATE TABLE automation_job_service_map (
     automation_job_id integer NOT NULL,
     parameters jsonb DEFAULT '{}'::json NOT NULL
 );
-create unique index automation_job_service_map_service_id_automation_job_id_uindex
-    on automation_job_service_map (service_id, automation_job_id);
+CREATE UNIQUE INDEX automation_job_service_map_service_id_automation_job_id_uindex
+    ON automation_job_service_map (service_id, automation_job_id);
 
 
 CREATE TABLE environment_feed_map (
     environment_id int NOT NULL,
     feed_id int NOT NULL
 );
-create unique index environment_feed_map_environment_id_feed_id_uindex
-    on environment_feed_map (environment_id, feed_id);
+CREATE UNIQUE INDEX environment_feed_map_environment_id_feed_id_uindex
+    ON environment_feed_map (environment_id, feed_id);
 
 
 /* ====================================== SEED DATA ============================================= */
@@ -192,17 +213,17 @@ INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 8);
 
 /* ================== CLEARVIEW APPS ================== */
 INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (101, 'infocus-reports', 'generic-zip', 'clearview', 'https://unanet-cloudops.azurewebsites.net/api/');
-INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (102, 'infocus-cloud-client', 'docker-app', 'clearview', NULL);
-INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (103, 'infocus-documents', 'docker-app', 'clearview', NULL);
-INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (104, 'infocus-proxy', 'docker-app', 'clearview', NULL);
-INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (105, 'infocus-web', 'docker-app', 'clearview', NULL);
-INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (106, 'infocus-windows', 'docker-app', 'clearview', NULL);
+INSERT INTO artifact(id, name, artifact_type, provider_group) VALUES (102, 'infocus-cloud-client', 'docker-app', 'clearview');
+INSERT INTO artifact(id, name, artifact_type, provider_group) VALUES (103, 'infocus-documents', 'docker-app', 'clearview');
+INSERT INTO artifact(id, name, artifact_type, provider_group) VALUES (104, 'infocus-proxy', 'docker-app', 'clearview');
+INSERT INTO artifact(id, name, artifact_type, provider_group) VALUES (105, 'infocus-web', 'docker-app', 'clearview');
+INSERT INTO artifact(id, name, artifact_type, provider_group) VALUES (106, 'infocus-windows', 'docker-app', 'clearview');
 
 /* ================== UNANET APPS ================== */
-INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (201, 'unanet', 'docker-app', 'unanet', NULL);
-INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (202, 'platform', 'docker-app', 'unanet', NULL);
-INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (203, 'exago', 'docker-app', 'unanet', NULL);
-INSERT INTO artifact(id, name, artifact_type, provider_group, function_pointer) VALUES (204, 'sql-migration-scripts', 'docker-init', 'unanet', NULL);
+INSERT INTO artifact(id, name, artifact_type, provider_group) VALUES (201, 'unanet', 'docker-app', 'unanet');
+INSERT INTO artifact(id, name, artifact_type, provider_group) VALUES (202, 'platform', 'docker-app', 'unanet');
+INSERT INTO artifact(id, name, artifact_type, provider_group) VALUES (203, 'exago', 'docker-app', 'unanet');
+INSERT INTO artifact(id, name, artifact_type, provider_group, customer_deployed) VALUES (204, 'sql-migration-scripts', 'docker-init', 'unanet', true);
 
 INSERT INTO cluster(id, name, provider_group) VALUES (1, 'int-clearview-cluster', 'clearview');
 INSERT INTO cluster(id, name, provider_group) VALUES (2, 'qa-clearview-cluster', 'clearview');
@@ -243,6 +264,7 @@ SELECT pg_catalog.setval('service_id_seq', 4, true);
 /* ====================================== END SEED DATA ============================================= */
 
 SELECT pg_catalog.setval('automation_job_id_seq', 1, false);
+SELECT pg_catalog.setval('service_customer_deployment_id_seq', 1, false);
 
 ALTER TABLE ONLY feed
     ADD CONSTRAINT feed_pk PRIMARY KEY (id);
