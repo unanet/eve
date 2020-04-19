@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"gitlab.unanet.io/devops/eve/internal/cloud/secrets"
+	"gitlab.unanet.io/devops/eve/internal/secrets"
 )
 
 func TestAWSGetSecret(t *testing.T) {
