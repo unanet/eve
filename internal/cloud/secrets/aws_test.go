@@ -10,8 +10,8 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/cloud/secrets"
 )
 
-func TestGetSecret(t *testing.T) {
-	result, err := secrets.GetSecret("artifactory")
+func TestAWSGetSecret(t *testing.T) {
+	result, err := secrets.GetAWSSecret("artifactory")
 	require.NoError(t, err)
 	require.Equal(t, "unanet-ci-r", result["ci_readonly_username"])
 }

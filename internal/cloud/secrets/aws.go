@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 )
 
-func GetSecret(secretName string) (map[string]string, error) {
+func GetAWSSecret(secretName string) (map[string]string, error) {
 	region := "us-east-1"
 
 	s, err := session.NewSession()

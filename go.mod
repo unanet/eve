@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/Microsoft/go-winio v0.4.14 // indirect
-	github.com/aws/aws-sdk-go v1.17.7
+	github.com/aws/aws-sdk-go v1.25.41
 	github.com/dghubble/sling v1.3.0
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v1.13.1 // indirect
@@ -13,6 +13,8 @@ require (
 	github.com/go-chi/chi v4.1.0+incompatible
 	github.com/go-chi/render v1.0.1
 	github.com/golang-migrate/migrate/v4 v4.10.0
+	github.com/hashicorp/vault v1.4.0
+	github.com/hashicorp/vault/api v1.0.5-0.20200317185738-82f498082f02
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lib/pq v1.3.0
