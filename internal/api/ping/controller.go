@@ -7,13 +7,13 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"gitlab.unanet.io/devops/eve/internal/api/controller"
+	"gitlab.unanet.io/devops/eve/internal/api/common"
 	"gitlab.unanet.io/devops/eve/pkg/eveerrs"
 	"gitlab.unanet.io/devops/eve/pkg/mux"
 )
 
 type Controller struct {
-	controller.Base
+	common.Base
 }
 
 func New() *Controller {
