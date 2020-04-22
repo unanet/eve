@@ -7,13 +7,11 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"gitlab.unanet.io/devops/eve/internal/api/common"
-	"gitlab.unanet.io/devops/eve/pkg/eveerrs"
+	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/mux"
 )
 
 type Controller struct {
-	common.Base
 }
 
 func New() *Controller {
@@ -27,7 +25,7 @@ func (c Controller) Setup(r chi.Router) {
 }
 
 func (c Controller) restError(w http.ResponseWriter, r *http.Request) {
-	render.Respond(w, r, &eveerrs.RestError{
+	render.Respond(w, r, &errors.RestError{
 		Code:          400,
 		Message:       "Bad Request",
 		OriginalError: nil,

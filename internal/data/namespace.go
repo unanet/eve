@@ -2,49 +2,66 @@ package data
 
 import (
 	"context"
-	"fmt"
-	"time"
+	"database/sql"
 
-	"gitlab.unanet.io/devops/eve/internal/data/common"
+	"gitlab.unanet.io/devops/eve/internal/data/orm"
+	"gitlab.unanet.io/devops/eve/pkg/errors"
 )
 
 type Namespace struct {
-	ID                 int             `db:"id"`
-	Name               string          `db:"name"`
-	Alias              string          `db:"alias"`
-	EnvironmentID      int             `db:"environment_id"`
-	Domain             string          `db:"domain"`
-	DefaultVersion     string          `db:"default_version"`
-	ExplicitDeployOnly bool            `db:"explicit_deploy_only"`
-	ClusterID          int             `db:"cluster_id"`
-	Metadata           common.JSONText `db:"metadata"`
-	CreatedAt          *time.Time      `db:"created_at"`
-	UpdatedAt          *time.Time      `db:"updated_at"`
+	ID                 int          `db:"id"`
+	Name               string       `db:"name"`
+	Alias              string       `db:"alias"`
+	EnvironmentID      int          `db:"environment_id"`
+	Domain             string       `db:"domain"`
+	RequestedVersion   string       `db:"requested_version"`
+	ExplicitDeployOnly bool         `db:"explicit_deploy_only"`
+	ClusterID          int          `db:"cluster_id"`
+	Metadata           JSONText     `db:"metadata"`
+	CreatedAt          sql.NullTime `db:"created_at"`
+	UpdatedAt          sql.NullTime `db:"updated_at"`
 }
 
-func (r *Repo) GetNamespaces(ctx context.Context, whereArgs ...common.WhereArg) ([]Namespace, error) {
+type Namespaces []Namespace
+
+func (n Namespaces) Names() []string {
+	var names []string
+	for _, x := range n {
+		names = append(names, x.Name)
+	}
+
+	return names
+}
+
+func (n Namespaces) Contains(name string) bool {
+	for _, x := range n {
+		if x.Name == name {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (r *Repo) NamespaceByName(ctx context.Context, name string) (*Namespace, error) {
 	db := r.getDB()
 	defer db.Close()
 
-	sql, args := common.CheckWhereArgs("select * from namespace", whereArgs)
-	rows, err := db.QueryxContext(ctx, sql, args...)
+	var namespace Namespace
+
+	row := db.QueryRowxContext(ctx, "select * from namespace where name = $1", name)
+	err := row.StructScan(&namespace)
 	if err != nil {
-		return nil, fmt.Errorf("Repo.GetNamespaces.QueryxContext Error: %w", err)
-	}
-	var namespaces []Namespace
-	for rows.Next() {
-		var namespace Namespace
-		err = rows.StructScan(&namespace)
-		if err != nil {
-			return nil, fmt.Errorf("Repo.GetNamespaces.StructScan Error: %w", err)
+		if err.Error() == "sql: no rows in result set" {
+			return nil, NotFoundErrorf("namespace with name: %s, not found", name)
 		}
-		namespaces = append(namespaces, namespace)
+		return nil, errors.WrapUnexpected(err)
 	}
 
-	return namespaces, nil
+	return &namespace, nil
 }
 
-func (r *Repo) GetNamespaceByID(ctx context.Context, id int) (*Namespace, error) {
+func (r *Repo) NamespaceByID(ctx context.Context, id int) (*Namespace, error) {
 	db := r.getDB()
 	defer db.Close()
 
@@ -53,8 +70,41 @@ func (r *Repo) GetNamespaceByID(ctx context.Context, id int) (*Namespace, error)
 	row := db.QueryRowxContext(ctx, "select * from namespace where id = $1", id)
 	err := row.StructScan(&namespace)
 	if err != nil {
-		return nil, fmt.Errorf("Repo.GetNamespaceByID.QueryRowxContext Error: %w", err)
+		if err.Error() == "sql: no rows in result set" {
+			return nil, NotFoundErrorf("namespace with id: %d, not found", id)
+		}
+		return nil, errors.WrapUnexpected(err)
 	}
 
 	return &namespace, nil
+}
+
+func (r *Repo) Namespaces(ctx context.Context) (Namespaces, error) {
+	return r.namespaces(ctx)
+}
+
+func (r *Repo) NamespacesByEnvironmentName(ctx context.Context, environmentName string) (Namespaces, error) {
+	return r.namespaces(ctx, Where("e.name", environmentName))
+}
+
+func (r *Repo) namespaces(ctx context.Context, whereArgs ...orm.WhereArg) (Namespaces, error) {
+	db := r.getDB()
+	defer db.Close()
+
+	sql, args := orm.CheckWhereArgs("SELECT n.* as environment_name FROM namespace AS n JOIN environment AS e ON n.environment_id = e.id", whereArgs)
+	rows, err := db.QueryxContext(ctx, sql, args...)
+	if err != nil {
+		return nil, errors.WrapUnexpected(err)
+	}
+	var namespaces []Namespace
+	for rows.Next() {
+		var namespace Namespace
+		err = rows.StructScan(&namespace)
+		if err != nil {
+			return nil, errors.WrapUnexpected(err)
+		}
+		namespaces = append(namespaces, namespace)
+	}
+
+	return namespaces, nil
 }

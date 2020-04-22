@@ -1,4 +1,4 @@
-package eveerrs
+package errors
 
 import (
 	"fmt"

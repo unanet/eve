@@ -9,9 +9,9 @@ import (
 
 	"github.com/dghubble/sling"
 
-	"gitlab.unanet.io/devops/eve/internal/common"
-	"gitlab.unanet.io/devops/eve/pkg/httpe"
-	"gitlab.unanet.io/devops/eve/pkg/slinge"
+	"gitlab.unanet.io/devops/eve/pkg/errors"
+	ehttp "gitlab.unanet.io/devops/eve/pkg/http"
+	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 const (
@@ -31,7 +31,7 @@ type Client struct {
 func NewClient(config Config) *Client {
 	var httpClient = &http.Client{
 		Timeout:   config.ArtifactoryTimeout,
-		Transport: httpe.DefaultTransport,
+		Transport: ehttp.LoggingTransport,
 	}
 
 	if !strings.HasSuffix(config.ArtifactoryBaseUrl, "/") {
@@ -41,42 +41,42 @@ func NewClient(config Config) *Client {
 	sling := sling.New().Base(config.ArtifactoryBaseUrl).Client(httpClient).
 		Add("X-JFrog-Art-Api", config.ArtifactoryApiKey).
 		Add("User-Agent", userAgent).
-		ResponseDecoder(slinge.NewJsonDecoder())
+		ResponseDecoder(json.NewJsonDecoder())
 	return &Client{sling: sling}
 }
 
-func (c *Client) GetLatestVersion(ctx context.Context, repository string, path string, version string) (*VersionResponse, error) {
+func (c *Client) GetLatestVersion(ctx context.Context, repository string, path string, version string) (string, error) {
 	var success VersionResponse
 	var failure ErrorResponse
-	r, err := c.sling.Get(fmt.Sprintf("versions/%s/%s", repository, path)).Request()
+	r, err := c.sling.New().Get(fmt.Sprintf("versions/%s/%s", repository, path)).Request()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	// set this here since version could have an asterisk and sling will encode the asterisk which Artifactory doesn't like
 	r.URL.RawQuery = fmt.Sprintf("version=%s", version)
 	resp, err := c.sling.Do(r.WithContext(ctx), &success, &failure)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		return &success, nil
+		return success.Version, nil
 	case http.StatusNotFound:
-		return nil, NotFoundErrorf("the following Version: %s, was not found", version)
+		return "", NotFoundErrorf("the following Version: %s, was not found", version)
 	default:
-		return nil, failure
+		return "", failure
 	}
 }
 
 func (c *Client) MoveArtifact(ctx context.Context, srcRepo, srcPath, destRepo, destPath string, dryRun bool) (*MessagesResponse, error) {
 	var success MessagesResponse
 	var failure ErrorResponse
-	r, err := c.sling.Post(fmt.Sprintf("move/%s/%s", srcRepo, srcPath)).Request()
+	r, err := c.sling.New().Post(fmt.Sprintf("move/%s/%s", srcRepo, srcPath)).Request()
 	if err != nil {
 		return nil, err
 	}
-	r.URL.RawQuery = fmt.Sprintf("to=/%s/%s&dry=%d", destRepo, destPath, common.Bool2int(dryRun))
+	r.URL.RawQuery = fmt.Sprintf("to=/%s/%s&dry=%d", destRepo, destPath, Bool2int(dryRun))
 	resp, err := c.sling.Do(r.WithContext(ctx), &success, &failure)
 	if err != nil {
 		return nil, err
@@ -92,11 +92,11 @@ func (c *Client) MoveArtifact(ctx context.Context, srcRepo, srcPath, destRepo, d
 func (c *Client) CopyArtifact(ctx context.Context, srcRepo, srcPath, destRepo, destPath string, dryRun bool) (*MessagesResponse, error) {
 	var success MessagesResponse
 	var failure ErrorResponse
-	r, err := c.sling.Post(fmt.Sprintf("copy/%s/%s", srcRepo, srcPath)).Request()
+	r, err := c.sling.New().Post(fmt.Sprintf("copy/%s/%s", srcRepo, srcPath)).Request()
 	if err != nil {
 		return nil, err
 	}
-	r.URL.RawQuery = fmt.Sprintf("to=/%s/%s&dry=%d", destRepo, destPath, common.Bool2int(dryRun))
+	r.URL.RawQuery = fmt.Sprintf("to=/%s/%s&dry=%d", destRepo, destPath, Bool2int(dryRun))
 	resp, err := c.sling.Do(r.WithContext(ctx), &success, &failure)
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func (c *Client) CopyArtifact(ctx context.Context, srcRepo, srcPath, destRepo, d
 func (c *Client) GetArtifactProperties(ctx context.Context, repository, path string) (*Properties, error) {
 	var success Properties
 	var failure string
-	r, err := c.sling.Get(fmt.Sprintf("storage/%s/%s", repository, path)).Request() //generic-int-local/unanet/unanet/unanet-%UNANET_VERSION%.tar.gz)
+	r, err := c.sling.New().Get(fmt.Sprintf("storage/%s/%s", repository, path)).Request() //generic-int-local/unanet/unanet/unanet-%UNANET_VERSION%.tar.gz)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (c *Client) GetArtifactProperties(ctx context.Context, repository, path str
 
 // GetLatestVersionLessThan Retrieves the latest version of an Artifact that is is less than the one specified
 // TODO: pull logic out from below and document up here
-func (c *Client) GetLatestVersionLessThan(ctx context.Context, repository string, path string, lessThanVersion string) (*VersionResponse, error) {
+func (c *Client) GetLatestVersionLessThan(ctx context.Context, repository string, path string, lessThanVersion string) (string, error) {
 	var success AQLResult
 	var failure string
 	var sort string
@@ -153,24 +153,22 @@ func (c *Client) GetLatestVersionLessThan(ctx context.Context, repository string
 	aqlQuery := fmt.Sprintf("{\"$and\":[{\"repo\":{\"$eq\":\"%s\"}},{\"@version\":{\"$lt\":\"%s\"}},{\"path\":{\"$match\":\"%s\"}}]}", repository, lessThanVersion, path)
 	body := strings.NewReader(fmt.Sprintf("items.find(%s).include(\"name\",\"@version\", \"path\").sort(%s).limit(1)", aqlQuery, sort))
 
-	r, err := c.sling.Post("search/aql").Body(body).Request()
+	r, err := c.sling.New().Post("search/aql").Body(body).Request()
 	resp, err := c.sling.Do(r.WithContext(ctx), &success, &failure)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("AQL Query failed: %s", failure)
+		return "", errors.WrapUnexpected(err)
 	}
 
 	if len(success.Results) == 0 {
-		return nil, NotFoundErrorf("no version was found less than: %s/%s:%s", repository, path, lessThanVersion)
+		return "", NotFoundErrorf("no version was found less than: %s/%s:%s", repository, path, lessThanVersion)
 	}
 
 	if len(success.Results[0].Properties) == 0 {
-		return nil, fmt.Errorf("there is no version property for the following path: %s", success.Results[0].Path)
+		return "", errors.WrapUnexpected(fmt.Errorf("there is no version property for the following path: %s", success.Results[0].Path))
 	}
-
-	versionResponse := VersionResponse{Version: success.Results[0].Properties[0].Value}
-	return &versionResponse, nil
+	return success.Results[0].Properties[0].Value, nil
 }

@@ -9,8 +9,8 @@ import (
 
 	"github.com/dghubble/sling"
 
-	"gitlab.unanet.io/devops/eve/pkg/httpe"
-	"gitlab.unanet.io/devops/eve/pkg/slinge"
+	ehttp "gitlab.unanet.io/devops/eve/pkg/http"
+	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 const (
@@ -30,7 +30,7 @@ type Client struct {
 func NewClient(config Config) *Client {
 	var httpClient = &http.Client{
 		Timeout:   config.GitlabTimeout,
-		Transport: httpe.DefaultTransport,
+		Transport: ehttp.LoggingTransport,
 	}
 
 	if !strings.HasSuffix(config.GitlabBaseUrl, "/") {
@@ -40,14 +40,14 @@ func NewClient(config Config) *Client {
 	sling := sling.New().Base(config.GitlabBaseUrl).Client(httpClient).
 		Add("PRIVATE-TOKEN", config.GitlabApiKey).
 		Add("User-Agent", userAgent).
-		ResponseDecoder(slinge.NewJsonDecoder())
+		ResponseDecoder(json.NewJsonDecoder())
 	return &Client{sling: sling}
 }
 
 func (c *Client) TagCommit(ctx context.Context, options TagOptions) (*Tag, error) {
 	var success Tag
 	var failure ErrorResponse
-	r, err := c.sling.Post(fmt.Sprintf("v4/projects/%d/repository/tags", options.ProjectID)).QueryStruct(options).Request()
+	r, err := c.sling.New().Post(fmt.Sprintf("v4/projects/%d/repository/tags", options.ProjectID)).QueryStruct(options).Request()
 	if err != nil {
 		return nil, err
 	}

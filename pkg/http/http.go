@@ -1,4 +1,4 @@
-package httpe
+package http
 
 import (
 	"context"
@@ -30,7 +30,7 @@ type Transport struct {
 }
 
 // THe default logging transport that wraps http.DefaultTransport.
-var DefaultTransport = &Transport{
+var LoggingTransport = &Transport{
 	Transport: http.DefaultTransport,
 }
 

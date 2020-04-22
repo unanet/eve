@@ -7,9 +7,9 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"go.uber.org/zap"
 
-	"gitlab.unanet.io/devops/eve/internal/artifactory"
-	"gitlab.unanet.io/devops/eve/internal/gitlab"
 	"gitlab.unanet.io/devops/eve/internal/secrets"
+	"gitlab.unanet.io/devops/eve/pkg/artifactory"
+	"gitlab.unanet.io/devops/eve/pkg/gitlab"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/mux"
 )

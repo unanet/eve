@@ -1,4 +1,4 @@
-package slinge
+package json
 
 import (
 	"encoding/json"

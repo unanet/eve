@@ -1,4 +1,4 @@
-package common
+package data
 
 import (
 	"database/sql/driver"
@@ -69,6 +69,15 @@ func (j *JSONText) Unmarshal(v interface{}) error {
 		*j = emptyJSON
 	}
 	return json.Unmarshal(*j, v)
+}
+
+func (j *JSONText) AsMap() map[string]interface{} {
+	var hash map[string]interface{}
+	err := j.Unmarshal(hash)
+	if err != nil {
+		// TODO: maybe log this, don't want to return an error
+	}
+	return hash
 }
 
 // String supports pretty printing for JSONText types.

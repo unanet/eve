@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"gitlab.unanet.io/devops/eve/internal/config"
-	"gitlab.unanet.io/devops/eve/internal/gitlab"
+	"gitlab.unanet.io/devops/eve/pkg/gitlab"
 )
 
 var (

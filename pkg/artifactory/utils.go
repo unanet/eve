@@ -1,4 +1,4 @@
-package common
+package artifactory
 
 func Bool2int(b bool) int {
 	if b {

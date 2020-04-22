@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"github.com/dghubble/sling"
-
-	"gitlab.unanet.io/devops/eve/pkg/slinge"
+	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 const (
@@ -26,7 +25,7 @@ func NewClient(timeout time.Duration) *Client {
 
 	sling := sling.New().Client(httpClient).
 		Add("User-Agent", userAgent).
-		ResponseDecoder(slinge.NewJsonDecoder())
+		ResponseDecoder(json.NewJsonDecoder())
 	return &Client{sling: sling}
 }
 

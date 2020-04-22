@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"gitlab.unanet.io/devops/eve/internal/artifactory"
 	"gitlab.unanet.io/devops/eve/internal/config"
+	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 )
 
 var (
@@ -30,21 +30,21 @@ func TestClient_GetLatestVersion_UnanetDockerSuccess(t *testing.T) {
 	resp, err := client(t).GetLatestVersion(context.TODO(), "docker-int", "unanet/unanet", "20.2.0.*")
 	require.NoError(t, err)
 	require.NotNil(t, resp)
-	fmt.Println(resp.Version)
+	fmt.Println(resp)
 }
 
 func TestClient_GetLatestVersion_UnanetGenericSuccess(t *testing.T) {
-	resp, err := client(t).GetLatestVersion(context.TODO(), "generic-int", "unanet/unanet", "20.2.0.*")
+	resp, err := client(t).GetLatestVersion(context.TODO(), "generic-int", "clearview/infocus-reports", "2020.2.*")
 	require.NoError(t, err)
 	require.NotNil(t, resp)
-	fmt.Println(resp.Version)
+	fmt.Println(resp)
 }
 
 func TestClient_GetLatestVersion_Success(t *testing.T) {
 	resp, err := client(t).GetLatestVersion(context.TODO(), "docker", "eve-api", "0.1.0.*")
 	require.NoError(t, err)
 	require.NotNil(t, resp)
-	require.Contains(t, resp.Version, "0.1.0")
+	require.Contains(t, resp, "0.1.0")
 }
 
 func TestClient_GetLatestVersion_NotFound(t *testing.T) {
