@@ -3,7 +3,6 @@ package data
 import (
 	"context"
 
-	"gitlab.unanet.io/devops/eve/internal/data/orm"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 )
 
@@ -59,11 +58,11 @@ func (r *Repo) Artifacts(ctx context.Context) (Artifacts, error) {
 	return r.artifacts(ctx)
 }
 
-func (r *Repo) artifacts(ctx context.Context, whereArgs ...orm.WhereArg) (Artifacts, error) {
+func (r *Repo) artifacts(ctx context.Context, whereArgs ...WhereArg) (Artifacts, error) {
 	db := r.getDB()
 	defer db.Close()
 
-	sql, args := orm.CheckWhereArgs("select * from artifact", whereArgs)
+	sql, args := CheckWhereArgs("select * from artifact", whereArgs)
 	rows, err := db.QueryxContext(ctx, sql, args...)
 	if err != nil {
 		return nil, errors.WrapUnexpected(err)

@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -15,11 +16,13 @@ import (
 
 func TestDeploymentPlanGenerator_Generate(t *testing.T) {
 	dpg := service.NewDeploymentPlanGenerator(data.NewRepo(), artifactory.NewClient(config.Values().ArtifactoryConfig))
-	err := dpg.Generate(context.TODO(), service.DeploymentPlanOptions{
+	result, err := dpg.GenerateDeploymentPlan(context.TODO(), service.PlanOptions{
 		Environment: "int",
 		Namespaces:  nil,
 		Services:    nil,
 	})
 	require.NoError(t, err)
-	fmt.Println(dpg.Plan)
+	jsonData, err := json.Marshal(result)
+	require.NoError(t, err)
+	fmt.Println(string(jsonData))
 }

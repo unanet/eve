@@ -1,13 +1,11 @@
 package data
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 
-	"gitlab.unanet.io/devops/eve/internal/data/orm"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
@@ -25,25 +23,4 @@ func (r *Repo) getDB() *sqlx.DB {
 	}
 
 	return db
-}
-
-func Where(key string, value interface{}) orm.WhereArg {
-	return func(clause *orm.WhereClause) {
-		beginning := fmt.Sprintf("%s=", key)
-		clause.AddClause(beginning+"%s", orm.ANDWhereCondition, value)
-	}
-}
-
-func AndWhere(key string, value interface{}) orm.WhereArg {
-	return func(clause *orm.WhereClause) {
-		beginning := fmt.Sprintf("%s=", key)
-		clause.AddClause(beginning+"%s", orm.ANDWhereCondition, value)
-	}
-}
-
-func OrWhere(key string, value interface{}) orm.WhereArg {
-	return func(clause *orm.WhereClause) {
-		beginning := fmt.Sprintf("%s=", key)
-		clause.AddClause(beginning+"%s", orm.ORWhereCondition, value)
-	}
 }

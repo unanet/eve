@@ -257,7 +257,7 @@ INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (204, 'sql-migr
 INSERT INTO cluster(id, name, provider_group) VALUES (1, 'int-clearview-cluster', 'clearview');
 INSERT INTO cluster(id, name, provider_group) VALUES (2, 'qa-clearview-cluster', 'clearview');
 
-INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id, domain) VALUES (1, 'previous-int', 'previous', 1, '2020.3', 1, 'previous.int.infocus.app');
+INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id, domain) VALUES (1, 'previous-int', 'previous', 1, '2020.2', 1, 'previous.int.infocus.app');
 INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id, domain) VALUES (2, 'current-int', 'current', 1, '2020.2', 1, 'current.int.infocus.app');
 INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id, domain) VALUES (3, 'future-int', 'future', 1, '2020', 1, 'future.int.infocus.app');
 SELECT pg_catalog.setval('namespace_id_seq', 3, true);

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"gitlab.unanet.io/devops/eve/internal/data/orm"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 )
 
@@ -83,15 +82,15 @@ func (r *Repo) Namespaces(ctx context.Context) (Namespaces, error) {
 	return r.namespaces(ctx)
 }
 
-func (r *Repo) NamespacesByEnvironmentName(ctx context.Context, environmentName string) (Namespaces, error) {
-	return r.namespaces(ctx, Where("e.name", environmentName))
+func (r *Repo) NamespacesByEnvironmentID(ctx context.Context, environmentID int) (Namespaces, error) {
+	return r.namespaces(ctx, Where("environment_id", environmentID))
 }
 
-func (r *Repo) namespaces(ctx context.Context, whereArgs ...orm.WhereArg) (Namespaces, error) {
+func (r *Repo) namespaces(ctx context.Context, whereArgs ...WhereArg) (Namespaces, error) {
 	db := r.getDB()
 	defer db.Close()
 
-	sql, args := orm.CheckWhereArgs("SELECT n.* as environment_name FROM namespace AS n JOIN environment AS e ON n.environment_id = e.id", whereArgs)
+	sql, args := CheckWhereArgs("SELECT * FROM namespace", whereArgs)
 	rows, err := db.QueryxContext(ctx, sql, args...)
 	if err != nil {
 		return nil, errors.WrapUnexpected(err)

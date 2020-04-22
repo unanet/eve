@@ -27,7 +27,7 @@ func client(t *testing.T) *artifactory.Client {
 }
 
 func TestClient_GetLatestVersion_UnanetDockerSuccess(t *testing.T) {
-	resp, err := client(t).GetLatestVersion(context.TODO(), "docker-int", "unanet/unanet", "20.2.0.*")
+	resp, err := client(t).GetLatestVersion(context.TODO(), "docker-int", "clearview/infocus-web", "2020.*")
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	fmt.Println(resp)
