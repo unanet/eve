@@ -44,12 +44,9 @@ func (r *Repo) ServicesByNamespaceIDs(ctx context.Context, namespaceIDs []interf
 }
 
 func (r *Repo) RequestedArtifactByEnvironment(ctx context.Context, artifactName string, environmentID int) (*RequestedArtifact, error) {
-	db := r.getDB()
-	defer db.Close()
-
 	var requestedArtifact RequestedArtifact
 
-	row := db.QueryRowxContext(ctx, `
+	row := r.db.QueryRowxContext(ctx, `
 		select a.id as artifact_id,
 		       a.name as artifact_name,
 		       a.provider_group as provider_group,
@@ -66,16 +63,13 @@ func (r *Repo) RequestedArtifactByEnvironment(ctx context.Context, artifactName 
 		if err.Error() == "sql: no rows in result set" {
 			return nil, NotFoundErrorf("artifact with name: %s not found", artifactName)
 		}
-		return nil, errors.WrapUnexpected(err)
+		return nil, errors.Wrap(err)
 	}
 
 	return &requestedArtifact, nil
 }
 
 func (r *Repo) RequestedArtifacts(ctx context.Context, namespaceIDs []interface{}) (RequestedArtifacts, error) {
-	db := r.getDB()
-	defer db.Close()
-
 	sql, args, err := sqlx.In(`
 		select distinct s.artifact_id, 
 		                a.metadata as artifact_metadata,
@@ -91,19 +85,19 @@ func (r *Repo) RequestedArtifacts(ctx context.Context, namespaceIDs []interface{
 			left join feed f on efm.feed_id = f.id and f.feed_type = a.feed_type
 		where f.name is not null and ns.id in (?)`, namespaceIDs)
 	if err != nil {
-		return nil, errors.WrapUnexpected(err)
+		return nil, errors.Wrap(err)
 	}
-	sql = db.Rebind(sql)
-	rows, err := db.QueryxContext(ctx, sql, args...)
+	sql = r.db.Rebind(sql)
+	rows, err := r.db.QueryxContext(ctx, sql, args...)
 	if err != nil {
-		return nil, errors.WrapUnexpected(err)
+		return nil, errors.Wrap(err)
 	}
 	var services []RequestedArtifact
 	for rows.Next() {
 		var service RequestedArtifact
 		err = rows.StructScan(&service)
 		if err != nil {
-			return nil, errors.WrapUnexpected(err)
+			return nil, errors.Wrap(err)
 		}
 		services = append(services, service)
 	}
@@ -111,9 +105,6 @@ func (r *Repo) RequestedArtifacts(ctx context.Context, namespaceIDs []interface{
 }
 
 func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) (Services, error) {
-	db := r.getDB()
-	defer db.Close()
-
 	sql, args := CheckWhereArgs(`
 		select s.*, a.name as artifact_name,
 		    COALESCE(s.override_version, n.requested_version) as requested_version 
@@ -121,16 +112,16 @@ func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) (Services, e
 		    left join artifact as a on a.id = s.artifact_id
 			left join namespace n on s.namespace_id = n.id
 `, whereArgs)
-	rows, err := db.QueryxContext(ctx, sql, args...)
+	rows, err := r.db.QueryxContext(ctx, sql, args...)
 	if err != nil {
-		return nil, errors.WrapUnexpected(err)
+		return nil, errors.Wrap(err)
 	}
 	var services []Service
 	for rows.Next() {
 		var service Service
 		err = rows.StructScan(&service)
 		if err != nil {
-			return nil, errors.WrapUnexpected(err)
+			return nil, errors.Wrap(err)
 		}
 		services = append(services, service)
 	}

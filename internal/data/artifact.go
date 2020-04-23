@@ -19,36 +19,30 @@ type Artifact struct {
 type Artifacts []Artifact
 
 func (r *Repo) ArtifactByID(ctx context.Context, id int) (*Artifact, error) {
-	db := r.getDB()
-	defer db.Close()
-
 	var artifact Artifact
 
-	row := db.QueryRowxContext(ctx, "select * from artifact where id = $1", id)
+	row := r.db.QueryRowxContext(ctx, "select * from artifact where id = $1", id)
 	err := row.StructScan(&artifact)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			return nil, NotFoundErrorf("artifact with id: %d, not found", id)
 		}
-		return nil, errors.WrapUnexpected(err)
+		return nil, errors.Wrap(err)
 	}
 
 	return &artifact, nil
 }
 
 func (r *Repo) ArtifactByName(ctx context.Context, name string) (*Artifact, error) {
-	db := r.getDB()
-	defer db.Close()
-
 	var artifact Artifact
 
-	row := db.QueryRowxContext(ctx, "select * from artifact where name = $1", name)
+	row := r.db.QueryRowxContext(ctx, "select * from artifact where name = $1", name)
 	err := row.StructScan(&artifact)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			return nil, NotFoundErrorf("artifact with name: %s, not found", name)
 		}
-		return nil, errors.WrapUnexpected(err)
+		return nil, errors.Wrap(err)
 	}
 
 	return &artifact, nil
@@ -59,20 +53,17 @@ func (r *Repo) Artifacts(ctx context.Context) (Artifacts, error) {
 }
 
 func (r *Repo) artifacts(ctx context.Context, whereArgs ...WhereArg) (Artifacts, error) {
-	db := r.getDB()
-	defer db.Close()
-
 	sql, args := CheckWhereArgs("select * from artifact", whereArgs)
-	rows, err := db.QueryxContext(ctx, sql, args...)
+	rows, err := r.db.QueryxContext(ctx, sql, args...)
 	if err != nil {
-		return nil, errors.WrapUnexpected(err)
+		return nil, errors.Wrap(err)
 	}
 	var artifacts []Artifact
 	for rows.Next() {
 		var artifact Artifact
 		err = rows.StructScan(&artifact)
 		if err != nil {
-			return nil, errors.WrapUnexpected(err)
+			return nil, errors.Wrap(err)
 		}
 		artifacts = append(artifacts, artifact)
 	}

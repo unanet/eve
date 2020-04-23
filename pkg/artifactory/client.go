@@ -160,7 +160,7 @@ func (c *Client) GetLatestVersionLessThan(ctx context.Context, repository string
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.WrapUnexpected(err)
+		return "", errors.Wrap(err)
 	}
 
 	if len(success.Results) == 0 {
@@ -168,7 +168,7 @@ func (c *Client) GetLatestVersionLessThan(ctx context.Context, repository string
 	}
 
 	if len(success.Results[0].Properties) == 0 {
-		return "", errors.WrapUnexpected(fmt.Errorf("there is no version property for the following path: %s", success.Results[0].Path))
+		return "", errors.Wrap(fmt.Errorf("there is no version property for the following path: %s", success.Results[0].Path))
 	}
 	return success.Results[0].Properties[0].Value, nil
 }

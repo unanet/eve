@@ -1,12 +1,22 @@
 package api
 
 import (
-	"gitlab.unanet.io/devops/eve/internal/api/deployments"
-	"gitlab.unanet.io/devops/eve/internal/api/ping"
+	"github.com/jmoiron/sqlx"
+
+	"gitlab.unanet.io/devops/eve/internal/config"
+	"gitlab.unanet.io/devops/eve/internal/data"
+	"gitlab.unanet.io/devops/eve/internal/service"
+	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/mux"
 )
 
-var Controllers = []mux.EveController{
-	ping.New(),
-	deployments.New(),
+func InitializeControllers(db *sqlx.DB) []mux.EveController {
+	repo := data.NewRepo(db)
+	artifactoryClient := artifactory.NewClient(config.Values().ArtifactoryConfig)
+	deploymentPlanGenerator := service.NewDeploymentPlanGenerator(repo, artifactoryClient)
+
+	return []mux.EveController{
+		NewPingController(),
+		NewDeploymentsController(deploymentPlanGenerator),
+	}
 }

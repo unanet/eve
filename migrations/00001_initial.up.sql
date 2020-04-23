@@ -247,6 +247,7 @@ INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (103, 'infocus-
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (104, 'infocus-proxy', 'docker', 'clearview');
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (105, 'infocus-web', 'docker', 'clearview');
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (106, 'infocus-windows', 'docker', 'clearview');
+INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (107, 'infocus-windows-bkt', 'generic', 'clearview');
 
 /* ================== UNANET APPS ================== */
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (201, 'unanet', 'docker', 'unanet');

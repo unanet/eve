@@ -43,36 +43,30 @@ func (n Namespaces) Contains(name string) bool {
 }
 
 func (r *Repo) NamespaceByName(ctx context.Context, name string) (*Namespace, error) {
-	db := r.getDB()
-	defer db.Close()
-
 	var namespace Namespace
 
-	row := db.QueryRowxContext(ctx, "select * from namespace where name = $1", name)
+	row := r.db.QueryRowxContext(ctx, "select * from namespace where name = $1", name)
 	err := row.StructScan(&namespace)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			return nil, NotFoundErrorf("namespace with name: %s, not found", name)
 		}
-		return nil, errors.WrapUnexpected(err)
+		return nil, errors.Wrap(err)
 	}
 
 	return &namespace, nil
 }
 
 func (r *Repo) NamespaceByID(ctx context.Context, id int) (*Namespace, error) {
-	db := r.getDB()
-	defer db.Close()
-
 	var namespace Namespace
 
-	row := db.QueryRowxContext(ctx, "select * from namespace where id = $1", id)
+	row := r.db.QueryRowxContext(ctx, "select * from namespace where id = $1", id)
 	err := row.StructScan(&namespace)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			return nil, NotFoundErrorf("namespace with id: %d, not found", id)
 		}
-		return nil, errors.WrapUnexpected(err)
+		return nil, errors.Wrap(err)
 	}
 
 	return &namespace, nil
@@ -87,20 +81,17 @@ func (r *Repo) NamespacesByEnvironmentID(ctx context.Context, environmentID int)
 }
 
 func (r *Repo) namespaces(ctx context.Context, whereArgs ...WhereArg) (Namespaces, error) {
-	db := r.getDB()
-	defer db.Close()
-
 	sql, args := CheckWhereArgs("SELECT * FROM namespace", whereArgs)
-	rows, err := db.QueryxContext(ctx, sql, args...)
+	rows, err := r.db.QueryxContext(ctx, sql, args...)
 	if err != nil {
-		return nil, errors.WrapUnexpected(err)
+		return nil, errors.Wrap(err)
 	}
 	var namespaces []Namespace
 	for rows.Next() {
 		var namespace Namespace
 		err = rows.StructScan(&namespace)
 		if err != nil {
-			return nil, errors.WrapUnexpected(err)
+			return nil, errors.Wrap(err)
 		}
 		namespaces = append(namespaces, namespace)
 	}

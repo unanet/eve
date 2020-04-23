@@ -38,15 +38,16 @@ type LogEntryConstructor struct {
 func (l *LogEntryConstructor) NewLogEntry(r *http.Request) middleware.LogEntry {
 	var logFields []zap.Field
 
-	if reqID := middleware.GetReqID(r.Context()); reqID != "" {
-		logFields = append(logFields, zap.String("req_id", reqID))
-	}
-
 	incomingRequestFields := []zap.Field{
 		zap.String("remote_addr", r.RemoteAddr),
 		zap.String("user_agent", r.UserAgent()),
 		zap.String("uri", r.RequestURI),
 		zap.String("method", r.Method),
+	}
+
+	if reqID := middleware.GetReqID(r.Context()); reqID != "" {
+		logFields = append(logFields, zap.String("req_id", reqID))
+		incomingRequestFields = append(incomingRequestFields, zap.String("req_id", reqID))
 	}
 
 	entry := &LogEntry{
@@ -63,7 +64,7 @@ func Log(r *http.Request) *zap.Logger {
 	if v == nil {
 		return log.Logger
 	}
-	if entry, ok := v.(LogEntry); ok {
+	if entry, ok := v.(*LogEntry); ok {
 		return entry.logger
 	} else {
 		return log.Logger

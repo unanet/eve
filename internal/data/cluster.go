@@ -18,18 +18,15 @@ type Cluster struct {
 type Clusters []Cluster
 
 func (r *Repo) ClusterByID(ctx context.Context, id int) (*Cluster, error) {
-	db := r.getDB()
-	defer db.Close()
-
 	var cluster Cluster
 
-	row := db.QueryRowxContext(ctx, "select * from cluster where id = $1", id)
+	row := r.db.QueryRowxContext(ctx, "select * from cluster where id = $1", id)
 	err := row.StructScan(&cluster)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			return nil, NotFoundErrorf("cluster with id: %d, not found", id)
 		}
-		return nil, errors.WrapUnexpected(err)
+		return nil, errors.Wrap(err)
 	}
 
 	return &cluster, nil

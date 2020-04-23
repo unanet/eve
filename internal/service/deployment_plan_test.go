@@ -15,11 +15,11 @@ import (
 )
 
 func TestDeploymentPlanGenerator_Generate(t *testing.T) {
-	dpg := service.NewDeploymentPlanGenerator(data.NewRepo(), artifactory.NewClient(config.Values().ArtifactoryConfig))
+	dpg := service.NewDeploymentPlanGenerator(data.NewRepo(nil), artifactory.NewClient(config.Values().ArtifactoryConfig))
 	result, err := dpg.GenerateDeploymentPlan(context.TODO(), service.PlanOptions{
-		Environment: "int",
-		Namespaces:  nil,
-		Services:    nil,
+		Environment:      "int",
+		NamespaceAliases: nil,
+		Services:         nil,
 	})
 	require.NoError(t, err)
 	jsonData, err := json.Marshal(result)

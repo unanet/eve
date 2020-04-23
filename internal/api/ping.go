@@ -1,4 +1,4 @@
-package ping
+package api
 
 import (
 	"fmt"
@@ -11,20 +11,20 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/mux"
 )
 
-type Controller struct {
+type PingController struct {
 }
 
-func New() *Controller {
-	return &Controller{}
+func NewPingController() *PingController {
+	return &PingController{}
 }
 
-func (c Controller) Setup(r chi.Router) {
+func (c PingController) Setup(r chi.Router) {
 	r.Get("/internal-error", c.internalError)
 	r.Get("/rest-error", c.restError)
 	r.Get("/ping", c.ping)
 }
 
-func (c Controller) restError(w http.ResponseWriter, r *http.Request) {
+func (c PingController) restError(w http.ResponseWriter, r *http.Request) {
 	render.Respond(w, r, &errors.RestError{
 		Code:          400,
 		Message:       "Bad Request",
@@ -32,11 +32,11 @@ func (c Controller) restError(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (c Controller) internalError(w http.ResponseWriter, r *http.Request) {
+func (c PingController) internalError(w http.ResponseWriter, r *http.Request) {
 	render.Respond(w, r, fmt.Errorf("Some Error"))
 }
 
-func (c Controller) ping(w http.ResponseWriter, r *http.Request) {
+func (c PingController) ping(w http.ResponseWriter, r *http.Request) {
 	render.Respond(w, r, render.M{
 		"message": "pong",
 		"version": mux.Version,

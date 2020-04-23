@@ -59,7 +59,7 @@ func (ra RequestedArtifacts) ID(id int) *RequestedArtifact {
 
 func (ra RequestedArtifacts) Match(requestedVersion string, artifactID int) *RequestedArtifact {
 	for _, x := range ra {
-		if x.ArtifactID == artifactID && x.RequestedVersion == requestedVersion {
+		if x.ArtifactID == artifactID && strings.HasPrefix(x.RequestedVersion, requestedVersion) {
 			return x
 		}
 	}
@@ -231,10 +231,11 @@ type PlanGenerator struct {
 }
 
 type PlanOptions struct {
-	Environment string
-	Namespaces  StringList
-	Services    ServiceDefinitions
-	ForceDeploy bool
+	Environment      string
+	NamespaceAliases StringList
+	Services         ServiceDefinitions
+	ForceDeploy      bool
+	DryRun           bool
 }
 
 func NewDeploymentPlanGenerator(r PlanGeneratorRepo, v VersionQuery) *PlanGenerator {
@@ -251,7 +252,7 @@ func (d *PlanGenerator) GenerateDeploymentPlan(ctx context.Context, options Plan
 		return nil, err
 	}
 	dp.Environment = environment
-	namespaces, err := d.getNamespaces(ctx, environment, options.Namespaces, dp.message)
+	namespaces, err := d.getNamespaces(ctx, environment, options.NamespaceAliases, dp.message)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +288,7 @@ func (d *PlanGenerator) GenerateDeploymentPlan(ctx context.Context, options Plan
 func (d *PlanGenerator) getServices(ctx context.Context, namespaceIDs []interface{}) (Services, error) {
 	services, err := d.repo.ServicesByNamespaceIDs(ctx, namespaceIDs)
 	if err != nil {
-		return nil, errors.WrapUnexpected(err)
+		return nil, errors.Wrap(err)
 	}
 	return fromDataServices(services), nil
 }
@@ -303,7 +304,7 @@ func (d *PlanGenerator) getRequestedArtifacts(ctx context.Context, environment *
 				if _, ok := err.(data.NotFoundError); ok {
 					return nil, errors.NotFoundf("artifact not found in db: %s, environment: %s, ", x.ArtifactName, environment.Name)
 				}
-				return nil, errors.WrapUnexpected(err)
+				return nil, errors.Wrap(err)
 			}
 			artifact.RequestedVersion = x.RequestedVersion
 			requestedArtifacts = append(requestedArtifacts, fromDataRequestedArtifact(*artifact))
@@ -312,7 +313,7 @@ func (d *PlanGenerator) getRequestedArtifacts(ctx context.Context, environment *
 		// If no services were supplied, we get all services for the supplied namespaces
 		dataArtifacts, err := d.repo.RequestedArtifacts(ctx, namespaceIDs)
 		if err != nil {
-			return nil, errors.WrapUnexpected(err)
+			return nil, errors.Wrap(err)
 		}
 		requestedArtifacts = fromDataRequestedArtifacts(dataArtifacts)
 	}
@@ -325,7 +326,7 @@ func (d *PlanGenerator) getRequestedArtifacts(ctx context.Context, environment *
 			if _, ok := err.(artifactory.NotFoundError); ok {
 				return nil, errors.NotFoundf("artifact not found in artifactory: %s, version: %s", a.ArtifactName, a.RequestedVersion)
 			}
-			return nil, errors.WrapUnexpected(err)
+			return nil, errors.Wrap(err)
 		}
 		a.VersionInArtifactory = version
 	}
@@ -339,13 +340,13 @@ func (d *PlanGenerator) getEnvironment(ctx context.Context, envName string) (*En
 		if _, ok := err.(data.NotFoundError); ok {
 			return nil, errors.NotFoundf("environment: %s, not found", envName)
 		}
-		return nil, errors.WrapUnexpected(err)
+		return nil, errors.Wrap(err)
 	}
 	env := fromDataEnvironment(*dataEnv)
 	return &env, nil
 }
 
-func (d *PlanGenerator) getNamespaces(ctx context.Context, env *Environment, namespaceNames StringList, logger messageLogger) (Namespaces, error) {
+func (d *PlanGenerator) getNamespaces(ctx context.Context, env *Environment, namespaceAliases StringList, logger messageLogger) (Namespaces, error) {
 	// lets start with all the namespaces in the Env and filter it down based on additional information passed in.
 	namespacesToDeploy, err := d.repo.NamespacesByEnvironmentID(ctx, env.ID)
 	if err != nil {
@@ -356,10 +357,10 @@ func (d *PlanGenerator) getNamespaces(ctx context.Context, env *Environment, nam
 		logger("the following environment: %s, has no associated namespaces", env.Name)
 		return nil, nil
 	}
-	if len(namespaceNames) > 0 {
+	if len(namespaceAliases) > 0 {
 		// Make sure that the namespaces that are specified are also available in the environment
 		included, excluded := filterNamespaces(namespacesToDeploy, func(namespace data.Namespace) bool {
-			return namespaceNames.Contains(namespace.Name)
+			return namespaceAliases.Contains(namespace.Alias)
 		})
 		namespacesToDeploy = included
 		if len(excluded) > 0 {

@@ -11,7 +11,7 @@ import (
 )
 
 func TestRepo_getServices(t *testing.T) {
-	repo := data.NewRepo()
+	repo := data.NewRepo(nil)
 	services, err := repo.RequestedArtifacts(context.TODO(), []int{1, 2, 3})
 	require.NoError(t, err)
 	fmt.Println(services)
