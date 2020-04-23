@@ -12,6 +12,7 @@ import (
 type Service struct {
 	ID               int            `db:"id"`
 	NamespaceID      int            `db:"namespace_id"`
+	NamespaceName    string         `db:"namespace_name"`
 	ArtifactID       int            `db:"artifact_id"`
 	ArtifactName     string         `db:"artifact_name"`
 	RequestedVersion string         `db:"requested_version"`
@@ -106,7 +107,7 @@ func (r *Repo) RequestedArtifacts(ctx context.Context, namespaceIDs []interface{
 
 func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) (Services, error) {
 	sql, args := CheckWhereArgs(`
-		select s.*, a.name as artifact_name,
+		select s.*, a.name as artifact_name, n.name as namespace_name,
 		    COALESCE(s.override_version, n.requested_version) as requested_version 
 		from service as s 
 		    left join artifact as a on a.id = s.artifact_id

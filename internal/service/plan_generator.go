@@ -30,6 +30,7 @@ type RequestedArtifact struct {
 	FeedName             string                 `json:"feed_name"`
 	RequestedVersion     string                 `json:"requested_version"`
 	VersionInArtifactory string                 `json:"version_in_artifactory"`
+	matched              bool
 }
 
 func (ra RequestedArtifact) Path() string {
@@ -63,8 +64,17 @@ func (ra RequestedArtifacts) Match(requestedVersion string, artifactID int) *Req
 			return x
 		}
 	}
-	empty := RequestedArtifact{}
-	return &empty
+	return nil
+}
+
+func (ra RequestedArtifacts) UnMatched() StringList {
+	var unmatched []string
+	for _, x := range ra {
+		if !x.matched {
+			unmatched = append(unmatched, fmt.Sprintf("%s:%s", x.ArtifactName, x.ArtifactoryRequestedVersion()))
+		}
+	}
+	return unmatched
 }
 
 func fromServiceDefinition(s ServiceDefinition) *RequestedArtifact {
@@ -104,6 +114,7 @@ func fromDataRequestedArtifacts(s data.RequestedArtifacts) RequestedArtifacts {
 type Service struct {
 	ID               int                    `json:"-"`
 	NamespaceID      int                    `json:"-"`
+	NamespaceName    string                 `json:"-"`
 	ArtifactID       int                    `json:"-"`
 	ArtifactName     string                 `json:"artifact_name"`
 	RequestedVersion string                 `json:"requested_version"`
@@ -118,6 +129,7 @@ func fromDataService(service data.Service) *Service {
 	return &Service{
 		ID:               service.ID,
 		NamespaceID:      service.NamespaceID,
+		NamespaceName:    service.NamespaceName,
 		ArtifactID:       service.ArtifactID,
 		ArtifactName:     service.ArtifactName,
 		RequestedVersion: service.RequestedVersion,
@@ -150,7 +162,8 @@ func fromDataEnvironment(environment data.Environment) Environment {
 
 type Namespace struct {
 	ID       int                    `json:"-"`
-	Name     string                 `json:"namespace"`
+	Name     string                 `json:"-"`
+	Alias    string                 `json:"namespace"`
 	Services Services               `json:"services"`
 	Metadata map[string]interface{} `json:"-"`
 }
@@ -178,6 +191,7 @@ func fromDataNamespace(ns data.Namespace) *Namespace {
 	return &Namespace{
 		ID:       ns.ID,
 		Name:     ns.Name,
+		Alias:    ns.Alias,
 		Metadata: ns.Metadata.AsMap(),
 	}
 }
@@ -238,6 +252,14 @@ type PlanOptions struct {
 	DryRun           bool
 }
 
+func (po PlanOptions) HasServices() bool {
+	return len(po.Services) > 0
+}
+
+func (po PlanOptions) HasNamespaceAliases() bool {
+	return len(po.NamespaceAliases) > 0
+}
+
 func NewDeploymentPlanGenerator(r PlanGeneratorRepo, v VersionQuery) *PlanGenerator {
 	return &PlanGenerator{
 		repo: r,
@@ -258,7 +280,7 @@ func (d *PlanGenerator) GenerateDeploymentPlan(ctx context.Context, options Plan
 	}
 	dp.Namespaces = namespaces
 
-	requestedArtifacts, err := d.getRequestedArtifacts(ctx, environment, options.Services, namespaces.IDs())
+	requestedArtifacts, err := d.getRequestedArtifacts(ctx, environment, options.Services, namespaces.IDs(), dp.message)
 	if err != nil {
 		return nil, err
 	}
@@ -269,17 +291,37 @@ func (d *PlanGenerator) GenerateDeploymentPlan(ctx context.Context, options Plan
 		return nil, err
 	}
 
+	// match services to be deployed
 	for _, s := range services {
-		s.AvailableVersion = dp.requestedArtifacts.Match(s.RequestedVersion, s.ArtifactID).VersionInArtifactory
-		if s.DeployedVersion == s.AvailableVersion && !options.ForceDeploy {
+		match := dp.requestedArtifacts.Match(s.RequestedVersion, s.ArtifactID)
+		if match == nil {
+			continue
+		}
+		if s.DeployedVersion == match.VersionInArtifactory && !options.ForceDeploy {
+			if options.HasServices() {
+				dp.message("artifact: %s, version: %s, is already up to date in namespace: %d", s.ArtifactName, s.DeployedVersion, s.NamespaceName)
+				match.matched = true
+			}
+			continue
+		}
+		s.AvailableVersion = match.VersionInArtifactory
+		if s.AvailableVersion == "" || (s.DeployedVersion == s.AvailableVersion && !options.ForceDeploy) {
 			continue
 		}
 
-		s.AvailableVersion = dp.requestedArtifacts.Match(s.RequestedVersion, s.ArtifactID).VersionInArtifactory
 		// stack environment, namespace, artifact and service in that order
 		s.Metadata = mergeKeys(s.Metadata, dp.getMetadata(s.NamespaceID, s.ArtifactID))
 		ns := dp.Namespaces.ID(s.NamespaceID)
+		match.matched = true
 		ns.Services = append(ns.Services, s)
+	}
+
+	// services were explicitly passed in
+	if options.HasServices() {
+		unmatched := dp.requestedArtifacts.UnMatched()
+		for _, x := range unmatched {
+			dp.message("unmatched service: %s", x)
+		}
 	}
 
 	return &dp, nil
@@ -290,10 +332,12 @@ func (d *PlanGenerator) getServices(ctx context.Context, namespaceIDs []interfac
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
+
 	return fromDataServices(services), nil
 }
 
-func (d *PlanGenerator) getRequestedArtifacts(ctx context.Context, environment *Environment, services ServiceDefinitions, namespaceIDs []interface{}) (RequestedArtifacts, error) {
+func (d *PlanGenerator) getRequestedArtifacts(ctx context.Context, environment *Environment,
+	services ServiceDefinitions, namespaceIDs []interface{}, logger messageLogger) (RequestedArtifacts, error) {
 	// If services were supplied, we check those against the database to make sure they are valid and pull
 	// required info needed to lookup in Artifactory
 	var requestedArtifacts RequestedArtifacts
@@ -302,7 +346,7 @@ func (d *PlanGenerator) getRequestedArtifacts(ctx context.Context, environment *
 			artifact, err := d.repo.RequestedArtifactByEnvironment(ctx, x.ArtifactName, environment.ID)
 			if err != nil {
 				if _, ok := err.(data.NotFoundError); ok {
-					return nil, errors.NotFoundf("artifact not found in db: %s, environment: %s, ", x.ArtifactName, environment.Name)
+					return nil, errors.NotFoundf("artifact not found in db: %s", x.ArtifactName)
 				}
 				return nil, errors.Wrap(err)
 			}
@@ -324,7 +368,8 @@ func (d *PlanGenerator) getRequestedArtifacts(ctx context.Context, environment *
 		version, err := d.vq.GetLatestVersion(ctx, a.FeedName, a.Path(), a.ArtifactoryRequestedVersion())
 		if err != nil {
 			if _, ok := err.(artifactory.NotFoundError); ok {
-				return nil, errors.NotFoundf("artifact not found in artifactory: %s, version: %s", a.ArtifactName, a.RequestedVersion)
+				logger("artifact not found in artifactory: %s:%s", a.ArtifactName, a.ArtifactoryRequestedVersion())
+				continue
 			}
 			return nil, errors.Wrap(err)
 		}
@@ -346,7 +391,7 @@ func (d *PlanGenerator) getEnvironment(ctx context.Context, envName string) (*En
 	return &env, nil
 }
 
-func (d *PlanGenerator) getNamespaces(ctx context.Context, env *Environment, namespaceAliases StringList, logger messageLogger) (Namespaces, error) {
+func (d *PlanGenerator) getNamespaces(ctx context.Context, env *Environment, requestedNamespaces StringList, logger messageLogger) (Namespaces, error) {
 	// lets start with all the namespaces in the Env and filter it down based on additional information passed in.
 	namespacesToDeploy, err := d.repo.NamespacesByEnvironmentID(ctx, env.ID)
 	if err != nil {
@@ -354,17 +399,19 @@ func (d *PlanGenerator) getNamespaces(ctx context.Context, env *Environment, nam
 	}
 	if len(namespacesToDeploy) == 0 {
 		// We have no namespaces in the env specified,so we effectively can't do anything.
-		logger("the following environment: %s, has no associated namespaces", env.Name)
+		logger("no associated namespaces in %s", env.Name)
 		return nil, nil
 	}
-	if len(namespaceAliases) > 0 {
+	if len(requestedNamespaces) > 0 {
 		// Make sure that the namespaces that are specified are also available in the environment
 		included, excluded := filterNamespaces(namespacesToDeploy, func(namespace data.Namespace) bool {
-			return namespaceAliases.Contains(namespace.Alias)
+			return requestedNamespaces.Contains(namespace.Alias)
 		})
 		namespacesToDeploy = included
-		if len(excluded) > 0 {
-			logger("the following namespaces were supplied: %v, but are not setup in %s", excluded, env.Name)
+		for _, x := range excluded {
+			if requestedNamespaces.Contains(x.Alias) {
+				logger("namespace %s not setup in %s", x, env.Name)
+			}
 		}
 	} else {
 		// If we didn't specify any namespaces, we need to make sure were not deploying to namespaces that require you to explicitly specify them
@@ -372,8 +419,8 @@ func (d *PlanGenerator) getNamespaces(ctx context.Context, env *Environment, nam
 			return !namespace.ExplicitDeployOnly
 		})
 		namespacesToDeploy = included
-		if len(excluded) > 0 {
-			logger("since no namespaces were supplied, the following namespaces are excluded as you must explicitly specify them: %v", excluded)
+		for _, x := range excluded {
+			logger("explicit namespace excluded: %s", x.Alias)
 		}
 	}
 
