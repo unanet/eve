@@ -17,11 +17,11 @@ type DeploymentsController struct {
 }
 
 type DeploymentRequest struct {
-	Environment string                     `json:"environment"`
-	Namespaces  service.StringList         `json:"namespaces"`
-	Services    service.ServiceDefinitions `json:"services"`
-	ForceDeploy bool                       `json:"force_deploy"`
-	DryRun      bool                       `json:"dry_run"`
+	Environment string                      `json:"environment"`
+	Namespaces  service.StringList          `json:"namespaces"`
+	Services    service.ArtifactDefinitions `json:"services"`
+	ForceDeploy bool                        `json:"force_deploy"`
+	DryRun      bool                        `json:"dry_run"`
 }
 
 func (dr DeploymentRequest) ValidateWithContext(ctx context.Context) error {
@@ -49,7 +49,7 @@ func (c DeploymentsController) createDeployment(w http.ResponseWriter, r *http.R
 	plan, err := c.planGenerator.GenerateDeploymentPlan(r.Context(), service.PlanOptions{
 		Environment:      dr.Environment,
 		NamespaceAliases: dr.Namespaces,
-		Services:         dr.Services,
+		Artifacts:        dr.Services,
 		ForceDeploy:      false,
 		DryRun:           dr.DryRun,
 	})

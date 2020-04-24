@@ -23,17 +23,6 @@ type Service struct {
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
 }
 
-type RequestedArtifact struct {
-	ArtifactID       int      `db:"artifact_id"`
-	ArtifactName     string   `db:"artifact_name"`
-	ProviderGroup    string   `db:"provider_group"`
-	FeedName         string   `db:"feed_name"`
-	ArtifactMetadata JSONText `db:"artifact_metadata"`
-	RequestedVersion string   `db:"requested_version"`
-}
-
-type RequestedArtifacts []RequestedArtifact
-
 type Services []Service
 
 func (r *Repo) Services(ctx context.Context) (Services, error) {
@@ -44,33 +33,7 @@ func (r *Repo) ServicesByNamespaceIDs(ctx context.Context, namespaceIDs []interf
 	return r.services(ctx, WhereIn("namespace_id", namespaceIDs))
 }
 
-func (r *Repo) RequestedArtifactByEnvironment(ctx context.Context, artifactName string, environmentID int) (*RequestedArtifact, error) {
-	var requestedArtifact RequestedArtifact
-
-	row := r.db.QueryRowxContext(ctx, `
-		select a.id as artifact_id,
-		       a.name as artifact_name,
-		       a.provider_group as provider_group,
-		       f.name as feed_name
-		from artifact as a
-		    left join environment e on e.id = $1
-		    left join environment_feed_map efm on e.id = efm.environment_id
-			left join feed f on efm.feed_id = f.id
-		where a.name = $2
-	`, environmentID, artifactName)
-
-	err := row.StructScan(&requestedArtifact)
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			return nil, NotFoundErrorf("artifact with name: %s not found", artifactName)
-		}
-		return nil, errors.Wrap(err)
-	}
-
-	return &requestedArtifact, nil
-}
-
-func (r *Repo) RequestedArtifacts(ctx context.Context, namespaceIDs []interface{}) (RequestedArtifacts, error) {
+func (r *Repo) ServiceArtifacts(ctx context.Context, namespaceIDs []interface{}) (RequestArtifacts, error) {
 	sql, args, err := sqlx.In(`
 		select distinct s.artifact_id, 
 		                a.metadata as artifact_metadata,
@@ -93,9 +56,9 @@ func (r *Repo) RequestedArtifacts(ctx context.Context, namespaceIDs []interface{
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-	var services []RequestedArtifact
+	var services []RequestArtifact
 	for rows.Next() {
-		var service RequestedArtifact
+		var service RequestArtifact
 		err = rows.StructScan(&service)
 		if err != nil {
 			return nil, errors.Wrap(err)

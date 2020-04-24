@@ -14,8 +14,8 @@ type PlanGeneratorRepo interface {
 	NamespacesByEnvironmentID(ctx context.Context, environmentID int) (data.Namespaces, error)
 	ServicesByNamespaceIDs(ctx context.Context, namespaceIDs []interface{}) (data.Services, error)
 	EnvironmentByName(ctx context.Context, name string) (*data.Environment, error)
-	RequestedArtifacts(ctx context.Context, namespaceIDs []interface{}) (data.RequestedArtifacts, error)
-	RequestedArtifactByEnvironment(ctx context.Context, artifactName string, environmentID int) (*data.RequestedArtifact, error)
+	ServiceArtifacts(ctx context.Context, namespaceIDs []interface{}) (data.RequestArtifacts, error)
+	RequestArtifactByEnvironment(ctx context.Context, artifactName string, environmentID int) (*data.RequestArtifact, error)
 }
 
 type VersionQuery interface {
@@ -77,14 +77,14 @@ func (ra RequestedArtifacts) UnMatched() StringList {
 	return unmatched
 }
 
-func fromServiceDefinition(s ServiceDefinition) *RequestedArtifact {
+func fromServiceDefinition(s ArtifactDefinition) *RequestedArtifact {
 	return &RequestedArtifact{
 		ArtifactName:     s.Name(),
 		RequestedVersion: s.Version(),
 	}
 }
 
-func fromServiceDefinitions(s ServiceDefinitions) RequestedArtifacts {
+func fromArtifactDefinitions(s ArtifactDefinitions) RequestedArtifacts {
 	var returnList []*RequestedArtifact
 	for _, x := range s {
 		returnList = append(returnList, fromServiceDefinition(x))
@@ -92,7 +92,7 @@ func fromServiceDefinitions(s ServiceDefinitions) RequestedArtifacts {
 	return returnList
 }
 
-func fromDataRequestedArtifact(s data.RequestedArtifact) *RequestedArtifact {
+func fromDataRequestedArtifact(s data.RequestArtifact) *RequestedArtifact {
 	return &RequestedArtifact{
 		ArtifactID:       s.ArtifactID,
 		ArtifactName:     s.ArtifactName,
@@ -103,7 +103,7 @@ func fromDataRequestedArtifact(s data.RequestedArtifact) *RequestedArtifact {
 	}
 }
 
-func fromDataRequestedArtifacts(s data.RequestedArtifacts) RequestedArtifacts {
+func fromDataRequestedArtifacts(s data.RequestArtifacts) RequestedArtifacts {
 	var returnList []*RequestedArtifact
 	for _, x := range s {
 		returnList = append(returnList, fromDataRequestedArtifact(x))
@@ -160,12 +160,18 @@ func fromDataEnvironment(environment data.Environment) Environment {
 	}
 }
 
+type Database struct {
+}
+
+type Databases []Database
+
 type Namespace struct {
-	ID       int                    `json:"-"`
-	Name     string                 `json:"-"`
-	Alias    string                 `json:"namespace"`
-	Services Services               `json:"services"`
-	Metadata map[string]interface{} `json:"-"`
+	ID        int                    `json:"-"`
+	Name      string                 `json:"-"`
+	Alias     string                 `json:"namespace"`
+	Services  Services               `json:"services,omitempty"`
+	Databases Databases              `json:"databases,omitempty"`
+	Metadata  map[string]interface{} `json:"-"`
 }
 
 type Namespaces []*Namespace
@@ -217,19 +223,19 @@ func (dp *DeploymentPlan) message(format string, a ...interface{}) {
 	dp.Messages = append(dp.Messages, fmt.Sprintf(format, a...))
 }
 
-func (dp *DeploymentPlan) getMetadata(namespaceID int, artifactID int) m {
+func (dp *DeploymentPlan) getMetadata(namespaceID int, artifactID int) M {
 	metadata := mergeKeys(dp.Environment.Metadata, dp.Namespaces.ID(namespaceID).Metadata)
 	metadata = mergeKeys(metadata, dp.requestedArtifacts.ID(artifactID).ArtifactMetadata)
 	return metadata
 }
 
-type ServiceDefinition string
+type ArtifactDefinition string
 
-func (s ServiceDefinition) Name() string {
+func (s ArtifactDefinition) Name() string {
 	return strings.Split(string(s), ":")[0]
 }
 
-func (s ServiceDefinition) Version() string {
+func (s ArtifactDefinition) Version() string {
 	split := strings.Split(string(s), ":")
 	if len(split) > 1 {
 		return split[1]
@@ -237,7 +243,7 @@ func (s ServiceDefinition) Version() string {
 	return ""
 }
 
-type ServiceDefinitions []ServiceDefinition
+type ArtifactDefinitions []ArtifactDefinition
 
 type PlanGenerator struct {
 	repo PlanGeneratorRepo
@@ -247,13 +253,13 @@ type PlanGenerator struct {
 type PlanOptions struct {
 	Environment      string
 	NamespaceAliases StringList
-	Services         ServiceDefinitions
+	Artifacts        ArtifactDefinitions
 	ForceDeploy      bool
 	DryRun           bool
 }
 
 func (po PlanOptions) HasServices() bool {
-	return len(po.Services) > 0
+	return len(po.Artifacts) > 0
 }
 
 func (po PlanOptions) HasNamespaceAliases() bool {
@@ -267,29 +273,91 @@ func NewDeploymentPlanGenerator(r PlanGeneratorRepo, v VersionQuery) *PlanGenera
 	}
 }
 
-func (d *PlanGenerator) GenerateDeploymentPlan(ctx context.Context, options PlanOptions) (*DeploymentPlan, error) {
+func (d *PlanGenerator) SetupDeploymentPlan(ctx context.Context, options PlanOptions) (*DeploymentPlan, error) {
 	dp := DeploymentPlan{}
-	environment, err := d.getEnvironment(ctx, options.Environment)
+	// make sure the environment name is valid and get the metadata
+	dataEnv, err := d.repo.EnvironmentByName(ctx, options.Environment)
 	if err != nil {
-		return nil, err
+		if _, ok := err.(data.NotFoundError); ok {
+			return nil, errors.NotFoundf("environment: %s, not found", options.Environment)
+		}
+		return nil, errors.Wrap(err)
 	}
-	dp.Environment = environment
-	namespaces, err := d.getNamespaces(ctx, environment, options.NamespaceAliases, dp.message)
+	environment := fromDataEnvironment(*dataEnv)
+	dp.Environment = &environment
+
+	namespaces, err := d.getNamespaces(ctx, &environment, options.NamespaceAliases, dp.message)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err)
 	}
 	dp.Namespaces = namespaces
 
-	requestedArtifacts, err := d.getRequestedArtifacts(ctx, environment, options.Services, namespaces.IDs(), dp.message)
+	requestedArtifacts, err := d.getRequestedArtifacts(ctx, &environment, options.Artifacts, namespaces.IDs(), dp.message)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err)
 	}
 	dp.requestedArtifacts = requestedArtifacts
+	return &dp, nil
+}
 
-	services, err := d.getServices(ctx, namespaces.IDs())
+func (d *PlanGenerator) GenerateMigrationPlan(ctx context.Context, options PlanOptions) (*DeploymentPlan, error) {
+	dp, err := d.SetupDeploymentPlan(ctx, options)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err)
 	}
+	return dp, nil
+
+	//database, err :=
+	//
+	//
+	//// match services to be deployed
+	//for _, s := range services {
+	//	match := dp.requestedArtifacts.Match(s.RequestedVersion, s.ArtifactID)
+	//	if match == nil {
+	//		continue
+	//	}
+	//	if s.DeployedVersion == match.VersionInArtifactory && !options.ForceDeploy {
+	//		if options.HasServices() {
+	//			dp.message("artifact: %s, version: %s, is already up to date in namespace: %s", s.ArtifactName, s.DeployedVersion, s.NamespaceName)
+	//			match.matched = true
+	//		}
+	//		continue
+	//	}
+	//	s.AvailableVersion = match.VersionInArtifactory
+	//	if s.AvailableVersion == "" || (s.DeployedVersion == s.AvailableVersion && !options.ForceDeploy) {
+	//		continue
+	//	}
+	//
+	//	// stack environment, namespace, artifact and service in that order
+	//	s.Metadata = mergeKeys(s.Metadata, dp.getMetadata(s.NamespaceID, s.ArtifactID))
+	//	ns := dp.Namespaces.ID(s.NamespaceID)
+	//	match.matched = true
+	//	ns.Services = append(ns.Services, s)
+	//}
+	//
+	//// services were explicitly passed in
+	//if options.HasServices() {
+	//	unmatched := dp.requestedArtifacts.UnMatched()
+	//	for _, x := range unmatched {
+	//		dp.message("unmatched service: %s", x)
+	//	}
+	//}
+	//
+	//
+	//return dp, nil
+}
+
+func (d *PlanGenerator) GenerateDeploymentPlan(ctx context.Context, options PlanOptions) (*DeploymentPlan, error) {
+	dp, err := d.SetupDeploymentPlan(ctx, options)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	dataServices, err := d.repo.ServicesByNamespaceIDs(ctx, dp.Namespaces.IDs())
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	services := fromDataServices(dataServices)
 
 	// match services to be deployed
 	for _, s := range services {
@@ -299,7 +367,7 @@ func (d *PlanGenerator) GenerateDeploymentPlan(ctx context.Context, options Plan
 		}
 		if s.DeployedVersion == match.VersionInArtifactory && !options.ForceDeploy {
 			if options.HasServices() {
-				dp.message("artifact: %s, version: %s, is already up to date in namespace: %d", s.ArtifactName, s.DeployedVersion, s.NamespaceName)
+				dp.message("artifact: %s, version: %s, is already up to date in namespace: %s", s.ArtifactName, s.DeployedVersion, s.NamespaceName)
 				match.matched = true
 			}
 			continue
@@ -324,26 +392,17 @@ func (d *PlanGenerator) GenerateDeploymentPlan(ctx context.Context, options Plan
 		}
 	}
 
-	return &dp, nil
+	return dp, nil
 }
 
-func (d *PlanGenerator) getServices(ctx context.Context, namespaceIDs []interface{}) (Services, error) {
-	services, err := d.repo.ServicesByNamespaceIDs(ctx, namespaceIDs)
-	if err != nil {
-		return nil, errors.Wrap(err)
-	}
-
-	return fromDataServices(services), nil
-}
-
-func (d *PlanGenerator) getRequestedArtifacts(ctx context.Context, environment *Environment,
-	services ServiceDefinitions, namespaceIDs []interface{}, logger messageLogger) (RequestedArtifacts, error) {
+func (d *PlanGenerator) getRequestedArtifacts(ctx context.Context, environment *Environment, services ArtifactDefinitions,
+	namespaceIDs []interface{}, logger messageLogger) (RequestedArtifacts, error) {
 	// If services were supplied, we check those against the database to make sure they are valid and pull
 	// required info needed to lookup in Artifactory
 	var requestedArtifacts RequestedArtifacts
 	if len(services) > 0 {
-		for _, x := range fromServiceDefinitions(services) {
-			artifact, err := d.repo.RequestedArtifactByEnvironment(ctx, x.ArtifactName, environment.ID)
+		for _, x := range fromArtifactDefinitions(services) {
+			artifact, err := d.repo.RequestArtifactByEnvironment(ctx, x.ArtifactName, environment.ID)
 			if err != nil {
 				if _, ok := err.(data.NotFoundError); ok {
 					return nil, errors.NotFoundf("artifact not found in db: %s", x.ArtifactName)
@@ -355,7 +414,7 @@ func (d *PlanGenerator) getRequestedArtifacts(ctx context.Context, environment *
 		}
 	} else {
 		// If no services were supplied, we get all services for the supplied namespaces
-		dataArtifacts, err := d.repo.RequestedArtifacts(ctx, namespaceIDs)
+		dataArtifacts, err := d.repo.ServiceArtifacts(ctx, namespaceIDs)
 		if err != nil {
 			return nil, errors.Wrap(err)
 		}
@@ -376,19 +435,6 @@ func (d *PlanGenerator) getRequestedArtifacts(ctx context.Context, environment *
 		a.VersionInArtifactory = version
 	}
 	return requestedArtifacts, nil
-}
-
-func (d *PlanGenerator) getEnvironment(ctx context.Context, envName string) (*Environment, error) {
-	// make sure the environment name is valid and get the metadata
-	dataEnv, err := d.repo.EnvironmentByName(ctx, envName)
-	if err != nil {
-		if _, ok := err.(data.NotFoundError); ok {
-			return nil, errors.NotFoundf("environment: %s, not found", envName)
-		}
-		return nil, errors.Wrap(err)
-	}
-	env := fromDataEnvironment(*dataEnv)
-	return &env, nil
 }
 
 func (d *PlanGenerator) getNamespaces(ctx context.Context, env *Environment, requestedNamespaces StringList, logger messageLogger) (Namespaces, error) {
