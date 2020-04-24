@@ -25,12 +25,37 @@ type Service struct {
 
 type Services []Service
 
-func (r *Repo) Services(ctx context.Context) (Services, error) {
-	return r.services(ctx)
-}
+func (r *Repo) DeployedServicesByNamespaceIDs(ctx context.Context, namespaceIDs []interface{}) (DeployedArtifacts, error) {
+	sql, args, err := sqlx.In(`
+		select s.id, 
+		       s.namespace_id,
+		       n.name as namespace_name,
+		       s.artifact_id,
+		       a.name as artifact_name, 
+		       s.deployed_version, 
+		       s.metadata,
+		    COALESCE(s.override_version, n.requested_version) as requested_version 
+		from service as s 
+		    left join artifact as a on a.id = s.artifact_id
+			left join namespace n on s.namespace_id = n.id
+		where s.namespace_id in (?)
+			`, namespaceIDs)
+	sql = r.db.Rebind(sql)
+	rows, err := r.db.QueryxContext(ctx, sql, args...)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	var deployedArtifacts []DeployedArtifact
+	for rows.Next() {
+		var deployedArtifact DeployedArtifact
+		err = rows.StructScan(&deployedArtifact)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+		deployedArtifacts = append(deployedArtifacts, deployedArtifact)
+	}
 
-func (r *Repo) ServicesByNamespaceIDs(ctx context.Context, namespaceIDs []interface{}) (Services, error) {
-	return r.services(ctx, WhereIn("namespace_id", namespaceIDs))
+	return deployedArtifacts, nil
 }
 
 func (r *Repo) ServiceArtifacts(ctx context.Context, namespaceIDs []interface{}) (RequestArtifacts, error) {
@@ -65,30 +90,5 @@ func (r *Repo) ServiceArtifacts(ctx context.Context, namespaceIDs []interface{})
 		}
 		services = append(services, service)
 	}
-	return services, nil
-}
-
-func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) (Services, error) {
-	sql, args := CheckWhereArgs(`
-		select s.*, a.name as artifact_name, n.name as namespace_name,
-		    COALESCE(s.override_version, n.requested_version) as requested_version 
-		from service as s 
-		    left join artifact as a on a.id = s.artifact_id
-			left join namespace n on s.namespace_id = n.id
-`, whereArgs)
-	rows, err := r.db.QueryxContext(ctx, sql, args...)
-	if err != nil {
-		return nil, errors.Wrap(err)
-	}
-	var services []Service
-	for rows.Next() {
-		var service Service
-		err = rows.StructScan(&service)
-		if err != nil {
-			return nil, errors.Wrap(err)
-		}
-		services = append(services, service)
-	}
-
 	return services, nil
 }

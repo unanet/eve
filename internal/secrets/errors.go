@@ -12,6 +12,10 @@ func (e NotFoundError) Error() string {
 	return e.message
 }
 
+func (e NotFoundError) IsEveError() bool {
+	return true
+}
+
 func NotFoundErrorf(format string, a ...interface{}) NotFoundError {
 	return NotFoundError{
 		message: fmt.Sprintf(format, a...),

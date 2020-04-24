@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"database/sql"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 )
@@ -16,6 +17,21 @@ type RequestArtifact struct {
 }
 
 type RequestArtifacts []RequestArtifact
+
+type DeployedArtifact struct {
+	ID               int            `db:"id"`
+	NamespaceID      int            `db:"namespace_id"`
+	NamespaceName    string         `db:"namespace_name"`
+	ArtifactID       int            `db:"artifact_id"`
+	ArtifactName     string         `db:"artifact_name"`
+	RequestedVersion string         `db:"requested_version"`
+	DeployedVersion  sql.NullString `db:"deployed_version"`
+	Metadata         JSONText       `db:"metadata"`
+	ServerMetadata   JSONText       `db:"server_metadata"`
+	CustomerName     sql.NullString `db:"customer_name"`
+}
+
+type DeployedArtifacts []DeployedArtifact
 
 func (r *Repo) RequestArtifactByEnvironment(ctx context.Context, artifactName string, environmentID int) (*RequestArtifact, error) {
 	var requestedArtifact RequestArtifact

@@ -16,6 +16,10 @@ func (re *RestError) Error() string {
 	return re.Message
 }
 
+func (re *RestError) IsEveError() bool {
+	return true
+}
+
 type UnexpectStatusCodeError struct {
 	UnexpectedCode int
 	OriginalError  error
@@ -27,6 +31,14 @@ func (e *UnexpectStatusCodeError) Error() string {
 
 func (re *RestError) Unwrap() error {
 	return re.OriginalError
+}
+
+func NewRestError(code int, format string, a ...interface{}) *RestError {
+	return &RestError{
+		Code:          code,
+		Message:       fmt.Sprintf(format, a...),
+		OriginalError: nil,
+	}
 }
 
 func NotFoundf(format string, a ...interface{}) *RestError {

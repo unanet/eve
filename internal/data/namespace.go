@@ -23,18 +23,9 @@ type Namespace struct {
 
 type Namespaces []Namespace
 
-func (n Namespaces) Names() []string {
-	var names []string
-	for _, x := range n {
-		names = append(names, x.Name)
-	}
-
-	return names
-}
-
 func (n Namespaces) Contains(name string) bool {
 	for _, x := range n {
-		if x.Name == name {
+		if x.Alias == name || x.Name == name {
 			return true
 		}
 	}
@@ -70,10 +61,6 @@ func (r *Repo) NamespaceByID(ctx context.Context, id int) (*Namespace, error) {
 	}
 
 	return &namespace, nil
-}
-
-func (r *Repo) Namespaces(ctx context.Context) (Namespaces, error) {
-	return r.namespaces(ctx)
 }
 
 func (r *Repo) NamespacesByEnvironmentID(ctx context.Context, environmentID int) (Namespaces, error) {
