@@ -85,8 +85,8 @@ func init() {
 	var c Config
 	configErr := envconfig.Process("EVE", &c)
 	Logger = newLogger(c.ServiceName, c.LogLevel)
-
 	if configErr != nil {
 		Logger.Error("Logger Config failed to Load", zap.Error(configErr))
 	}
+	Logger.Info("eve logger initialized", zap.String("service_name", c.ServiceName), zap.String("log_level", c.LogLevel))
 }
