@@ -23,7 +23,7 @@ var (
 	StatBuildInfo = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "service_build_info",
-			Help: "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which the service was build was built.",
+			Help: "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which the service was built",
 		}, []string{"service", "revision", "branch", "version", "author", "build_date", "build_user", "build_host"})
 
 	StatRequestDurationGauge = promauto.NewGaugeVec(
@@ -31,12 +31,6 @@ var (
 			Name: "http_request_duration_ms",
 			Help: "The time the server spends processing a request in milliseconds",
 		}, []string{"uri", "method", "protocol"})
-
-	//StatAuditCount = promauto.NewCounterVec(
-	//	prometheus.CounterOpts{
-	//		Name: "audit_total",
-	//		Help: "The total number of audit events",
-	//	}, []string{"event"})
 
 	StatHTTPRequestCount = promauto.NewCounterVec(
 		prometheus.CounterOpts{

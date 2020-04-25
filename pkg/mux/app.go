@@ -73,18 +73,20 @@ func (a *Api) gracefulShutdown() {
 
 	// Attempt to shutdown cleanly
 	if err := a.server.Shutdown(ctx); err != nil {
-		panic("HTTP EVE-API Server Failed Graceful Shutdown")
+		panic("HTTP Server Failed Graceful Shutdown")
 	}
 
 	if err := a.mServer.Shutdown(ctx); err != nil {
-		panic("HTTP EVE Metrics Server Failed Graceful Shutdown")
+		panic("HTTP Metrics Server Failed Graceful Shutdown")
 	}
 	close(a.done)
 }
 
+// Start starts the Mux Service Listeners (API/Metrics)
 func (a *Api) Start() {
 	a.setup()
 	a.mServer = metrics.StartMetricsServer(a.done, a.config.MetricsPort)
+	log.Logger.Info(fmt.Sprintf("start %v metrics listener", a.config.ServiceName), zap.Int("port", a.config.MetricsPort))
 
 	signal.Notify(a.sigChannel, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	go a.sigHandler()
@@ -93,8 +95,9 @@ func (a *Api) Start() {
 		log.Logger.Panic("Failed to Start Server", zap.Error(err))
 	}
 
+	log.Logger.Info(fmt.Sprintf("start %v api listener", a.config.ServiceName), zap.Int("port", a.config.Port))
 	<-a.done
-	log.Logger.Info("Eve-API Shutdown")
+	log.Logger.Info("Service Shutdown", zap.String("service_name", a.config.ServiceName))
 }
 
 func (a *Api) setup() {
