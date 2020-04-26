@@ -211,6 +211,26 @@ CREATE UNIQUE INDEX environment_feed_map_environment_id_feed_id_uindex
     ON environment_feed_map (environment_id, feed_id);
 
 
+CREATE TABLE deployment (
+    id integer NOT NULL,
+    queue_group character varying(50),
+    req_id character varying(50),
+    request bytea NOT NULL,
+    response bytea NOT NULL,
+
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL
+);
+CREATE SEQUENCE deployment_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+ALTER SEQUENCE deployment_id_seq OWNED BY deployment.id;
+ALTER TABLE ONLY deployment ALTER COLUMN id SET DEFAULT nextval('deployment_id_seq'::regclass);
+
 /* ====================================== SEED DATA ============================================= */
 
 INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (1, 'docker-int', 0, 'docker');
@@ -431,6 +451,7 @@ SELECT pg_catalog.setval('database_instance_id_seq', 36, true);
 /* ====================================== END SEED DATA ============================================= */
 
 SELECT pg_catalog.setval('automation_job_id_seq', 1, false);
+SELECT pg_catalog.setval('deployment_id_seq', 1, false);
 
 ALTER TABLE ONLY database_type
     ADD CONSTRAINT database_type_migration_artifact_id_fk FOREIGN KEY (migration_artifact_id) REFERENCES artifact(id);

@@ -13,6 +13,7 @@ type RequestArtifact struct {
 	ProviderGroup    string   `db:"provider_group"`
 	FeedName         string   `db:"feed_name"`
 	ArtifactMetadata JSONText `db:"artifact_metadata"`
+	ServerMetadata   JSONText `db:"server_metadata"`
 	RequestedVersion string   `db:"requested_version"`
 }
 
@@ -27,7 +28,6 @@ type DeployedArtifact struct {
 	RequestedVersion string         `db:"requested_version"`
 	DeployedVersion  sql.NullString `db:"deployed_version"`
 	Metadata         JSONText       `db:"metadata"`
-	ServerMetadata   JSONText       `db:"server_metadata"`
 	CustomerName     sql.NullString `db:"customer_name"`
 }
 

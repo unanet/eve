@@ -28,6 +28,7 @@ type DeploymentRequest struct {
 	Namespaces  service.StringList          `json:"namespaces"`
 	Services    service.ArtifactDefinitions `json:"services"`
 	ForceDeploy bool                        `json:"force_deploy"`
+	CallbackURL string                      `json:"callback_url"`
 	Type        DeploymentPlanType          `json:"type"`
 	DryRun      bool                        `json:"dry_run"`
 }
@@ -38,7 +39,7 @@ func (dr DeploymentRequest) ValidateWithContext(ctx context.Context) error {
 		validation.Field(&dr.Type, validation.Required, validation.In(ApplicationDeploymentPlan, MigrationDeploymentPlan)))
 }
 
-func NewDeploymentsController(planGenerator *service.DeploymentPlanGenerator) *DeploymentsController {
+func NewDeploymentPlanController(planGenerator *service.DeploymentPlanGenerator) *DeploymentsController {
 	return &DeploymentsController{
 		planGenerator: planGenerator,
 	}
@@ -61,6 +62,7 @@ func (c DeploymentsController) createDeployment(w http.ResponseWriter, r *http.R
 		Artifacts:        dr.Services,
 		ForceDeploy:      false,
 		DryRun:           dr.DryRun,
+		CallbackURL:      dr.CallbackURL,
 	}
 
 	var plan *service.DeploymentPlan

@@ -19,8 +19,10 @@ func (r *Repo) DatabaseInstanceArtifacts(ctx context.Context, namespaceIDs []int
 				a.provider_group as provider_group,
 				f.name as feed_name,
 			    a.metadata as artifact_metadata,
+				ds.metadata as server_metadata,
 				COALESCE(di.migration_override_version, ns.requested_version) as requested_version
 			from database_instance as di
+			    left join database_server ds on di.database_server_id = ds.id
 			    left join namespace ns on di.namespace_id = ns.id
 				left join database_type dt on di.database_type_id = dt.id
 				left join artifact a on dt.migration_artifact_id = a.id
@@ -57,7 +59,6 @@ func (r *Repo) DeployedDatabaseInstancesByNamespaceIDs(ctx context.Context, name
 		    a.id as artifact_id, 
 			a.name as artifact_name,
 		    di.migration_deployed_version as deployed_version,
-		    ds.metadata as server_metadata,
 		    c.name as customer_name,
 			di.metadata as metadata,
 			COALESCE(di.migration_override_version, ns.requested_version) as requested_version 

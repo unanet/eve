@@ -85,7 +85,6 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req = req.WithContext(ctx)
 
 	t.logRequest(req)
-
 	resp, err := t.transport().RoundTrip(req)
 	if err != nil {
 		return resp, err

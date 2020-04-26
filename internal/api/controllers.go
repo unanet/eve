@@ -17,6 +17,6 @@ func InitializeControllers(db *sqlx.DB) []mux.EveController {
 
 	return []mux.EveController{
 		NewPingController(),
-		NewDeploymentsController(deploymentPlanGenerator),
+		NewDeploymentPlanController(deploymentPlanGenerator),
 	}
 }
