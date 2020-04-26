@@ -88,5 +88,5 @@ func init() {
 	if configErr != nil {
 		Logger.Error("Logger Config failed to Load", zap.Error(configErr))
 	}
-	Logger.Info("eve logger initialized", zap.String("service_name", c.ServiceName), zap.String("log_level", c.LogLevel))
+	Logger.Info("Logger Initialized", zap.String("level", c.LogLevel))
 }
