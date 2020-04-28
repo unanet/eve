@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 )
@@ -15,6 +16,10 @@ type RequestArtifact struct {
 	ArtifactMetadata JSONText `db:"artifact_metadata"`
 	ServerMetadata   JSONText `db:"server_metadata"`
 	RequestedVersion string   `db:"requested_version"`
+}
+
+func (ra *RequestArtifact) Path() string {
+	return fmt.Sprintf("%s/%s", ra.ProviderGroup, ra.ArtifactName)
 }
 
 type RequestArtifacts []RequestArtifact

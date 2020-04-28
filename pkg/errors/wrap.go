@@ -15,6 +15,9 @@ type eveError interface {
 }
 
 func Wrap(err error) error {
+	if err == nil {
+		return nil
+	}
 	if ee, ok := err.(eveError); ok && ee.IsEveError() {
 		return err
 	} else if _, ok := err.(cause); ok {

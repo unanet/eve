@@ -12,12 +12,21 @@ import (
 // implements `Unmarshal`, which unmarshals the json within to an interface{}
 type JSONText json.RawMessage
 
-var emptyJSON = JSONText("{}")
+var EmptyJSONText = JSONText("{}")
+
+func StructToJSONText(v interface{}) (JSONText, error) {
+	j, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+
+	return j, nil
+}
 
 // MarshalJSON returns the *j as the JSON encoding of j.
 func (j JSONText) MarshalJSON() ([]byte, error) {
 	if len(j) == 0 {
-		return emptyJSON, nil
+		return EmptyJSONText, nil
 	}
 	return j, nil
 }
@@ -50,12 +59,12 @@ func (j *JSONText) Scan(src interface{}) error {
 		source = []byte(t)
 	case []byte:
 		if len(t) == 0 {
-			source = emptyJSON
+			source = EmptyJSONText
 		} else {
 			source = t
 		}
 	case nil:
-		*j = emptyJSON
+		*j = EmptyJSONText
 	default:
 		return fmt.Errorf("incompatible type for JSONText")
 	}
@@ -66,7 +75,7 @@ func (j *JSONText) Scan(src interface{}) error {
 // Unmarshal unmarshal's the json in j to v, as in json.Unmarshal.
 func (j *JSONText) Unmarshal(v interface{}) error {
 	if len(*j) == 0 {
-		*j = emptyJSON
+		*j = EmptyJSONText
 	}
 	return json.Unmarshal(*j, v)
 }

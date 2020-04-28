@@ -23,6 +23,22 @@ type Namespace struct {
 
 type Namespaces []Namespace
 
+func (n Namespaces) ToAliases() []string {
+	var aliases []string
+	for _, x := range n {
+		aliases = append(aliases, x.Alias)
+	}
+	return aliases
+}
+
+func (n Namespaces) ToIDs() []int {
+	var ids []int
+	for _, x := range n {
+		ids = append(ids, x.ID)
+	}
+	return ids
+}
+
 func (n Namespaces) Contains(name string) bool {
 	for _, x := range n {
 		if x.Alias == name || x.Name == name {
@@ -31,6 +47,20 @@ func (n Namespaces) Contains(name string) bool {
 	}
 
 	return false
+}
+
+func (n Namespaces) FilterNamespaces(filter func(namespace Namespace) bool) (Namespaces, Namespaces) {
+	var included Namespaces
+	var excluded Namespaces
+	for _, x := range n {
+		if filter(x) {
+			included = append(included, x)
+		} else {
+			excluded = append(excluded, x)
+		}
+	}
+
+	return included, excluded
 }
 
 func (r *Repo) NamespaceByName(ctx context.Context, name string) (*Namespace, error) {

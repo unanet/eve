@@ -58,7 +58,7 @@ func (r *Repo) DeployedServicesByNamespaceIDs(ctx context.Context, namespaceIDs 
 	return deployedArtifacts, nil
 }
 
-func (r *Repo) ServiceArtifacts(ctx context.Context, namespaceIDs []interface{}) (RequestArtifacts, error) {
+func (r *Repo) ServiceArtifacts(ctx context.Context, namespaceIDs []int) (RequestArtifacts, error) {
 	sql, args, err := sqlx.In(`
 		select distinct s.artifact_id, 
 		                a.metadata as artifact_metadata,

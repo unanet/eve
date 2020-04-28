@@ -11,9 +11,9 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 )
 
-func (r *Repo) DatabaseInstanceArtifacts(ctx context.Context, namespaceIDs []interface{}) (RequestArtifacts, error) {
+func (r *Repo) DatabaseInstanceArtifacts(ctx context.Context, namespaceIDs []int) (RequestArtifacts, error) {
 	sql, args, err := sqlx.In(`
-			select
+			select distinct
 			 	a.id as artifact_id,
 				a.name as artifact_name,
 				a.provider_group as provider_group,
@@ -50,7 +50,7 @@ func (r *Repo) DatabaseInstanceArtifacts(ctx context.Context, namespaceIDs []int
 	return artifacts, nil
 }
 
-func (r *Repo) DeployedDatabaseInstancesByNamespaceIDs(ctx context.Context, namespaceIDs []interface{}) (DeployedArtifacts, error) {
+func (r *Repo) DeployedDatabaseInstancesByNamespaceIDs(ctx context.Context, namespaceIDs []int) (DeployedArtifacts, error) {
 	sql, args, err := sqlx.In(`
 		select 
 			di.id,
