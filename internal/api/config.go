@@ -38,6 +38,8 @@ type Config struct {
 	ApiQVisibilityTimeout  int64         `split_words:"true" default:"3600"`
 	ApiQMaxNumberOfMessage int64         `split_words:"true" default:"10"`
 	ApiQWorkerTimeout      time.Duration `split_words:"true" default:"60s"`
+	S3Bucket               string        `split_words:"true" required:"true"`
+	AWSRegion              string        `split_words:"true" required:"true"`
 	DBHost                 string        `split_words:"true" default:"localhost"`
 	DBPort                 int           `split_words:"true" default:"5432"`
 	DBUsername             string        `split_words:"true" default:"eve-api"`

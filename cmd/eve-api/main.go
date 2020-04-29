@@ -9,6 +9,7 @@ import (
 
 	"gitlab.unanet.io/devops/eve/internal/api"
 	"gitlab.unanet.io/devops/eve/internal/cloud/queue"
+	"gitlab.unanet.io/devops/eve/internal/cloud/s3"
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/pkg/log"
@@ -28,7 +29,7 @@ func main() {
 	}
 
 	awsSession, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-east-2")},
+		Region: aws.String(config.AWSRegion)},
 	)
 	if err != nil {
 		log.Logger.Panic("Failed to create AWS Session", zap.Error(err))
@@ -54,7 +55,11 @@ func main() {
 		log.Logger.Panic("Failed to Create Api App", zap.Error(err))
 	}
 
-	deploymentQueue := service.NewDeploymentQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, schQueue)
+	s3Uploader := s3.NewUploader(awsSession, s3.Config{
+		Bucket: config.S3Bucket,
+	})
+
+	deploymentQueue := service.NewDeploymentQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, schQueue, s3Uploader)
 	deploymentQueue.Start()
 
 	api.Start(func() {
