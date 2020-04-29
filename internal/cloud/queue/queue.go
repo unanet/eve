@@ -126,7 +126,7 @@ func (q *Q) Receive(ctx context.Context) ([]*M, error) {
 		m := M{
 			ID:            id,
 			GroupID:       *x.Attributes[sqs.MessageSystemAttributeNameMessageGroupId],
-			ReqID:         *x.Attributes[MessageAttributeReqID],
+			ReqID:         *x.MessageAttributes[MessageAttributeReqID].StringValue,
 			Body:          *x.Body,
 			ReceiptHandle: *x.ReceiptHandle,
 			MessageID:     *x.MessageId,

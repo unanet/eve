@@ -25,19 +25,44 @@ type Deployment struct {
 	ID               uuid.UUID       `db:"id"`
 	EnvironmentID    int             `db:"environment_id"`
 	NamespaceID      int             `db:"namespace_id"`
+	MessageID        sql.NullString  `db:"message_id"`
+	ReceiptHandle    sql.NullString  `db:"receipt_handle"`
 	ReqID            string          `db:"req_id"`
 	PlanOptions      JSONText        `db:"plan_options"`
 	S3PlanLocation   sql.NullString  `db:"s3_plan_location"`
 	S3ResultLocation sql.NullString  `db:"s3_result_location"`
+	State            DeploymentState `db:"state"`
 	CreatedAt        sql.NullTime    `db:"created_at"`
 	UpdatedAt        sql.NullTime    `db:"updated_at"`
-	State            DeploymentState `db:"state"`
 }
 
-func (r *Repo) Deployment(ctx context.Context, id uuid.UUID) (*Deployment, error) {
-	var deployment Deployment
+func (r *Repo) UpdateDeploymentMessageIDTx(ctx context.Context, tx driver.Tx, id uuid.UUID, messageID string) error {
+	sTx, ok := tx.(*sqlx.Tx)
+	if !ok {
+		return fmt.Errorf("could not cast tx to sqlx.Tx")
+	}
 
-	row := r.db.QueryRowxContext(ctx, "select * from deployment where id = $1", id)
+	_, err := sTx.ExecContext(ctx, "update deployment set message_id = $1, updated_at = $2 where id = $3", messageID, time.Now().UTC(), id)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
+
+func (r *Repo) UpdateDeploymentState(ctx context.Context, id uuid.UUID, state DeploymentState) error {
+	_, err := r.db.ExecContext(ctx, "update deployment set state = $1, updated_at = $2 where id = $3", state, time.Now().UTC(), id)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
+
+func (r *Repo) UpdateDeploymentReceiptHandle(ctx context.Context, id uuid.UUID, receiptHandle string) (*Deployment, error) {
+	var deployment Deployment
+	row := r.db.QueryRowxContext(ctx, `
+		update deployment set receipt_handle = $1, updated_at = $2 where id = $3
+		returning *
+	`, receiptHandle, time.Now().UTC(), id)
 	err := row.StructScan(&deployment)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
@@ -47,19 +72,6 @@ func (r *Repo) Deployment(ctx context.Context, id uuid.UUID) (*Deployment, error
 	}
 
 	return &deployment, nil
-}
-
-func (r *Repo) UpdateDeploymentMessageIDTx(ctx context.Context, tx driver.Tx, id uuid.UUID, messageID string) error {
-	sTx, ok := tx.(*sqlx.Tx)
-	if !ok {
-		return fmt.Errorf("could not cast tx to sqlx.Tx")
-	}
-
-	_, err := sTx.ExecContext(ctx, "update deployment set message_id = $1 where id = $2", messageID, id)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-	return nil
 }
 
 func (r *Repo) CreateDeploymentTx(ctx context.Context, d *Deployment) (driver.Tx, error) {

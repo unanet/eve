@@ -35,16 +35,18 @@ type VersionQuery interface {
 type DeploymentPlanType string
 
 const (
-	ApplicationDeploymentPlan DeploymentPlanType = "application"
-	MigrationDeploymentPlan   DeploymentPlanType = "migration"
+	DeploymentPlanTypeApplication DeploymentPlanType = "application"
+	DeploymentPlanTypeMigration   DeploymentPlanType = "migration"
 )
 
 type ArtifactDefinition struct {
+	ID               int    `json:"id"`
 	Name             string `json:"name"`
 	RequestedVersion string `json:"requested_version,omitempty"`
 	AvailableVersion string `json:"available_version"`
 	ArtifactoryFeed  string `json:"artifactory_feed"`
 	ArtifactoryPath  string `json:"artifactory_path"`
+	Matched          bool   `json:"-"`
 }
 
 func (ad ArtifactDefinition) ArtifactoryRequestedVersion() string {
@@ -65,6 +67,25 @@ func (ad ArtifactDefinitions) ContainsVersion(name string, version string) bool 
 		}
 	}
 	return false
+}
+
+func (ad ArtifactDefinitions) Match(artifactID int, requestedVersion string) *ArtifactDefinition {
+	for _, x := range ad {
+		if x.ID == artifactID && strings.HasPrefix(x.AvailableVersion, requestedVersion) {
+			return x
+		}
+	}
+	return nil
+}
+
+func (ad ArtifactDefinitions) UnMatched() ArtifactDefinitions {
+	var unmatched ArtifactDefinitions
+	for _, x := range ad {
+		if !x.Matched {
+			unmatched = append(unmatched, x)
+		}
+	}
+	return unmatched
 }
 
 type NamespaceRequest struct {
@@ -99,13 +120,15 @@ type DeploymentPlanOptions struct {
 }
 
 type NamespacePlanOptions struct {
-	NamespaceRequest *NamespaceRequest   `json:"namespace"`
-	Artifacts        ArtifactDefinitions `json:"artifacts"`
-	ForceDeploy      bool                `json:"force_deploy"`
-	DryRun           bool                `json:"dry_run"`
-	CallbackURL      string              `json:"callback_url"`
-	EnvironmentID    int                 `json:"environment_id"`
-	Type             DeploymentPlanType  `json:"type"`
+	NamespaceRequest  *NamespaceRequest   `json:"namespace"`
+	Artifacts         ArtifactDefinitions `json:"artifacts"`
+	ArtifactsSupplied bool                `json:"artifacts_supplied"`
+	ForceDeploy       bool                `json:"force_deploy"`
+	DryRun            bool                `json:"dry_run"`
+	CallbackURL       string              `json:"callback_url"`
+	EnvironmentID     int                 `json:"environment_id"`
+	EnvironmentName   string              `json:"environment_name"`
+	Type              DeploymentPlanType  `json:"type"`
 }
 
 func (po *DeploymentPlanOptions) Message(format string, a ...interface{}) {
@@ -123,7 +146,7 @@ func (po DeploymentPlanOptions) HasNamespaceAliases() bool {
 func (po DeploymentPlanOptions) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, &po,
 		validation.Field(&po.Environment, validation.Required),
-		validation.Field(&po.Type, validation.Required, validation.In(ApplicationDeploymentPlan, MigrationDeploymentPlan)))
+		validation.Field(&po.Type, validation.Required, validation.In(DeploymentPlanTypeApplication, DeploymentPlanTypeMigration)))
 }
 
 type DeploymentPlanGenerator struct {
@@ -150,6 +173,9 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 		return errors.Wrap(err)
 	}
 
+	// whether they explicitly supplied artifacts or whether they were generated
+	artifactsSupplied := len(options.Artifacts) > 0
+
 	namespaceRequests, err := d.validateNamespaces(ctx, env, options)
 	if err != nil {
 		return errors.Wrap(err)
@@ -167,13 +193,15 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 
 	for _, ns := range namespaceRequests {
 		nsPlanOptions, err := data.StructToJSONText(&NamespacePlanOptions{
-			NamespaceRequest: ns,
-			Artifacts:        options.Artifacts,
-			ForceDeploy:      options.ForceDeploy,
-			DryRun:           options.DryRun,
-			CallbackURL:      options.CallbackURL,
-			EnvironmentID:    env.ID,
-			Type:             options.Type,
+			NamespaceRequest:  ns,
+			ArtifactsSupplied: artifactsSupplied,
+			Artifacts:         options.Artifacts,
+			ForceDeploy:       options.ForceDeploy,
+			DryRun:            options.DryRun,
+			CallbackURL:       options.CallbackURL,
+			EnvironmentID:     env.ID,
+			EnvironmentName:   env.Name,
+			Type:              options.Type,
 		})
 		if err != nil {
 			return errors.Wrap(err)
@@ -191,6 +219,7 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 		queueM := queue.M{
 			ID:      dataDeployment.ID,
 			GroupID: ns.getQueueGroupID(),
+			ReqID:   middleware.GetReqID(ctx),
 		}
 		if err := d.q.Message(&queueM); err != nil {
 			return errors.WrapTx(tx, err)
@@ -221,12 +250,13 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 			}
 			x.ArtifactoryFeed = ra.FeedName
 			x.ArtifactoryPath = ra.Path()
+			x.ID = ra.ArtifactID
 		}
 	} else {
 		// If no services were supplied, we get all services for the supplied namespaces
 		var dataArtifacts data.RequestArtifacts
 		var err error
-		if options.Type == ApplicationDeploymentPlan {
+		if options.Type == DeploymentPlanTypeApplication {
 			dataArtifacts, err = d.repo.ServiceArtifacts(ctx, ns.ToIDs())
 		} else {
 			dataArtifacts, err = d.repo.DatabaseInstanceArtifacts(ctx, ns.ToIDs())
@@ -236,6 +266,7 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 		}
 		for _, x := range dataArtifacts {
 			options.Artifacts = append(options.Artifacts, &ArtifactDefinition{
+				ID:               x.ArtifactID,
 				Name:             x.ArtifactName,
 				RequestedVersion: x.RequestedVersion,
 				ArtifactoryFeed:  x.FeedName,

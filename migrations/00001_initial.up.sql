@@ -19,6 +19,22 @@ CREATE TYPE deployment_state AS ENUM (
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+CREATE OR REPLACE FUNCTION jsonb_merge(orig jsonb, delta jsonb)
+RETURNS jsonb LANGUAGE sql AS $$
+    SELECT
+        jsonb_object_agg(
+            coalesce(keyOrig, keyDelta),
+            CASE
+                WHEN valOrig ISNULL THEN valDelta
+                WHEN valDelta ISNULL THEN valOrig
+                WHEN (jsonb_typeof(valOrig) <> 'object' OR jsonb_typeof(valDelta) <> 'object') THEN valDelta
+                ELSE jsonb_merge(valOrig, valDelta)
+            END
+        )
+    FROM jsonb_each(orig) e1(keyOrig, valOrig)
+    FULL JOIN jsonb_each(delta) e2(keyDelta, valDelta) ON keyOrig = keyDelta
+$$;
+
 CREATE TABLE feed (
     id integer NOT NULL,
     name character varying(25) NOT NULL,

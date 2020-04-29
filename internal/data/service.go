@@ -10,13 +10,10 @@ import (
 )
 
 type Service struct {
-	ID               int            `db:"id"`
-	NamespaceID      int            `db:"namespace_id"`
-	NamespaceName    string         `db:"namespace_name"`
+	ServiceID        int            `db:"service_id"`
 	ArtifactID       int            `db:"artifact_id"`
 	ArtifactName     string         `db:"artifact_name"`
 	RequestedVersion string         `db:"requested_version"`
-	OverrideVersion  sql.NullString `db:"override_version"`
 	DeployedVersion  sql.NullString `db:"deployed_version"`
 	Metadata         JSONText       `db:"metadata"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
@@ -25,37 +22,35 @@ type Service struct {
 
 type Services []Service
 
-func (r *Repo) DeployedServicesByNamespaceIDs(ctx context.Context, namespaceIDs []interface{}) (DeployedArtifacts, error) {
-	sql, args, err := sqlx.In(`
-		select s.id, 
-		       s.namespace_id,
-		       n.name as namespace_name,
-		       s.artifact_id,
-		       a.name as artifact_name, 
-		       s.deployed_version, 
-		       s.metadata,
-		    COALESCE(s.override_version, n.requested_version) as requested_version 
+func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID int) (Services, error) {
+	rows, err := r.db.QueryxContext(ctx, `
+		select s.id as service_id, 
+		   s.artifact_id,
+		   a.name as artifact_name, 
+		   s.deployed_version,
+		   jsonb_merge(e.metadata, jsonb_merge(n.metadata, jsonb_merge(a.metadata, s.metadata))) as metadata,
+		   COALESCE(s.override_version, n.requested_version) as requested_version,
+		   s.created_at,
+		   s.updated_at
 		from service as s 
 		    left join artifact as a on a.id = s.artifact_id
 			left join namespace n on s.namespace_id = n.id
-		where s.namespace_id in (?)
-			`, namespaceIDs)
-	sql = r.db.Rebind(sql)
-	rows, err := r.db.QueryxContext(ctx, sql, args...)
+			left join environment e on n.environment_id = e.id
+		where s.namespace_id = $1
+	`, namespaceID)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-	var deployedArtifacts []DeployedArtifact
+	var services []Service
 	for rows.Next() {
-		var deployedArtifact DeployedArtifact
-		err = rows.StructScan(&deployedArtifact)
+		var service Service
+		err = rows.StructScan(&service)
 		if err != nil {
 			return nil, errors.Wrap(err)
 		}
-		deployedArtifacts = append(deployedArtifacts, deployedArtifact)
+		services = append(services, service)
 	}
-
-	return deployedArtifacts, nil
+	return services, nil
 }
 
 func (r *Repo) ServiceArtifacts(ctx context.Context, namespaceIDs []int) (RequestArtifacts, error) {

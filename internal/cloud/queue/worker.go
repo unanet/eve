@@ -52,6 +52,7 @@ func NewWorker(name string, q *Q, timeout time.Duration) *Worker {
 }
 
 func (worker *Worker) Start(h Handler) {
+	worker.log.Info("Queue worker started")
 	for {
 		select {
 		case <-worker.ctx.Done():
@@ -59,7 +60,6 @@ func (worker *Worker) Start(h Handler) {
 			close(worker.done)
 			return
 		default:
-			worker.log.Info("Queue worker started")
 			m, err := worker.q.Receive(worker.ctx)
 			if err != nil {
 				worker.log.Error("Error receiving message from queue", zap.Error(err))
@@ -78,6 +78,10 @@ func (worker *Worker) Stop() {
 	<-worker.done
 }
 
+func (worker *Worker) DeleteMessage(m *M) error {
+	return worker.q.Delete(m)
+}
+
 func (worker *Worker) run(h Handler, messages []*M) {
 	numMessages := len(messages)
 	var wg sync.WaitGroup
@@ -93,4 +97,14 @@ func (worker *Worker) run(h Handler, messages []*M) {
 		}(messages[i])
 	}
 	wg.Wait()
+}
+
+func GetReqID(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	if reqID, ok := ctx.Value(RequestIDKey).(string); ok {
+		return reqID
+	}
+	return ""
 }

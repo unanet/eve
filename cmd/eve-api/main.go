@@ -54,10 +54,10 @@ func main() {
 		log.Logger.Panic("Failed to Create Api App", zap.Error(err))
 	}
 
-	deploymentGenerator := service.NewDeploymentQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, schQueue)
-	deploymentGenerator.Start()
+	deploymentQueue := service.NewDeploymentQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, schQueue)
+	deploymentQueue.Start()
 
 	api.Start(func() {
-		deploymentGenerator.Stop()
+		deploymentQueue.Stop()
 	})
 }

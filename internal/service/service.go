@@ -11,6 +11,7 @@ type QWriter interface {
 type QueueWorker interface {
 	Start(queue.Handler)
 	Stop()
+	DeleteMessage(m *queue.M) error
 }
 
 type M map[string]interface{}
