@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"gitlab.unanet.io/devops/eve/internal/config"
+	"gitlab.unanet.io/devops/eve/internal/api"
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
@@ -21,7 +21,7 @@ func TestPlanGenerator_GenerateMigrationPlan(t *testing.T) {
 	db, err := data.GetDBWithTimeout(time.Second * 10)
 	require.NoError(t, err)
 	repo := data.NewRepo(db)
-	jfrog := artifactory.NewClient(config.Values().ArtifactoryConfig)
+	jfrog := artifactory.NewClient(api.GetConfig().ArtifactoryConfig)
 	pg := service.NewDeploymentPlanGenerator(repo, jfrog)
 	plan, err := pg.GenerateApplicationPlan(context.TODO(), service.DeploymentPlanOptions{
 		Environment:      "int",

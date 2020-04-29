@@ -1,6 +1,8 @@
 package errors
 
 import (
+	"database/sql/driver"
+
 	"github.com/pkg/errors"
 )
 
@@ -14,6 +16,19 @@ type eveError interface {
 	IsEveError() bool
 }
 
+type txError struct {
+	TxError       error
+	OriginalError error
+}
+
+func (tx txError) Error() string {
+	return tx.TxError.Error()
+}
+
+func (tx txError) Unwrap() error {
+	return tx.OriginalError
+}
+
 func Wrap(err error) error {
 	if err == nil {
 		return nil
@@ -25,4 +40,19 @@ func Wrap(err error) error {
 	} else {
 		return errors.Wrap(err, eveErrorMessage)
 	}
+}
+
+func WrapTx(tx driver.Tx, err error) error {
+	if tx == nil {
+		return Wrap(err)
+	}
+	txErr := tx.Rollback()
+	if txErr != nil {
+		err = txError{
+			TxError:       txErr,
+			OriginalError: err,
+		}
+		return Wrap(txErr)
+	}
+	return Wrap(err)
 }

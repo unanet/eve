@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"gitlab.unanet.io/devops/eve/internal/config"
+	"gitlab.unanet.io/devops/eve/internal/api"
 	"gitlab.unanet.io/devops/eve/pkg/gitlab"
 )
 
@@ -20,7 +20,7 @@ func client(t *testing.T) *gitlab.Client {
 	if c != nil {
 		return c
 	}
-	c = gitlab.NewClient(config.Values().GitlabConfig)
+	c = gitlab.NewClient(api.GetConfig().GitlabConfig)
 	require.NotNil(t, c)
 	return c
 }

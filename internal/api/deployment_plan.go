@@ -39,5 +39,10 @@ func (c DeploymentsController) createDeployment(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	if len(options.Messages) > 0 {
+		render.Status(r, http.StatusPartialContent)
+	} else {
+		render.Status(r, http.StatusAccepted)
+	}
 	render.Respond(w, r, options)
 }

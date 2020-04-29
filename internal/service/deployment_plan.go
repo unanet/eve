@@ -2,13 +2,17 @@ package service
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
+	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/middleware"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	uuid "github.com/satori/go.uuid"
 
+	"gitlab.unanet.io/devops/eve/internal/cloud/queue"
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
@@ -20,15 +24,12 @@ type DeploymentPlanRepo interface {
 	ServiceArtifacts(ctx context.Context, namespaceIDs []int) (data.RequestArtifacts, error)
 	DatabaseInstanceArtifacts(ctx context.Context, namespaceIDs []int) (data.RequestArtifacts, error)
 	RequestArtifactByEnvironment(ctx context.Context, artifactName string, environmentID int) (*data.RequestArtifact, error)
-	CreateDeployment(ctx context.Context, d *data.Deployment) error
+	CreateDeploymentTx(ctx context.Context, d *data.Deployment) (driver.Tx, error)
+	UpdateDeploymentMessageIDTx(ctx context.Context, tx driver.Tx, id uuid.UUID, messageID string) error
 }
 
 type VersionQuery interface {
 	GetLatestVersion(ctx context.Context, repository string, path string, version string) (string, error)
-}
-
-type Q interface {
-	Message(uuid.UUID, string) error
 }
 
 type DeploymentPlanType string
@@ -40,7 +41,7 @@ const (
 
 type ArtifactDefinition struct {
 	Name             string `json:"name"`
-	RequestedVersion string `json:"requested_version"`
+	RequestedVersion string `json:"requested_version,omitempty"`
 	AvailableVersion string `json:"available_version"`
 	ArtifactoryFeed  string `json:"artifactory_feed"`
 	ArtifactoryPath  string `json:"artifactory_path"`
@@ -53,6 +54,17 @@ func (ad ArtifactDefinition) ArtifactoryRequestedVersion() string {
 		return ad.RequestedVersion + ".*"
 	}
 	return ad.RequestedVersion
+}
+
+type ArtifactDefinitions []*ArtifactDefinition
+
+func (ad ArtifactDefinitions) ContainsVersion(name string, version string) bool {
+	for _, x := range ad {
+		if x.AvailableVersion == version && x.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 type NamespaceRequest struct {
@@ -76,24 +88,24 @@ func (n NamespaceRequests) ToIDs() []int {
 }
 
 type DeploymentPlanOptions struct {
-	Artifacts        []*ArtifactDefinition `json:"artifacts"`
-	ForceDeploy      bool                  `json:"force_deploy"`
-	DryRun           bool                  `json:"dry_run"`
-	CallbackURL      string                `json:"callback_url"`
-	Environment      string                `json:"environment"`
-	NamespaceAliases StringList            `json:"namespaces,omitempty"`
-	Messages         []string              `json:"messages,omitempty"`
-	Type             DeploymentPlanType    `json:"type"`
+	Artifacts        ArtifactDefinitions `json:"artifacts"`
+	ForceDeploy      bool                `json:"force_deploy"`
+	DryRun           bool                `json:"dry_run"`
+	CallbackURL      string              `json:"callback_url"`
+	Environment      string              `json:"environment"`
+	NamespaceAliases StringList          `json:"namespaces,omitempty"`
+	Messages         []string            `json:"messages,omitempty"`
+	Type             DeploymentPlanType  `json:"type"`
 }
 
 type NamespacePlanOptions struct {
-	NamespaceRequest *NamespaceRequest     `json:"namespace"`
-	Artifacts        []*ArtifactDefinition `json:"artifacts"`
-	ForceDeploy      bool                  `json:"force_deploy"`
-	DryRun           bool                  `json:"dry_run"`
-	CallbackURL      string                `json:"callback_url"`
-	EnvironmentID    int                   `json:"environment_id"`
-	Type             DeploymentPlanType    `json:"type"`
+	NamespaceRequest *NamespaceRequest   `json:"namespace"`
+	Artifacts        ArtifactDefinitions `json:"artifacts"`
+	ForceDeploy      bool                `json:"force_deploy"`
+	DryRun           bool                `json:"dry_run"`
+	CallbackURL      string              `json:"callback_url"`
+	EnvironmentID    int                 `json:"environment_id"`
+	Type             DeploymentPlanType  `json:"type"`
 }
 
 func (po *DeploymentPlanOptions) Message(format string, a ...interface{}) {
@@ -117,10 +129,10 @@ func (po DeploymentPlanOptions) ValidateWithContext(ctx context.Context) error {
 type DeploymentPlanGenerator struct {
 	repo DeploymentPlanRepo
 	vq   VersionQuery
-	q    Q
+	q    QWriter
 }
 
-func NewDeploymentPlanGenerator(r DeploymentPlanRepo, v VersionQuery, q Q) *DeploymentPlanGenerator {
+func NewDeploymentPlanGenerator(r DeploymentPlanRepo, v VersionQuery, q QWriter) *DeploymentPlanGenerator {
 	return &DeploymentPlanGenerator{
 		repo: r,
 		vq:   v,
@@ -148,6 +160,11 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 		return errors.Wrap(err)
 	}
 
+	// nothing to do, should exit
+	if len(options.Artifacts) == 0 {
+		return errors.NewRestError(400, "no artifacts would be deployed: %v", options.Messages)
+	}
+
 	for _, ns := range namespaceRequests {
 		nsPlanOptions, err := data.StructToJSONText(&NamespacePlanOptions{
 			NamespaceRequest: ns,
@@ -167,11 +184,25 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 			ReqID:         middleware.GetReqID(ctx),
 			PlanOptions:   nsPlanOptions,
 		}
-		err = d.repo.CreateDeployment(ctx, &dataDeployment)
+		tx, err := d.repo.CreateDeploymentTx(ctx, &dataDeployment)
+		if err != nil {
+			return errors.WrapTx(tx, err)
+		}
+		queueM := queue.M{
+			ID:      dataDeployment.ID,
+			GroupID: ns.getQueueGroupID(),
+		}
+		if err := d.q.Message(&queueM); err != nil {
+			return errors.WrapTx(tx, err)
+		}
+		err = d.repo.UpdateDeploymentMessageIDTx(ctx, tx, queueM.ID, queueM.MessageID)
+		if err != nil {
+			return errors.WrapTx(tx, err)
+		}
+		err = tx.Commit()
 		if err != nil {
 			return errors.Wrap(err)
 		}
-		//d.q.Message(dataDeployment.ID, ns.getQueueGroupID())
 	}
 	return nil
 }
@@ -214,6 +245,7 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 	}
 
 	// now we query artifactory for the actual version
+	var artifacts ArtifactDefinitions
 	for _, a := range options.Artifacts {
 		// if you didn't pass a full version, we need to add a wildcard so it work correctly to query artifactory
 		version, err := d.vq.GetLatestVersion(ctx, a.ArtifactoryFeed, a.ArtifactoryPath, a.ArtifactoryRequestedVersion())
@@ -224,8 +256,38 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 			}
 			return errors.Wrap(err)
 		}
+
+		// if this version is already in the list, don't include it again
+		if artifacts.ContainsVersion(a.Name, version) {
+			continue
+		}
+		a.RequestedVersion = ""
 		a.AvailableVersion = version
+		artifacts = append(artifacts, a)
 	}
+
+	// we need to sort the higher versions first so that when we match, it tries to match the highest version possible first
+	sort.Slice(artifacts, func(i, j int) bool {
+		jSplit := strings.Split(artifacts[j].AvailableVersion, ".")
+		iSplit := strings.Split(artifacts[i].AvailableVersion, ".")
+		minLength := min(len(jSplit), len(iSplit))
+		for x := 0; x < minLength; x++ {
+			jv, err := strconv.Atoi(jSplit[x])
+			if err != nil {
+				return false
+			}
+			iv, err := strconv.Atoi(iSplit[x])
+			if err != nil {
+				return false
+			}
+			if iv == jv {
+				continue
+			}
+			return jv < iv
+		}
+		return true
+	})
+	options.Artifacts = artifacts
 	return nil
 }
 
@@ -271,4 +333,11 @@ func (d *DeploymentPlanGenerator) validateNamespaces(ctx context.Context, env *d
 	}
 
 	return namespaceRequests, nil
+}
+
+func min(x, y int) int {
+	if x > y {
+		return y
+	}
+	return x
 }

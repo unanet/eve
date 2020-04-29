@@ -1,8 +1,9 @@
-package config
+package api
 
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 	"go.uber.org/zap"
@@ -31,18 +32,24 @@ type Config struct {
 	MuxConfig
 	GitlabConfig
 	VaultConfig
-	DBHost     string `split_words:"true" default:"localhost"`
-	DBPort     int    `split_words:"true" default:"5432"`
-	DBUsername string `split_words:"true" default:"eve-api"`
-	DBPassword string `split_words:"true" default:"eve-api"`
-	DBName     string `split_words:"true" default:"eve-api"`
+	ApiQUrl                string        `split_words:"true" required:"true"`
+	SchQUrl                string        `split_words:"true" required:"true"`
+	ApiQWaitTimeSecond     int64         `split_words:"true" default:"20"`
+	ApiQVisibilityTimeout  int64         `split_words:"true" default:"3600"`
+	ApiQMaxNumberOfMessage int64         `split_words:"true" default:"10"`
+	ApiQWorkerTimeout      time.Duration `split_words:"true" default:"60s"`
+	DBHost                 string        `split_words:"true" default:"localhost"`
+	DBPort                 int           `split_words:"true" default:"5432"`
+	DBUsername             string        `split_words:"true" default:"eve-api"`
+	DBPassword             string        `split_words:"true" default:"eve-api"`
+	DBName                 string        `split_words:"true" default:"eve-api"`
 }
 
-func Values() *Config {
+func GetConfig() Config {
 	mutex.Lock()
 	defer mutex.Unlock()
 	if values != nil {
-		return values
+		return *values
 	}
 	c := Config{}
 	err := envconfig.Process("EVE", &c)
@@ -50,7 +57,7 @@ func Values() *Config {
 		log.Logger.Panic("Unable to Load Config", zap.Error(err))
 	}
 	values = &c
-	return values
+	return *values
 }
 
 func (c Config) DbConnectionString() string {

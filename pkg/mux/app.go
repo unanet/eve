@@ -29,6 +29,7 @@ type Api struct {
 	done        chan bool
 	sigChannel  chan os.Signal
 	config      *Config
+	onShutdown  []func()
 }
 
 func NewApi(controllers []EveController, c Config) (*Api, error) {
@@ -72,25 +73,30 @@ func (a *Api) gracefulShutdown() {
 	a.server.SetKeepAlivesEnabled(false)
 
 	// Attempt to shutdown cleanly
+	for _, x := range a.onShutdown {
+		x()
+	}
+	if err := a.mServer.Shutdown(ctx); err != nil {
+		panic("HTTP Metrics Server Failed Graceful Shutdown")
+	}
 	if err := a.server.Shutdown(ctx); err != nil {
 		panic("HTTP API Server Failed Graceful Shutdown")
 	}
-
-	if err := a.mServer.Shutdown(ctx); err != nil {
-		panic("HTTP Metrics Server Failed Graceful Shutdown")
+	if err := log.Logger.Sync(); err != nil {
+		// not much to do here
 	}
 	close(a.done)
 }
 
 // Start starts the Mux Service Listeners (API/Metrics)
-func (a *Api) Start() {
+func (a *Api) Start(onShutdown ...func()) {
 	a.setup()
+	a.onShutdown = onShutdown
 	a.mServer = metrics.StartMetricsServer(a.done, a.config.MetricsPort)
 	log.Logger.Info("Metrics Listener", zap.Int("port", a.config.MetricsPort))
 
 	signal.Notify(a.sigChannel, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	go a.sigHandler()
-
 	log.Logger.Info("API Listener", zap.Int("port", a.config.Port))
 	if err := a.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Logger.Panic("Failed to Start Server", zap.Error(err))

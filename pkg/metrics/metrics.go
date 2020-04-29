@@ -68,9 +68,6 @@ func StartMetricsServer(done chan bool, port int) *http.Server {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Logger.Panic("Failed to Start Metrics Server", zap.Error(err))
 		}
-
-		<-done
-		log.Logger.Info("Eve Metrics Server Shutdown")
 	}()
 
 	return server

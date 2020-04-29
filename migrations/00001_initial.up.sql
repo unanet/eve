@@ -13,8 +13,8 @@ CREATE TYPE provider_group AS ENUM (
 DROP TYPE IF EXISTS deployment_state;
 CREATE TYPE deployment_state AS ENUM (
     'queued',
-    'running',
-    'done'
+    'scheduled',
+    'completed'
     );
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -224,9 +224,12 @@ CREATE TABLE deployment (
     environment_id integer NOT NULL,
     namespace_id integer NOT NULL,
     req_id character varying(100),
+    message_id character varying(100),
+    receipt_handle character varying(1024),
     plan_options jsonb NOT NULL,
     s3_plan_location character varying(250),
     s3_result_location character varying(250),
+    state deployment_state NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL
 );

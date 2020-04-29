@@ -1,0 +1,20 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="eve-api" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="eve" />
+    <working_directory value="$PROJECT_DIR$/" />
+    <go_parameters value="-i" />
+    <envs>
+      <env name="EVE_SERVICE_NAME" value="eve-api" />
+      <env name="EVE_ARTIFACTORY_BASE_URL" value="https://unanet.jfrog.io/unanet/api" />
+      <env name="EVE_GITLAB_BASE_URL" value="https://gitlab.unanet.io/api" />
+      <env name="EVE_VAULT_ADDR" value="https://vault.unanet.io" />
+      <env name="EVE_API_Q_URL" value="https://sqs.us-east-2.amazonaws.com/580107804399/eve-api-prod.fifo" />
+      <env name="EVE_SCH_Q_URL" value="https://sqs.us-east-2.amazonaws.com/580107804399/eve-sch-prod.fifo" />
+    </envs>
+    <kind value="FILE" />
+    <filePath value="$PROJECT_DIR$/cmd/eve-api/main.go" />
+    <package value="gitlab.unanet.io/devops/eve" />
+    <directory value="$PROJECT_DIR$/" />
+    <method v="2" />
+  </configuration>
+</component>

@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"gitlab.unanet.io/devops/eve/internal/config"
+	"gitlab.unanet.io/devops/eve/internal/api"
 	"gitlab.unanet.io/devops/eve/internal/secrets"
 )
 
@@ -20,7 +20,7 @@ func client(t *testing.T) *secrets.Client {
 		return c
 	}
 
-	cl, err := secrets.NewClient(config.Values().VaultConfig)
+	cl, err := secrets.NewClient(api.GetConfig().VaultConfig)
 	require.NoError(t, err)
 	c = cl
 	require.NotNil(t, c)

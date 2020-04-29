@@ -1,5 +1,18 @@
 package service
 
+import (
+	"gitlab.unanet.io/devops/eve/internal/cloud/queue"
+)
+
+type QWriter interface {
+	Message(m *queue.M) error
+}
+
+type QueueWorker interface {
+	Start(queue.Handler)
+	Stop()
+}
+
 type M map[string]interface{}
 
 // mergeKeys stomps on the keys in the left map if they exist in the right map

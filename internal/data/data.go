@@ -1,12 +1,14 @@
 package data
 
 import (
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
 
-	"gitlab.unanet.io/devops/eve/internal/config"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
@@ -20,7 +22,30 @@ func NewRepo(db *sqlx.DB) *Repo {
 	}
 }
 
-func MigrateDB(DSN string) error {
+// ConnectLoop tries to connect to the DB under given DSN using a give driver
+// in a loop until connection succeeds. timeout specifies the timeout for the
+// loop.
+func GetDBWithTimeout(dsn string, timeout time.Duration) (*sqlx.DB, error) {
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+	timeoutExceeded := time.After(timeout)
+	for {
+		select {
+		case <-timeoutExceeded:
+			return nil, fmt.Errorf("db connection failed after %s timeout", timeout)
+
+		case <-ticker.C:
+			db, err := sqlx.Connect("postgres", dsn)
+			if err == nil {
+				return db, nil
+			}
+			// TODO: This dumps the db password to the logs, we need to scrub this.
+			log.Logger.Error("Failed to Connect to DB", zap.String("DSN", dsn))
+		}
+	}
+}
+
+func MigrateDB(DSN, logLevel string) error {
 	m, err := migrate.New(
 		"file://migrations",
 		DSN,
@@ -29,7 +54,7 @@ func MigrateDB(DSN string) error {
 		return err
 	}
 
-	m.Log = NewMigrationLogger(strings.ToLower(config.Values().LogLevel) == "debug")
+	m.Log = NewMigrationLogger(strings.ToLower(logLevel) == "debug")
 
 	err = m.Up()
 	if err != nil && err.Error() != "no change" {

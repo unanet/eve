@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"gitlab.unanet.io/devops/eve/internal/config"
+	"gitlab.unanet.io/devops/eve/internal/api"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 )
 
@@ -21,7 +21,7 @@ func client(t *testing.T) *artifactory.Client {
 	if c != nil {
 		return c
 	}
-	c = artifactory.NewClient(config.Values().ArtifactoryConfig)
+	c = artifactory.NewClient(api.GetConfig().ArtifactoryConfig)
 	require.NotNil(t, c)
 	return c
 }
