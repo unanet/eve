@@ -1,6 +1,7 @@
 stages:
   - test
   - dist
+  - deploy
 
 Dist:
   stage: dist
@@ -19,3 +20,12 @@ Test:
     - linux
   except:
     - tags
+
+Deploy:
+  stage: deploy
+  script:
+    - make deploy
+  tags:
+    - linux
+  only:
+    - master
