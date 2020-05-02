@@ -78,8 +78,8 @@ func (worker *Worker) Stop() {
 	<-worker.done
 }
 
-func (worker *Worker) DeleteMessage(m *M) error {
-	return worker.q.Delete(m)
+func (worker *Worker) DeleteMessage(ctx context.Context, m *M) error {
+	return worker.q.Delete(ctx, m)
 }
 
 func (worker *Worker) run(h Handler, messages []*M) {

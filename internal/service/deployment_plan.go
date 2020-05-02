@@ -39,6 +39,12 @@ const (
 	DeploymentPlanTypeMigration   DeploymentPlanType = "migration"
 )
 
+const (
+	DeploymentStateQueued    string = "queued"
+	DeploymentStateScheduled string = "scheduled"
+	DeploymentStateCompleted string = "completed"
+)
+
 type ArtifactDefinition struct {
 	ID               int    `json:"id"`
 	Name             string `json:"name"`
@@ -111,6 +117,7 @@ func (n NamespaceRequests) ToIDs() []int {
 type DeploymentPlanOptions struct {
 	Artifacts        ArtifactDefinitions `json:"artifacts"`
 	ForceDeploy      bool                `json:"force_deploy"`
+	User             string              `json:"user"`
 	DryRun           bool                `json:"dry_run"`
 	CallbackURL      string              `json:"callback_url"`
 	Environment      string              `json:"environment"`
@@ -146,7 +153,8 @@ func (po DeploymentPlanOptions) HasNamespaceAliases() bool {
 func (po DeploymentPlanOptions) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, &po,
 		validation.Field(&po.Environment, validation.Required),
-		validation.Field(&po.Type, validation.Required, validation.In(DeploymentPlanTypeApplication, DeploymentPlanTypeMigration)))
+		validation.Field(&po.Type, validation.Required, validation.In(DeploymentPlanTypeApplication, DeploymentPlanTypeMigration)),
+		validation.Field(&po.User, validation.Required))
 }
 
 type DeploymentPlanGenerator struct {
@@ -211,6 +219,7 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 			NamespaceID:   ns.ID,
 			ReqID:         middleware.GetReqID(ctx),
 			PlanOptions:   nsPlanOptions,
+			User:          options.User,
 		}
 		tx, err := d.repo.CreateDeploymentTx(ctx, &dataDeployment)
 		if err != nil {
@@ -220,6 +229,7 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 			ID:      dataDeployment.ID,
 			GroupID: ns.getQueueGroupID(),
 			ReqID:   middleware.GetReqID(ctx),
+			State:   DeploymentStateQueued,
 		}
 		if err := d.q.Message(&queueM); err != nil {
 			return errors.WrapTx(tx, err)
@@ -262,7 +272,7 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 			dataArtifacts, err = d.repo.DatabaseInstanceArtifacts(ctx, ns.ToIDs())
 		}
 		if err != nil {
-			errors.Wrap(err)
+			return errors.Wrap(err)
 		}
 		for _, x := range dataArtifacts {
 			options.Artifacts = append(options.Artifacts, &ArtifactDefinition{

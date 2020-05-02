@@ -16,11 +16,16 @@ type DeploymentQueueRepo interface {
 	UpdateDeploymentReceiptHandle(ctx context.Context, id uuid.UUID, receiptHandle string) (*data.Deployment, error)
 	DeployedServicesByNamespaceID(ctx context.Context, namespaceID int) (data.Services, error)
 	DeployedDatabaseInstancesByNamespaceID(ctx context.Context, namespaceID int) (data.DatabaseInstances, error)
-	UpdateDeploymentState(ctx context.Context, id uuid.UUID, state data.DeploymentState) error
+	UpdateDeploymentS3PlanLocation(ctx context.Context, id uuid.UUID, location string) error
+	UpdateDeploymentS3ResultLocation(ctx context.Context, id uuid.UUID, location string) (*data.Deployment, error)
 }
 
 type CloudUploader interface {
 	UploadText(ctx context.Context, key string, body string) (string, error)
+}
+
+type HttpCallback interface {
+	Post(ctx context.Context, url string) error
 }
 
 type DeployArtifact struct {
@@ -30,7 +35,7 @@ type DeployArtifact struct {
 	DeployedVersion  string `json:"deployed_version"`
 	AvailableVersion string `json:"available_version"`
 	Metadata         M      `json:"metadata"`
-	Deploy           bool   `json:"deploy"`
+	Deploy           bool   `json:"-"`
 }
 
 type DeployService struct {
@@ -136,7 +141,10 @@ type DeploymentQueue struct {
 	uploader CloudUploader
 }
 
-func NewDeploymentQueue(worker QueueWorker, repo DeploymentQueueRepo, schQueue QWriter, uploader CloudUploader) *DeploymentQueue {
+func NewDeploymentQueue(worker QueueWorker,
+	repo DeploymentQueueRepo,
+	schQueue QWriter,
+	uploader CloudUploader) *DeploymentQueue {
 	return &DeploymentQueue{
 		worker:   worker,
 		repo:     repo,
@@ -195,7 +203,7 @@ func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, options
 	if options.ArtifactsSupplied {
 		unmatched := options.Artifacts.UnMatched()
 		for _, x := range unmatched {
-			nSDeploymentPlan.Message("unmatched service: %s", x)
+			nSDeploymentPlan.Message("unmatched service: %s", x.Name)
 		}
 	}
 	nSDeploymentPlan.Services = services.ToDeploy()
@@ -215,16 +223,20 @@ func (dq *DeploymentQueue) createMigrationsDeployment(ctx context.Context, optio
 	if options.ArtifactsSupplied {
 		unmatched := options.Artifacts.UnMatched()
 		for _, x := range unmatched {
-			nSDeploymentPlan.Message("unmatched service: %s", x)
+			nSDeploymentPlan.Message("unmatched service: %s", x.Name)
 		}
 	}
 	nSDeploymentPlan.Migrations = migrations.ToDeploy()
 	return nSDeploymentPlan, nil
 }
 
-func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, deployment *data.Deployment, m *queue.M) error {
+func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) error {
+	deployment, err := dq.repo.UpdateDeploymentReceiptHandle(ctx, m.ID, m.ReceiptHandle)
+	if err != nil {
+		return errors.Wrap(err)
+	}
 	var options NamespacePlanOptions
-	err := json.Unmarshal(deployment.PlanOptions, &options)
+	err = json.Unmarshal(deployment.PlanOptions, &options)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -240,15 +252,19 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, deployment *d
 		return errors.Wrap(err)
 	}
 
+	//if len(options.CallbackURL) == 0 {
+	//	err := dq.callback.Post(ctx, options.CallbackURL)
+	//	if err != nil {
+	//		log.Logger.Warn("callback failed", zap.String("callback_url", options.CallbackURL), zap.String("req_id", queue.GetReqID(ctx)))
+	//	}
+	//}
+
 	if options.DryRun {
-		err := dq.worker.DeleteMessage(m)
+		err := dq.worker.DeleteMessage(ctx, m)
 		if err != nil {
 			return errors.Wrap(err)
 		}
-		if len(options.CallbackURL) == 0 {
-			// TODO: wire up call back url..
-			return nil
-		}
+		return nil
 	}
 
 	location, err := dq.uploader.UploadText(ctx, fmt.Sprintf("plan-%s", deployment.ID), nsDeploymentPlanText.String())
@@ -261,7 +277,7 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, deployment *d
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	err = dq.repo.UpdateDeploymentState(ctx, deployment.ID, data.DeploymentStateScheduled)
+	err = dq.repo.UpdateDeploymentS3PlanLocation(ctx, deployment.ID, location)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -270,24 +286,36 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, deployment *d
 }
 
 func (dq *DeploymentQueue) handleMessage(ctx context.Context, m *queue.M) error {
-	deployment, err := dq.repo.UpdateDeploymentReceiptHandle(ctx, m.ID, m.ReceiptHandle)
+	switch m.State {
+	// This means it hasn't been sent to the scheduler yet
+	case DeploymentStateQueued:
+		return dq.scheduleDeployment(ctx, m)
+
+	// This means it came back from the scheduler
+	case DeploymentStateScheduled:
+		return dq.completeDeployment(ctx, m)
+
+	default:
+		return fmt.Errorf("unrecognized state: %s", m.State)
+	}
+}
+
+func (dq *DeploymentQueue) completeDeployment(ctx context.Context, m *queue.M) error {
+	err := dq.worker.DeleteMessage(ctx, m)
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	switch deployment.State {
-	// This means it hasn't been sent to the scheduler yet
-	case data.DeploymentStateQueued:
-		return dq.scheduleDeployment(ctx, deployment, m)
-
-	// This means it came back from the scheduler
-	case data.DeploymentStateScheduled:
-
-	// WTF we shouldn't hit this case in here
-	case data.DeploymentStateCompleted:
-
-	// Also we should hit this case
-	default:
+	deployment, err := dq.repo.UpdateDeploymentS3ResultLocation(ctx, m.ID, m.Body)
+	if err != nil {
+		return errors.Wrap(err)
 	}
-
+	err = dq.worker.DeleteMessage(ctx, &queue.M{
+		ID:            deployment.ID,
+		ReqID:         queue.GetReqID(ctx),
+		ReceiptHandle: deployment.ReceiptHandle.String,
+	})
+	if err != nil {
+		return errors.Wrap(err)
+	}
 	return nil
 }

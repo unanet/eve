@@ -33,7 +33,7 @@ func (c *Client) ExecuteFn(ctx context.Context, arguments ...Argument) (map[stri
 	var success map[string]interface{}
 	var failure string
 	for _, s := range arguments {
-		c.sling = s(c.sling)
+		c.sling = s(c.sling.New())
 	}
 	r, err := c.sling.Post("").Request()
 	if err != nil {

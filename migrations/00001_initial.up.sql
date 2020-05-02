@@ -246,6 +246,7 @@ CREATE TABLE deployment (
     s3_plan_location character varying(250),
     s3_result_location character varying(250),
     state deployment_state NOT NULL,
+    "user" character varying(50) NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL
 );

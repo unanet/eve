@@ -18,6 +18,7 @@ import (
 
 const (
 	MessageAttributeReqID string = "eve_req_id"
+	MessageAttributeState string = "eve_state"
 )
 
 var (
@@ -57,22 +58,28 @@ type M struct {
 	Body          string
 	ReceiptHandle string
 	MessageID     string
+	State         string
 }
 
 func (q *Q) logWith(m *M) *zap.Logger {
 	return q.log.With(
-		zap.String("message_group_id", m.GroupID),
 		zap.String("message_id", m.ID.String()),
-		zap.String("req_id", m.ReqID),
-		zap.String("message_body", m.Body))
+		zap.String("req_id", m.ReqID))
 }
 
 func (q *Q) Message(m *M) error {
+	if len(m.State) == 0 {
+		m.State = "empty"
+	}
 	awsM := sqs.SendMessageInput{
 		MessageAttributes: map[string]*sqs.MessageAttributeValue{
 			MessageAttributeReqID: {
 				DataType:    aws.String("String"),
 				StringValue: aws.String(m.ReqID),
+			},
+			MessageAttributeState: {
+				DataType:    aws.String("String"),
+				StringValue: aws.String(m.State),
 			},
 		},
 		MessageGroupId:         aws.String(m.GroupID),
@@ -127,6 +134,7 @@ func (q *Q) Receive(ctx context.Context) ([]*M, error) {
 			ID:            id,
 			GroupID:       *x.Attributes[sqs.MessageSystemAttributeNameMessageGroupId],
 			ReqID:         *x.MessageAttributes[MessageAttributeReqID].StringValue,
+			State:         *x.MessageAttributes[MessageAttributeState].StringValue,
 			Body:          *x.Body,
 			ReceiptHandle: *x.ReceiptHandle,
 			MessageID:     *x.MessageId,
@@ -138,9 +146,9 @@ func (q *Q) Receive(ctx context.Context) ([]*M, error) {
 	return returnMs, nil
 }
 
-func (q *Q) Delete(m *M) error {
+func (q *Q) Delete(ctx context.Context, m *M) error {
 	now := time.Now()
-	_, err := q.aws.DeleteMessage(&sqs.DeleteMessageInput{
+	_, err := q.aws.DeleteMessageWithContext(ctx, &sqs.DeleteMessageInput{
 		QueueUrl:      aws.String(q.c.QueueURL),
 		ReceiptHandle: aws.String(m.ReceiptHandle),
 	})

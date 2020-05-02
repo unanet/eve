@@ -1,6 +1,8 @@
 package service
 
 import (
+	"context"
+
 	"gitlab.unanet.io/devops/eve/internal/cloud/queue"
 )
 
@@ -11,7 +13,7 @@ type QWriter interface {
 type QueueWorker interface {
 	Start(queue.Handler)
 	Stop()
-	DeleteMessage(m *queue.M) error
+	DeleteMessage(ctx context.Context, m *queue.M) error
 }
 
 type M map[string]interface{}
