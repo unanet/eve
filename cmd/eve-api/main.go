@@ -18,6 +18,7 @@ import (
 
 func main() {
 	config := api.GetConfig()
+
 	// Try to get a DB Connection
 	db, err := data.GetDBWithTimeout(config.DbConnectionString(), 10*time.Minute)
 	if err != nil {
