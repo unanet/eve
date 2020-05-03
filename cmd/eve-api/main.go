@@ -19,8 +19,8 @@ import (
 
 func main() {
 	serverFlag := flag.Bool("server", false, "start api server")
-	migrateFlag := flag.Bool("migrate", false, "run migration")
-	dropDBFlag := flag.Bool("drop", false, "drop db")
+	migrateFlag := flag.Bool("migrate-db", false, "run migration")
+	dropDBFlag := flag.Bool("drop-db", false, "drop db")
 	flag.Parse()
 	dbConfig := api.GetDBConfig()
 	// Try to get a DB Connection
@@ -29,11 +29,15 @@ func main() {
 		log.Logger.Panic("Failed to open Connection to DB.", zap.Error(err))
 	}
 
-	if *migrateFlag {
+	if *migrateFlag || *dropDBFlag {
 		err = data.MigrateDB(dbConfig.MigrationConnectionString(), dbConfig.LogLevel, *dropDBFlag)
 		if err != nil {
 			log.Logger.Panic("Failed to load the Database Migration Tool.", zap.Error(err))
 		}
+	}
+
+	if *dropDBFlag {
+		return
 	}
 
 	if !*serverFlag {

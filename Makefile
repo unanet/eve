@@ -60,7 +60,12 @@ dist: build
 
 deploy:
 	-@kubectl delete -f .kube/migration.yaml
+	-@kubectl delete -f .kube/drop-db.yaml
+	kubectl apply -f .kube/drop-db.yaml
+	kubectl wait --for=condition=complete job -l app=eve-api-v1-drop-db
 	kubectl apply -f .kube/migration.yaml
 	kubectl wait --for=condition=complete job -l app=eve-api-v1-migration
 	kubectl apply -f .kube/manifest.yaml
 	kubectl set image deployment/eve-api-v1 eve-api-v1=${IMAGE_DIGEST} --record
+	aws sqs purge-queue --queue-url https://sqs.us-east-2.amazonaws.com/580107804399/cvs-nonprod-zxrjdqr67u.fifo
+	aws sqs purge-queue --queue-url https://sqs.us-east-2.amazonaws.com/580107804399/eve-api-prod.fifo

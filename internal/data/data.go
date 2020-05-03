@@ -57,15 +57,15 @@ func MigrateDB(DSN, logLevel string, drop bool) error {
 
 	m.Log = NewMigrationLogger(strings.ToLower(logLevel) == "debug")
 	if drop {
-		err := m.Drop()
+		err = m.Drop()
 		if err != nil {
 			return errors.Wrap(err)
 		}
-	}
-
-	err = m.Up()
-	if err != nil && err.Error() != "no change" {
-		return errors.Wrap(err)
+	} else {
+		err = m.Up()
+		if err != nil && err.Error() != "no change" {
+			return errors.Wrap(err)
+		}
 	}
 
 	return nil
