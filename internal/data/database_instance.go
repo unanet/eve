@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 type DatabaseInstance struct {
@@ -18,7 +19,7 @@ type DatabaseInstance struct {
 	ArtifactName     string         `db:"artifact_name"`
 	RequestedVersion string         `db:"requested_version"`
 	DeployedVersion  sql.NullString `db:"deployed_version"`
-	Metadata         JSONText       `db:"metadata"`
+	Metadata         json.Text      `db:"metadata"`
 	DatabaseName     string         `db:"database_name"`
 }
 

@@ -8,7 +8,6 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"go.uber.org/zap"
 
-	"gitlab.unanet.io/devops/eve/internal/secrets"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/gitlab"
 	"gitlab.unanet.io/devops/eve/pkg/log"
@@ -25,7 +24,6 @@ type LogConfig = log.Config
 type ArtifactoryConfig = artifactory.Config
 type MuxConfig = mux.Config
 type GitlabConfig = gitlab.Config
-type VaultConfig = secrets.Config
 
 type DBConfig struct {
 	DBHost              string        `split_words:"true" default:"localhost"`
@@ -50,7 +48,7 @@ type Config struct {
 	ArtifactoryConfig
 	MuxConfig
 	GitlabConfig
-	VaultConfig
+	SchQUrlPrev            string        `split_words:"true" default:""`
 	ApiQUrl                string        `split_words:"true" required:"true"`
 	ApiQWaitTimeSecond     int64         `split_words:"true" default:"20"`
 	ApiQVisibilityTimeout  int64         `split_words:"true" default:"3600"`

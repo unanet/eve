@@ -12,10 +12,12 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.unanet.io/devops/eve/internal/cloud/queue"
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"gitlab.unanet.io/devops/eve/pkg/json"
+	"gitlab.unanet.io/devops/eve/pkg/queue"
 )
 
 type DeploymentPlanRepo interface {
@@ -94,27 +96,6 @@ func (ad ArtifactDefinitions) UnMatched() ArtifactDefinitions {
 	return unmatched
 }
 
-type NamespaceRequest struct {
-	ID        int    `json:"id"`
-	Alias     string `json:"alias"`
-	Name      string `json:"name"`
-	ClusterID int    `json:"cluster_id"`
-}
-
-func (ns *NamespaceRequest) getQueueGroupID() string {
-	return fmt.Sprintf("eve_api-%s", ns.Name)
-}
-
-type NamespaceRequests []*NamespaceRequest
-
-func (n NamespaceRequests) ToIDs() []int {
-	var ids []int
-	for _, x := range n {
-		ids = append(ids, x.ID)
-	}
-	return ids
-}
-
 type DeploymentPlanOptions struct {
 	Artifacts        ArtifactDefinitions `json:"artifacts"`
 	ForceDeploy      bool                `json:"force_deploy"`
@@ -128,15 +109,15 @@ type DeploymentPlanOptions struct {
 }
 
 type NamespacePlanOptions struct {
-	NamespaceRequest  *NamespaceRequest   `json:"namespace"`
-	Artifacts         ArtifactDefinitions `json:"artifacts"`
-	ArtifactsSupplied bool                `json:"artifacts_supplied"`
-	ForceDeploy       bool                `json:"force_deploy"`
-	DryRun            bool                `json:"dry_run"`
-	CallbackURL       string              `json:"callback_url"`
-	EnvironmentID     int                 `json:"environment_id"`
-	EnvironmentName   string              `json:"environment_name"`
-	Type              DeploymentPlanType  `json:"type"`
+	NamespaceRequest  *eve.NamespaceRequest `json:"namespace"`
+	Artifacts         ArtifactDefinitions   `json:"artifacts"`
+	ArtifactsSupplied bool                  `json:"artifacts_supplied"`
+	ForceDeploy       bool                  `json:"force_deploy"`
+	DryRun            bool                  `json:"dry_run"`
+	CallbackURL       string                `json:"callback_url"`
+	EnvironmentID     int                   `json:"environment_id"`
+	EnvironmentName   string                `json:"environment_name"`
+	Type              DeploymentPlanType    `json:"type"`
 }
 
 func (po *DeploymentPlanOptions) Message(format string, a ...interface{}) {
@@ -201,7 +182,7 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 	}
 
 	for _, ns := range namespaceRequests {
-		nsPlanOptions, err := data.StructToJSONText(&NamespacePlanOptions{
+		nsPlanOptions, err := json.StructToJson(&NamespacePlanOptions{
 			NamespaceRequest:  ns,
 			ArtifactsSupplied: artifactsSupplied,
 			Artifacts:         options.Artifacts,
@@ -228,7 +209,7 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 		}
 		queueM := queue.M{
 			ID:      dataDeployment.ID,
-			GroupID: ns.getQueueGroupID(),
+			GroupID: ns.GetQueueGroupID(),
 			ReqID:   middleware.GetReqID(ctx),
 			State:   DeploymentStateQueued,
 		}
@@ -247,7 +228,7 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 	return nil
 }
 
-func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Context, env *data.Environment, options *DeploymentPlanOptions, ns NamespaceRequests) error {
+func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Context, env *data.Environment, options *DeploymentPlanOptions, ns eve.NamespaceRequests) error {
 	// If services were supplied, we check those against the database to make sure they are valid and pull
 	// required info needed to lookup in Artifactory
 	if len(options.Artifacts) > 0 {
@@ -333,7 +314,7 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 	return nil
 }
 
-func (d *DeploymentPlanGenerator) validateNamespaces(ctx context.Context, env *data.Environment, options *DeploymentPlanOptions) (NamespaceRequests, error) {
+func (d *DeploymentPlanGenerator) validateNamespaces(ctx context.Context, env *data.Environment, options *DeploymentPlanOptions) (eve.NamespaceRequests, error) {
 	// lets start with all the namespaces in the Env and filter it down based on additional information passed in.
 	namespacesToDeploy, err := d.repo.NamespacesByEnvironmentID(ctx, env.ID)
 	if err != nil {
@@ -365,9 +346,9 @@ func (d *DeploymentPlanGenerator) validateNamespaces(ctx context.Context, env *d
 	}
 
 	options.NamespaceAliases = namespacesToDeploy.ToAliases()
-	var namespaceRequests NamespaceRequests
+	var namespaceRequests eve.NamespaceRequests
 	for _, x := range namespacesToDeploy {
-		namespaceRequests = append(namespaceRequests, &NamespaceRequest{
+		namespaceRequests = append(namespaceRequests, &eve.NamespaceRequest{
 			ID:        x.ID,
 			Name:      x.Name,
 			Alias:     x.Alias,

@@ -8,59 +8,35 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 
-	"gitlab.unanet.io/devops/eve/internal/cloud/queue"
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/eve/pkg/eve"
+	json2 "gitlab.unanet.io/devops/eve/pkg/json"
+	"gitlab.unanet.io/devops/eve/pkg/queue"
+	"gitlab.unanet.io/devops/eve/pkg/s3"
 )
 
 type DeploymentQueueRepo interface {
 	UpdateDeploymentReceiptHandle(ctx context.Context, id uuid.UUID, receiptHandle string) (*data.Deployment, error)
 	DeployedServicesByNamespaceID(ctx context.Context, namespaceID int) (data.Services, error)
 	DeployedDatabaseInstancesByNamespaceID(ctx context.Context, namespaceID int) (data.DatabaseInstances, error)
-	UpdateDeploymentS3PlanLocation(ctx context.Context, id uuid.UUID, location string) error
-	UpdateDeploymentS3ResultLocation(ctx context.Context, id uuid.UUID, location string) (*data.Deployment, error)
+	UpdateDeploymentS3PlanLocation(ctx context.Context, id uuid.UUID, location json2.Text) error
+	UpdateDeploymentS3ResultLocation(ctx context.Context, id uuid.UUID, location json2.Text) (*data.Deployment, error)
 	ClusterByID(ctx context.Context, id int) (*data.Cluster, error)
 }
 
 type CloudUploader interface {
-	UploadText(ctx context.Context, key string, body string) (string, error)
+	UploadText(ctx context.Context, key string, body string) (*s3.Location, error)
 }
 
 type HttpCallback interface {
 	Post(ctx context.Context, url string) error
 }
 
-type DeployArtifact struct {
-	ArtifactID       int    `json:"artifact_id"`
-	ArtifactName     string `json:"artifact_name"`
-	RequestedVersion string `json:"requested_version"`
-	DeployedVersion  string `json:"deployed_version"`
-	AvailableVersion string `json:"available_version"`
-	Metadata         M      `json:"metadata"`
-	Deploy           bool   `json:"-"`
-}
-
-type DeployService struct {
-	*DeployArtifact
-	ServiceID int `json:"service_id"`
-}
-
-type DeployServices []*DeployService
-
-func (ds DeployServices) ToDeploy() DeployServices {
-	var list DeployServices
-	for _, x := range ds {
-		if x.Deploy {
-			list = append(list, x)
-		}
-	}
-	return list
-}
-
-func fromDataService(s data.Service) *DeployService {
-	return &DeployService{
+func fromDataService(s data.Service) *eve.DeployService {
+	return &eve.DeployService{
 		ServiceID: s.ServiceID,
-		DeployArtifact: &DeployArtifact{
+		DeployArtifact: &eve.DeployArtifact{
 			ArtifactID:       s.ArtifactID,
 			ArtifactName:     s.ArtifactName,
 			RequestedVersion: s.RequestedVersion,
@@ -70,37 +46,19 @@ func fromDataService(s data.Service) *DeployService {
 	}
 }
 
-func fromDataServices(services data.Services) DeployServices {
-	var list DeployServices
+func fromDataServices(services data.Services) eve.DeployServices {
+	var list eve.DeployServices
 	for _, x := range services {
 		list = append(list, fromDataService(x))
 	}
 	return list
 }
 
-type DeployMigration struct {
-	*DeployArtifact
-	DatabaseID   int    `json:"database_id"`
-	DatabaseName string `json:"database_name"`
-}
-
-type DeployMigrations []*DeployMigration
-
-func (ds DeployMigrations) ToDeploy() DeployMigrations {
-	var list DeployMigrations
-	for _, x := range ds {
-		if x.Deploy {
-			list = append(list, x)
-		}
-	}
-	return list
-}
-
-func fromDataDatabaseInstance(s data.DatabaseInstance) *DeployMigration {
-	return &DeployMigration{
+func fromDataDatabaseInstance(s data.DatabaseInstance) *eve.DeployMigration {
+	return &eve.DeployMigration{
 		DatabaseID:   s.DatabaseID,
 		DatabaseName: s.DatabaseName,
-		DeployArtifact: &DeployArtifact{
+		DeployArtifact: &eve.DeployArtifact{
 			ArtifactID:       s.ArtifactID,
 			ArtifactName:     s.ArtifactName,
 			RequestedVersion: s.RequestedVersion,
@@ -110,29 +68,12 @@ func fromDataDatabaseInstance(s data.DatabaseInstance) *DeployMigration {
 	}
 }
 
-func fromDataDatabaseInstances(d data.DatabaseInstances) DeployMigrations {
-	var list DeployMigrations
+func fromDataDatabaseInstances(d data.DatabaseInstances) eve.DeployMigrations {
+	var list eve.DeployMigrations
 	for _, x := range d {
 		list = append(list, fromDataDatabaseInstance(x))
 	}
 	return list
-}
-
-type NSDeploymentPlan struct {
-	Namespace       *NamespaceRequest `json:"namespace"`
-	EnvironmentName string            `json:"environment_name"`
-	Services        DeployServices    `json:"services,omitempty"`
-	Migrations      DeployMigrations  `json:"migrations,omitempty"`
-	Messages        []string          `json:"messages,omitempty"`
-	SchQueueUrl     string            `json:"-"`
-}
-
-func (ns *NSDeploymentPlan) GroupID() string {
-	return ns.Namespace.Name
-}
-
-func (ns *NSDeploymentPlan) Message(format string, a ...interface{}) {
-	ns.Messages = append(ns.Messages, fmt.Sprintf(format, a...))
 }
 
 type messageLogger func(format string, a ...interface{})
@@ -171,7 +112,7 @@ func (dq *DeploymentQueue) Stop() {
 	dq.worker.Stop()
 }
 
-func (dq *DeploymentQueue) matchArtifact(a *DeployArtifact, options NamespacePlanOptions, logger messageLogger) {
+func (dq *DeploymentQueue) matchArtifact(a *eve.DeployArtifact, options NamespacePlanOptions, logger messageLogger) {
 	// match services to be deployed
 	match := options.Artifacts.Match(a.ArtifactID, a.RequestedVersion)
 	if match == nil {
@@ -185,25 +126,27 @@ func (dq *DeploymentQueue) matchArtifact(a *DeployArtifact, options NamespacePla
 		return
 	}
 	a.AvailableVersion = match.AvailableVersion
+	a.ArtifactoryPath = match.ArtifactoryPath
+	a.ArtifactoryFeed = match.ArtifactoryFeed
 	if a.AvailableVersion == "" || (a.DeployedVersion == a.AvailableVersion && !options.ForceDeploy) {
 		return
 	}
 	a.Deploy = true
 }
 
-func (dq *DeploymentQueue) setupNSDeploymentPlan(ctx context.Context, options NamespacePlanOptions) (*NSDeploymentPlan, error) {
+func (dq *DeploymentQueue) setupNSDeploymentPlan(ctx context.Context, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
 	cluster, err := dq.repo.ClusterByID(ctx, options.NamespaceRequest.ClusterID)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-	return &NSDeploymentPlan{
+	return &eve.NSDeploymentPlan{
 		Namespace:       options.NamespaceRequest,
 		EnvironmentName: options.EnvironmentName,
 		SchQueueUrl:     cluster.SchQueueUrl,
 	}, nil
 }
 
-func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, options NamespacePlanOptions) (*NSDeploymentPlan, error) {
+func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
 	nSDeploymentPlan, err := dq.setupNSDeploymentPlan(ctx, options)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -226,7 +169,7 @@ func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, options
 	return nSDeploymentPlan, nil
 }
 
-func (dq *DeploymentQueue) createMigrationsDeployment(ctx context.Context, options NamespacePlanOptions) (*NSDeploymentPlan, error) {
+func (dq *DeploymentQueue) createMigrationsDeployment(ctx context.Context, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
 	nSDeploymentPlan, err := dq.setupNSDeploymentPlan(ctx, options)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -259,14 +202,14 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	var nsDeploymentPlan *NSDeploymentPlan
+	var nsDeploymentPlan *eve.NSDeploymentPlan
 	if options.Type == DeploymentPlanTypeApplication {
 		nsDeploymentPlan, err = dq.createServicesDeployment(ctx, options)
 	} else {
 		nsDeploymentPlan, err = dq.createMigrationsDeployment(ctx, options)
 	}
 
-	nsDeploymentPlanText, err := data.StructToJSONText(nsDeploymentPlan)
+	nsDeploymentPlanText, err := json2.StructToJson(nsDeploymentPlan)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -287,17 +230,26 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 	}
 
 	location, err := dq.uploader.UploadText(ctx, fmt.Sprintf("plan-%s", deployment.ID), nsDeploymentPlanText.String())
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	locationJson, err := json2.StructToJson(&location)
+	if err != nil {
+		return errors.Wrap(err)
+	}
 
 	err = dq.worker.Message(ctx, nsDeploymentPlan.SchQueueUrl, &queue.M{
 		ID:      deployment.ID,
 		ReqID:   queue.GetReqID(ctx),
 		GroupID: nsDeploymentPlan.GroupID(),
-		Body:    location,
+		Body:    locationJson,
 	})
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	err = dq.repo.UpdateDeploymentS3PlanLocation(ctx, deployment.ID, location)
+
+	err = dq.repo.UpdateDeploymentS3PlanLocation(ctx, deployment.ID, locationJson)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -316,7 +268,7 @@ func (dq *DeploymentQueue) handleMessage(ctx context.Context, m *queue.M) error 
 		return dq.completeDeployment(ctx, m)
 
 	default:
-		return fmt.Errorf("unrecognized state: %s", m.State)
+		return errors.Wrapf("unrecognized state: %s", m.State)
 	}
 }
 

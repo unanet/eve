@@ -53,6 +53,7 @@ func NewWorker(name string, q *Q, timeout time.Duration, qWriters ...*Q) *Worker
 		cancel:  cancel,
 		sess:    q.sess,
 		done:    make(chan bool),
+		wqs:     make(map[string]*Q),
 	}
 
 	for _, x := range qWriters {
@@ -72,8 +73,7 @@ func (worker *Worker) Start(h Handler) {
 		default:
 			m, err := worker.q.Receive(worker.ctx)
 			if err != nil {
-				worker.log.Error("Error receiving message from queue", zap.Error(err))
-				continue
+				worker.log.Panic("Error receiving message from queue", zap.Error(err))
 			}
 			if len(m) == 0 {
 				continue

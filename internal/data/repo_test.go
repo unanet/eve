@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
+	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 var (
@@ -47,7 +48,7 @@ func TestRepo_CreateDeployment(t *testing.T) {
 		ServerMetadata:   nil,
 		RequestedVersion: "",
 	}
-	jsonText, err := data.StructToJSONText(&blah)
+	jsonText, err := json.StructToJson(&blah)
 	require.NoError(t, err)
 	d := data.Deployment{
 		EnvironmentID: 1,

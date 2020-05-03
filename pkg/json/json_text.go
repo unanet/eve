@@ -1,4 +1,4 @@
-package data
+package json
 
 import (
 	"database/sql/driver"
@@ -10,11 +10,11 @@ import (
 // Value() validates the json format in the source, and returns an error if
 // the json is not valid.  Scan does no validation.  JSONText additionally
 // implements `Unmarshal`, which unmarshals the json within to an interface{}
-type JSONText json.RawMessage
+type Text json.RawMessage
 
-var EmptyJSONText = JSONText("{}")
+var EmptyJSONText = Text("{}")
 
-func StructToJSONText(v interface{}) (JSONText, error) {
+func StructToJson(v interface{}) (Text, error) {
 	j, err := json.Marshal(v)
 	if err != nil {
 		return nil, err
@@ -24,7 +24,7 @@ func StructToJSONText(v interface{}) (JSONText, error) {
 }
 
 // MarshalJSON returns the *j as the JSON encoding of j.
-func (j JSONText) MarshalJSON() ([]byte, error) {
+func (j Text) MarshalJSON() ([]byte, error) {
 	if len(j) == 0 {
 		return EmptyJSONText, nil
 	}
@@ -32,7 +32,7 @@ func (j JSONText) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON sets *j to a copy of Repo
-func (j *JSONText) UnmarshalJSON(data []byte) error {
+func (j *Text) UnmarshalJSON(data []byte) error {
 	if j == nil {
 		return fmt.Errorf("JSONText: UnmarshalJSON on nil pointer")
 	}
@@ -42,7 +42,7 @@ func (j *JSONText) UnmarshalJSON(data []byte) error {
 
 // Value returns j as a value.  This does a validating unmarshal into another
 // RawMessage.  If j is invalid json, it returns an error.
-func (j JSONText) Value() (driver.Value, error) {
+func (j Text) Value() (driver.Value, error) {
 	var m json.RawMessage
 	var err = j.Unmarshal(&m)
 	if err != nil {
@@ -52,7 +52,7 @@ func (j JSONText) Value() (driver.Value, error) {
 }
 
 // Scan stores the src in *j.  No validation is done.
-func (j *JSONText) Scan(src interface{}) error {
+func (j *Text) Scan(src interface{}) error {
 	var source []byte
 	switch t := src.(type) {
 	case string:
@@ -73,14 +73,14 @@ func (j *JSONText) Scan(src interface{}) error {
 }
 
 // Unmarshal unmarshal's the json in j to v, as in json.Unmarshal.
-func (j *JSONText) Unmarshal(v interface{}) error {
+func (j *Text) Unmarshal(v interface{}) error {
 	if len(*j) == 0 {
 		*j = EmptyJSONText
 	}
 	return json.Unmarshal(*j, v)
 }
 
-func (j *JSONText) AsMap() map[string]interface{} {
+func (j *Text) AsMap() map[string]interface{} {
 	var hash map[string]interface{}
 	err := j.Unmarshal(hash)
 	if err != nil {
@@ -90,6 +90,6 @@ func (j *JSONText) AsMap() map[string]interface{} {
 }
 
 // String supports pretty printing for JSONText types.
-func (j JSONText) String() string {
+func (j Text) String() string {
 	return string(j)
 }

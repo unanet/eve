@@ -7,11 +7,18 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 )
 
 type Config struct {
 	Bucket string
+}
+
+type Location struct {
+	Bucket string `json:"bucket"`
+	Key    string `json:"key"`
+	Url    string `json:"url"`
 }
 
 type Uploader struct {
@@ -26,7 +33,7 @@ func NewUploader(sess *session.Session, config Config) *Uploader {
 	}
 }
 
-func (u Uploader) UploadText(ctx context.Context, key string, body string) (string, error) {
+func (u Uploader) UploadText(ctx context.Context, key string, body string) (*Location, error) {
 	bodyReader := strings.NewReader(body)
 	result, err := u.s3.UploadWithContext(ctx, &s3manager.UploadInput{
 		Body:   bodyReader,
@@ -34,7 +41,11 @@ func (u Uploader) UploadText(ctx context.Context, key string, body string) (stri
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		return "", errors.Wrap(err)
+		return nil, errors.Wrap(err)
 	}
-	return result.Location, nil
+	return &Location{
+		Bucket: u.Bucket,
+		Key:    key,
+		Url:    result.Location,
+	}, nil
 }

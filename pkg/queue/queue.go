@@ -13,6 +13,7 @@ import (
 	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/eve/pkg/json"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
@@ -57,7 +58,7 @@ type M struct {
 	ID            uuid.UUID
 	ReqID         string
 	GroupID       string
-	Body          string
+	Body          json.Text
 	ReceiptHandle string
 	MessageID     string
 	State         string
@@ -90,7 +91,7 @@ func (q *Q) Message(ctx context.Context, m *M) error {
 	}
 
 	if len(m.Body) > 0 {
-		awsM.MessageBody = aws.String(m.Body)
+		awsM.MessageBody = aws.String(m.Body.String())
 	} else {
 		awsM.MessageBody = aws.String(m.ID.String())
 	}
@@ -137,7 +138,7 @@ func (q *Q) Receive(ctx context.Context) ([]*M, error) {
 			GroupID:       *x.Attributes[sqs.MessageSystemAttributeNameMessageGroupId],
 			ReqID:         *x.MessageAttributes[MessageAttributeReqID].StringValue,
 			State:         *x.MessageAttributes[MessageAttributeState].StringValue,
-			Body:          *x.Body,
+			Body:          json.Text(*x.Body),
 			ReceiptHandle: *x.ReceiptHandle,
 			MessageID:     *x.MessageId,
 		}

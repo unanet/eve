@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"gitlab.unanet.io/devops/eve/internal/cloud/queue"
+	"gitlab.unanet.io/devops/eve/pkg/queue"
 )
 
 type QWriter interface {
@@ -17,8 +17,6 @@ type QueueWorker interface {
 	// Message sends a message to a different queue given a url, not this one
 	Message(ctx context.Context, qUrl string, m *queue.M) error
 }
-
-type M map[string]interface{}
 
 type StringList []string
 

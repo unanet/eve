@@ -8,13 +8,13 @@ import (
 	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/internal/api"
-	"gitlab.unanet.io/devops/eve/internal/cloud/queue"
-	"gitlab.unanet.io/devops/eve/internal/cloud/s3"
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/pkg/http"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/mux"
+	"gitlab.unanet.io/devops/eve/pkg/queue"
+	"gitlab.unanet.io/devops/eve/pkg/s3"
 )
 
 func main() {

@@ -11,6 +11,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 type DeploymentState string
@@ -28,9 +29,9 @@ type Deployment struct {
 	MessageID        sql.NullString  `db:"message_id"`
 	ReceiptHandle    sql.NullString  `db:"receipt_handle"`
 	ReqID            string          `db:"req_id"`
-	PlanOptions      JSONText        `db:"plan_options"`
-	S3PlanLocation   sql.NullString  `db:"s3_plan_location"`
-	S3ResultLocation sql.NullString  `db:"s3_result_location"`
+	PlanOptions      json.Text       `db:"plan_options"`
+	S3PlanLocation   json.Text       `db:"s3_plan_location"`
+	S3ResultLocation json.Text       `db:"s3_result_location"`
 	State            DeploymentState `db:"state"`
 	User             string          `db:"user"`
 	CreatedAt        sql.NullTime    `db:"created_at"`
@@ -50,7 +51,7 @@ func (r *Repo) UpdateDeploymentMessageIDTx(ctx context.Context, tx driver.Tx, id
 	return nil
 }
 
-func (r *Repo) UpdateDeploymentS3PlanLocation(ctx context.Context, id uuid.UUID, location string) error {
+func (r *Repo) UpdateDeploymentS3PlanLocation(ctx context.Context, id uuid.UUID, location json.Text) error {
 	_, err := r.db.ExecContext(ctx, "update deployment set s3_plan_location = $1, state = $2, updated_at = $3 where id = $4",
 		location, DeploymentStateScheduled, time.Now().UTC(), id)
 	if err != nil {
@@ -59,7 +60,7 @@ func (r *Repo) UpdateDeploymentS3PlanLocation(ctx context.Context, id uuid.UUID,
 	return nil
 }
 
-func (r *Repo) UpdateDeploymentS3ResultLocation(ctx context.Context, id uuid.UUID, location string) (*Deployment, error) {
+func (r *Repo) UpdateDeploymentS3ResultLocation(ctx context.Context, id uuid.UUID, location json.Text) (*Deployment, error) {
 	var deployment Deployment
 
 	row := r.db.QueryRowxContext(ctx, `

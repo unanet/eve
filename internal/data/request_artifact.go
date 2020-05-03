@@ -5,16 +5,17 @@ import (
 	"fmt"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 type RequestArtifact struct {
-	ArtifactID       int      `db:"artifact_id"`
-	ArtifactName     string   `db:"artifact_name"`
-	ProviderGroup    string   `db:"provider_group"`
-	FeedName         string   `db:"feed_name"`
-	ArtifactMetadata JSONText `db:"artifact_metadata"`
-	ServerMetadata   JSONText `db:"server_metadata"`
-	RequestedVersion string   `db:"requested_version"`
+	ArtifactID       int       `db:"artifact_id"`
+	ArtifactName     string    `db:"artifact_name"`
+	ProviderGroup    string    `db:"provider_group"`
+	FeedName         string    `db:"feed_name"`
+	ArtifactMetadata json.Text `db:"artifact_metadata"`
+	ServerMetadata   json.Text `db:"server_metadata"`
+	RequestedVersion string    `db:"requested_version"`
 }
 
 func (ra *RequestArtifact) Path() string {

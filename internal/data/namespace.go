@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 type Namespace struct {
@@ -16,7 +17,7 @@ type Namespace struct {
 	RequestedVersion   string       `db:"requested_version"`
 	ExplicitDeployOnly bool         `db:"explicit_deploy_only"`
 	ClusterID          int          `db:"cluster_id"`
-	Metadata           JSONText     `db:"metadata"`
+	Metadata           json.Text    `db:"metadata"`
 	CreatedAt          sql.NullTime `db:"created_at"`
 	UpdatedAt          sql.NullTime `db:"updated_at"`
 }

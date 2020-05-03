@@ -2,6 +2,7 @@ package errors
 
 import (
 	"database/sql/driver"
+	"fmt"
 
 	"github.com/pkg/errors"
 )
@@ -40,6 +41,10 @@ func Wrap(err error) error {
 	} else {
 		return errors.Wrap(err, eveErrorMessage)
 	}
+}
+
+func Wrapf(format string, a ...interface{}) error {
+	return Wrap(fmt.Errorf(format, a))
 }
 
 func WrapTx(tx driver.Tx, err error) error {

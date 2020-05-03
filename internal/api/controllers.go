@@ -1,11 +1,11 @@
 package api
 
 import (
-	"gitlab.unanet.io/devops/eve/internal/cloud/queue"
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/mux"
+	"gitlab.unanet.io/devops/eve/pkg/queue"
 )
 
 func InitializeControllers(c Config, repo *data.Repo, apiQueue *queue.Q) ([]mux.EveController, error) {
