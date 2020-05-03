@@ -44,7 +44,7 @@ func Wrap(err error) error {
 }
 
 func Wrapf(format string, a ...interface{}) error {
-	return Wrap(fmt.Errorf(format, a))
+	return Wrap(fmt.Errorf(format, a...))
 }
 
 func WrapTx(tx driver.Tx, err error) error {
