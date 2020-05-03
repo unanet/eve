@@ -62,7 +62,7 @@ func TestQ_Delete(t *testing.T) {
 		Body:          "",
 		ReceiptHandle: "",
 		MessageID:     "",
-		State:         "",
+		Command:       "",
 	})
 	require.NoError(t, err)
 }

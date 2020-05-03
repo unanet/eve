@@ -15,8 +15,6 @@ require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.1.0
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/golang-migrate/migrate/v4 v4.10.0
-	github.com/hashicorp/vault v1.4.0
-	github.com/hashicorp/vault/api v1.0.5-0.20200317185738-82f498082f02
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/leodido/go-urn v1.2.0 // indirect

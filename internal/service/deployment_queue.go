@@ -192,26 +192,39 @@ func (dq *DeploymentQueue) createMigrationsDeployment(ctx context.Context, optio
 	return nSDeploymentPlan, nil
 }
 
+func (dq *DeploymentQueue) rollbackError(ctx context.Context, m *queue.M, err error) error {
+	qerr := dq.worker.DeleteMessage(ctx, m)
+	if qerr != nil {
+		dq.Logger(ctx).Error("an error occurred while trying to remove the message due to an error", zap.Any("queue_message", m), zap.Error(qerr))
+	}
+	return errors.Wrap(err)
+}
+
 func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 	deployment, err := dq.repo.UpdateDeploymentReceiptHandle(ctx, m.ID, m.ReceiptHandle)
 	if err != nil {
-		return errors.Wrap(err)
+		return dq.rollbackError(ctx, m, err)
 	}
+
 	var options NamespacePlanOptions
 	err = json.Unmarshal(deployment.PlanOptions, &options)
 	if err != nil {
-		return errors.Wrap(err)
+		return dq.rollbackError(ctx, m, err)
 	}
+
 	var nsDeploymentPlan *eve.NSDeploymentPlan
 	if options.Type == DeploymentPlanTypeApplication {
 		nsDeploymentPlan, err = dq.createServicesDeployment(ctx, options)
 	} else {
 		nsDeploymentPlan, err = dq.createMigrationsDeployment(ctx, options)
 	}
+	if err != nil {
+		return dq.rollbackError(ctx, m, err)
+	}
 
 	nsDeploymentPlanText, err := json2.StructToJson(nsDeploymentPlan)
 	if err != nil {
-		return errors.Wrap(err)
+		return dq.rollbackError(ctx, m, err)
 	}
 
 	if len(options.CallbackURL) == 0 {
@@ -222,21 +235,21 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 	}
 
 	if options.DryRun {
-		err := dq.worker.DeleteMessage(ctx, m)
+		err = dq.worker.DeleteMessage(ctx, m)
 		if err != nil {
-			return errors.Wrap(err)
+			return dq.rollbackError(ctx, m, err)
 		}
 		return nil
 	}
 
 	location, err := dq.uploader.UploadText(ctx, fmt.Sprintf("plan-%s", deployment.ID), nsDeploymentPlanText.String())
 	if err != nil {
-		return errors.Wrap(err)
+		return dq.rollbackError(ctx, m, err)
 	}
 
 	locationJson, err := json2.StructToJson(&location)
 	if err != nil {
-		return errors.Wrap(err)
+		return dq.rollbackError(ctx, m, err)
 	}
 
 	err = dq.worker.Message(ctx, nsDeploymentPlan.SchQueueUrl, &queue.M{
@@ -246,41 +259,43 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 		Body:    locationJson,
 	})
 	if err != nil {
-		return errors.Wrap(err)
+		return dq.rollbackError(ctx, m, err)
 	}
 
 	err = dq.repo.UpdateDeploymentS3PlanLocation(ctx, deployment.ID, locationJson)
 	if err != nil {
-		return errors.Wrap(err)
+		return dq.rollbackError(ctx, m, err)
 	}
 
 	return nil
 }
 
 func (dq *DeploymentQueue) handleMessage(ctx context.Context, m *queue.M) error {
-	switch m.State {
+	switch m.Command {
 	// This means it hasn't been sent to the scheduler yet
-	case DeploymentStateQueued:
+	case CommandScheduleDeployment:
 		return dq.scheduleDeployment(ctx, m)
 
 	// This means it came back from the scheduler
-	case DeploymentStateScheduled:
-		return dq.completeDeployment(ctx, m)
+	case CommandUpdateDeployment:
+		return dq.updateDeployment(ctx, m)
 
 	default:
-		return errors.Wrapf("unrecognized state: %s", m.State)
+		return errors.Wrapf("unrecognized command: %s", m.Command)
 	}
 }
 
-func (dq *DeploymentQueue) completeDeployment(ctx context.Context, m *queue.M) error {
+func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) error {
 	err := dq.worker.DeleteMessage(ctx, m)
 	if err != nil {
 		return errors.Wrap(err)
 	}
+
 	deployment, err := dq.repo.UpdateDeploymentS3ResultLocation(ctx, m.ID, m.Body)
 	if err != nil {
 		return errors.Wrap(err)
 	}
+
 	err = dq.worker.DeleteMessage(ctx, &queue.M{
 		ID:            deployment.ID,
 		ReqID:         queue.GetReqID(ctx),

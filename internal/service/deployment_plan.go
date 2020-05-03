@@ -42,9 +42,8 @@ const (
 )
 
 const (
-	DeploymentStateQueued    string = "queued"
-	DeploymentStateScheduled string = "scheduled"
-	DeploymentStateCompleted string = "completed"
+	CommandScheduleDeployment string = "api-schedule-deployment"
+	CommandUpdateDeployment   string = "api-update-deployment"
 )
 
 type ArtifactDefinition struct {
@@ -211,7 +210,7 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 			ID:      dataDeployment.ID,
 			GroupID: ns.GetQueueGroupID(),
 			ReqID:   middleware.GetReqID(ctx),
-			State:   DeploymentStateQueued,
+			Command: CommandScheduleDeployment,
 		}
 		if err := d.q.Message(ctx, &queueM); err != nil {
 			return errors.WrapTx(tx, err)

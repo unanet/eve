@@ -61,7 +61,7 @@ type M struct {
 	Body          json.Text
 	ReceiptHandle string
 	MessageID     string
-	State         string
+	Command       string
 }
 
 func (q *Q) logWith(m *M) *zap.Logger {
@@ -71,8 +71,8 @@ func (q *Q) logWith(m *M) *zap.Logger {
 }
 
 func (q *Q) Message(ctx context.Context, m *M) error {
-	if len(m.State) == 0 {
-		m.State = "empty"
+	if len(m.Command) == 0 {
+		m.Command = "empty"
 	}
 	awsM := sqs.SendMessageInput{
 		MessageAttributes: map[string]*sqs.MessageAttributeValue{
@@ -82,7 +82,7 @@ func (q *Q) Message(ctx context.Context, m *M) error {
 			},
 			MessageAttributeState: {
 				DataType:    aws.String("String"),
-				StringValue: aws.String(m.State),
+				StringValue: aws.String(m.Command),
 			},
 		},
 		MessageGroupId:         aws.String(m.GroupID),
@@ -137,7 +137,7 @@ func (q *Q) Receive(ctx context.Context) ([]*M, error) {
 			ID:            id,
 			GroupID:       *x.Attributes[sqs.MessageSystemAttributeNameMessageGroupId],
 			ReqID:         *x.MessageAttributes[MessageAttributeReqID].StringValue,
-			State:         *x.MessageAttributes[MessageAttributeState].StringValue,
+			Command:       *x.MessageAttributes[MessageAttributeState].StringValue,
 			Body:          json.Text(*x.Body),
 			ReceiptHandle: *x.ReceiptHandle,
 			MessageID:     *x.MessageId,
