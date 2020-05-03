@@ -65,7 +65,7 @@ func MigrateDB(DSN, logLevel string, drop bool) error {
 
 	err = m.Up()
 	if err != nil && err.Error() != "no change" {
-		return err
+		return errors.Wrap(err)
 	}
 
 	return nil
