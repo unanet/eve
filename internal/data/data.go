@@ -9,6 +9,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 
+	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
@@ -45,16 +46,22 @@ func GetDBWithTimeout(dsn string, timeout time.Duration) (*sqlx.DB, error) {
 	}
 }
 
-func MigrateDB(DSN, logLevel string) error {
+func MigrateDB(DSN, logLevel string, drop bool) error {
 	m, err := migrate.New(
 		"file://migrations",
 		DSN,
 	)
 	if err != nil {
-		return err
+		return errors.Wrap(err)
 	}
 
 	m.Log = NewMigrationLogger(strings.ToLower(logLevel) == "debug")
+	if drop {
+		err := m.Drop()
+		if err != nil {
+			return errors.Wrap(err)
+		}
+	}
 
 	err = m.Up()
 	if err != nil && err.Error() != "no change" {

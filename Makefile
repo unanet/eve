@@ -59,4 +59,8 @@ dist: build
 		https://unanet.jfrog.io/unanet/api/storage/docker-local/eve-api/${PATCH_VERSION}\?properties=version=${VERSION}%7Cgitlab-build-properties.project-id=${CI_PROJECT_ID}%7Cgitlab-build-properties.git-sha=${CI_COMMIT_SHORT_SHA}%7Cgitlab-build-properties.git-branch=${CI_COMMIT_BRANCH}
 
 deploy:
+	-@kubectl delete -f .kube/migration.yaml
+	kubectl apply -f .kube/migration.yaml
+	kubectl wait --for=condition=complete job -l app=eve-api-v1-migration
+	kubectl apply -f .kube/manifest.yaml
 	kubectl set image deployment/eve-api-v1 eve-api-v1=${IMAGE_DIGEST} --record
