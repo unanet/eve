@@ -52,7 +52,7 @@ var (
 		}, []string{"uri", "method", "protocol"})
 )
 
-func StartMetricsServer(done chan bool, port int) *http.Server {
+func StartMetricsServer(port int) *http.Server {
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 
@@ -68,6 +68,8 @@ func StartMetricsServer(done chan bool, port int) *http.Server {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Logger.Panic("Failed to Start Metrics Server", zap.Error(err))
 		}
+
+		log.Logger.Info("Metrics Server Shutdown")
 	}()
 
 	return server

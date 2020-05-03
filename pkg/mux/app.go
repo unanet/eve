@@ -92,7 +92,7 @@ func (a *Api) gracefulShutdown() {
 func (a *Api) Start(onShutdown ...func()) {
 	a.setup()
 	a.onShutdown = onShutdown
-	a.mServer = metrics.StartMetricsServer(a.done, a.config.MetricsPort)
+	a.mServer = metrics.StartMetricsServer(a.config.MetricsPort)
 	log.Logger.Info("Metrics Listener", zap.Int("port", a.config.MetricsPort))
 
 	signal.Notify(a.sigChannel, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
