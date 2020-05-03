@@ -41,11 +41,6 @@ const (
 	DeploymentPlanTypeMigration   DeploymentPlanType = "migration"
 )
 
-const (
-	CommandScheduleDeployment string = "api-schedule-deployment"
-	CommandUpdateDeployment   string = "api-update-deployment"
-)
-
 type ArtifactDefinition struct {
 	ID               int    `json:"id"`
 	Name             string `json:"name"`

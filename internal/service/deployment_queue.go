@@ -29,6 +29,17 @@ type CloudUploader interface {
 	UploadText(ctx context.Context, key string, body string) (*s3.Location, error)
 }
 
+// API Queue Commands
+const (
+	CommandScheduleDeployment string = "api-schedule-deployment"
+	CommandUpdateDeployment   string = "api-update-deployment"
+)
+
+// Scheduler Queue Commands
+const (
+	CommandDeployNamespace string = "sch-deploy-namespace"
+)
+
 type HttpCallback interface {
 	Post(ctx context.Context, url string) error
 }
@@ -257,6 +268,7 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 		ReqID:   queue.GetReqID(ctx),
 		GroupID: nsDeploymentPlan.GroupID(),
 		Body:    locationJson,
+		Command: CommandDeployNamespace,
 	})
 	if err != nil {
 		return dq.rollbackError(ctx, m, err)
@@ -286,16 +298,16 @@ func (dq *DeploymentQueue) handleMessage(ctx context.Context, m *queue.M) error 
 }
 
 func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) error {
-	err := dq.worker.DeleteMessage(ctx, m)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
 	deployment, err := dq.repo.UpdateDeploymentS3ResultLocation(ctx, m.ID, m.Body)
 	if err != nil {
 		return errors.Wrap(err)
 	}
 
+	// TODO: Update successfull deployed db values in the database.
+
+	// Here we are deleting the original deploy message which unblocks deployments for a namespace in an environment
+	// We will need to add some additional logic to this to account for certain scenarios where we should
+	// Still Delete the Message that triggers this updateDeployment (like an error that returns not found or already deleted)
 	err = dq.worker.DeleteMessage(ctx, &queue.M{
 		ID:            deployment.ID,
 		ReqID:         queue.GetReqID(ctx),
@@ -304,5 +316,11 @@ func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) err
 	if err != nil {
 		return errors.Wrap(err)
 	}
+
+	err = dq.worker.DeleteMessage(ctx, m)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
 	return nil
 }

@@ -72,5 +72,6 @@ func StartMetricsServer(port int) *http.Server {
 		log.Logger.Info("Metrics Server Shutdown")
 	}()
 
+	log.Logger.Info("Metrics Listener", zap.Int("port", port))
 	return server
 }

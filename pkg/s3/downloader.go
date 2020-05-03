@@ -21,7 +21,7 @@ func NewDownloader(sess *session.Session) *Downloader {
 	}
 }
 
-func (u Downloader) Download(ctx context.Context, location Location) (string, error) {
+func (u Downloader) Download(ctx context.Context, location *Location) ([]byte, error) {
 	buf := &aws.WriteAtBuffer{}
 
 	_, err := u.s3.DownloadWithContext(ctx, buf, &s3.GetObjectInput{
@@ -29,8 +29,8 @@ func (u Downloader) Download(ctx context.Context, location Location) (string, er
 		Key:    aws.String(location.Key),
 	})
 	if err != nil {
-		return "", errors.Wrap(err)
+		return nil, errors.Wrap(err)
 	}
 
-	return string(buf.Bytes()), nil
+	return buf.Bytes(), nil
 }

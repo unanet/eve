@@ -71,6 +71,7 @@ func (a *Api) gracefulShutdown() {
 
 	// Turn off keepalive
 	a.server.SetKeepAlivesEnabled(false)
+	a.mServer.SetKeepAlivesEnabled(false)
 
 	// Attempt to shutdown cleanly
 	for _, x := range a.onShutdown {
@@ -93,7 +94,6 @@ func (a *Api) Start(onShutdown ...func()) {
 	a.setup()
 	a.onShutdown = onShutdown
 	a.mServer = metrics.StartMetricsServer(a.config.MetricsPort)
-	log.Logger.Info("Metrics Listener", zap.Int("port", a.config.MetricsPort))
 
 	signal.Notify(a.sigChannel, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	go a.sigHandler()

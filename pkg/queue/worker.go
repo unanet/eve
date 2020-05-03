@@ -42,7 +42,7 @@ type Worker struct {
 	sess    *session.Session
 }
 
-func NewWorker(name string, q *Q, timeout time.Duration, qWriters ...*Q) *Worker {
+func NewWorker(name string, q *Q, timeout time.Duration) *Worker {
 	ctx, cancel := context.WithCancel(context.Background())
 	w := Worker{
 		name:    name,
@@ -56,9 +56,6 @@ func NewWorker(name string, q *Q, timeout time.Duration, qWriters ...*Q) *Worker
 		wqs:     make(map[string]*Q),
 	}
 
-	for _, x := range qWriters {
-		w.wqs[x.c.QueueURL] = x
-	}
 	return &w
 }
 

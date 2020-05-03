@@ -48,7 +48,6 @@ type Config struct {
 	ArtifactoryConfig
 	MuxConfig
 	GitlabConfig
-	SchQUrlPrev            string        `split_words:"true" default:""`
 	ApiQUrl                string        `split_words:"true" required:"true"`
 	ApiQWaitTimeSecond     int64         `split_words:"true" default:"20"`
 	ApiQVisibilityTimeout  int64         `split_words:"true" default:"3600"`
