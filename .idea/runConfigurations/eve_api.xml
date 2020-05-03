@@ -3,6 +3,7 @@
     <module name="eve" />
     <working_directory value="$PROJECT_DIR$/" />
     <go_parameters value="-i" />
+    <parameters value="-migrate -server" />
     <envs>
       <env name="EVE_SERVICE_NAME" value="eve-api" />
       <env name="EVE_ARTIFACTORY_BASE_URL" value="https://unanet.jfrog.io/unanet/api" />
@@ -12,6 +13,7 @@
       <env name="EVE_SCH_Q_URL" value="https://sqs.us-east-2.amazonaws.com/580107804399/eve-sch-prod.fifo" />
       <env name="EVE_S3_BUCKET" value="unanet-eve-queue" />
       <env name="EVE_AWS_REGION" value="us-east-2" />
+      <env name="EVE_DB_CONNECTION_TIMEOUT" value="60s" />
     </envs>
     <kind value="FILE" />
     <filePath value="$PROJECT_DIR$/cmd/eve-api/main.go" />

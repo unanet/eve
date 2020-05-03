@@ -1,7 +1,7 @@
 package main
 
 import (
-	"time"
+	"flag"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -12,21 +12,34 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/cloud/s3"
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
+	"gitlab.unanet.io/devops/eve/pkg/http"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/mux"
 )
 
 func main() {
-	config := api.GetConfig()
+	serverFlag := flag.Bool("server", false, "start api server")
+	migrateFlag := flag.Bool("migrate", false, "run migration")
+	flag.Parse()
+	dbConfig := api.GetDBConfig()
 	// Try to get a DB Connection
-	db, err := data.GetDBWithTimeout(config.DbConnectionString(), 10*time.Minute)
+	db, err := data.GetDBWithTimeout(dbConfig.DbConnectionString(), dbConfig.DBConnectionTimeout)
 	if err != nil {
 		log.Logger.Panic("Failed to open Connection to DB.", zap.Error(err))
 	}
-	err = data.MigrateDB(config.MigrationConnectionString(), config.LogLevel)
-	if err != nil {
-		log.Logger.Panic("Failed to load the Database Migration Tool.", zap.Error(err))
+
+	if *migrateFlag {
+		err = data.MigrateDB(dbConfig.MigrationConnectionString(), dbConfig.LogLevel)
+		if err != nil {
+			log.Logger.Panic("Failed to load the Database Migration Tool.", zap.Error(err))
+		}
 	}
+
+	if !*serverFlag {
+		return
+	}
+
+	config := api.GetConfig()
 
 	awsSession, err := session.NewSession(&aws.Config{
 		Region: aws.String(config.AWSRegion)},
@@ -39,10 +52,6 @@ func main() {
 		QueueURL:           config.ApiQUrl,
 		WaitTimeSecond:     config.ApiQWaitTimeSecond,
 		VisibilityTimeout:  config.ApiQVisibilityTimeout,
-	})
-
-	schQueue := queue.NewQ(awsSession, queue.Config{
-		QueueURL: config.SchQUrl,
 	})
 
 	repo := data.NewRepo(db)
@@ -59,7 +68,9 @@ func main() {
 		Bucket: config.S3Bucket,
 	})
 
-	deploymentQueue := service.NewDeploymentQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, schQueue, s3Uploader)
+	httpCallBack := http.NewCallback(config.HttpCallbackTimeout)
+
+	deploymentQueue := service.NewDeploymentQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, s3Uploader, httpCallBack)
 	deploymentQueue.Start()
 
 	api.Start(func() {

@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/session"
 	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/pkg/log"
@@ -36,19 +37,28 @@ type Worker struct {
 	ctx     context.Context
 	cancel  context.CancelFunc
 	done    chan bool
+	wqs     map[string]*Q
+	mutex   sync.Mutex
+	sess    *session.Session
 }
 
-func NewWorker(name string, q *Q, timeout time.Duration) *Worker {
+func NewWorker(name string, q *Q, timeout time.Duration, qWriters ...*Q) *Worker {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &Worker{
+	w := Worker{
 		name:    name,
 		q:       q,
 		log:     log.Logger.With(zap.Uint64("internal_queue_id", q.id), zap.String("worker", name)),
 		timeout: timeout,
 		ctx:     ctx,
 		cancel:  cancel,
+		sess:    q.sess,
 		done:    make(chan bool),
 	}
+
+	for _, x := range qWriters {
+		w.wqs[x.c.QueueURL] = x
+	}
+	return &w
 }
 
 func (worker *Worker) Start(h Handler) {
@@ -82,6 +92,24 @@ func (worker *Worker) DeleteMessage(ctx context.Context, m *M) error {
 	return worker.q.Delete(ctx, m)
 }
 
+func (worker *Worker) getQueue(qUrl string) *Q {
+	worker.mutex.Lock()
+	defer worker.mutex.Unlock()
+	if val, ok := worker.wqs[qUrl]; ok {
+		return val
+	}
+	q := NewQ(worker.sess, Config{
+		QueueURL: qUrl,
+	})
+	worker.wqs[qUrl] = q
+	return q
+}
+
+func (worker *Worker) Message(ctx context.Context, qUrl string, m *M) error {
+	q := worker.getQueue(qUrl)
+	return q.Message(ctx, m)
+}
+
 func (worker *Worker) run(h Handler, messages []*M) {
 	numMessages := len(messages)
 	var wg sync.WaitGroup
@@ -107,4 +135,13 @@ func GetReqID(ctx context.Context) string {
 		return reqID
 	}
 	return ""
+}
+
+func GetLogger(ctx context.Context) *zap.Logger {
+	reqID := GetReqID(ctx)
+	if len(reqID) > 0 {
+		return log.Logger.With(zap.String("req_id", reqID))
+	} else {
+		return log.Logger
+	}
 }

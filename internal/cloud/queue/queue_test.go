@@ -3,6 +3,7 @@
 package queue_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -38,14 +39,14 @@ func TestQ_Message(t *testing.T) {
 		GroupID: "testing",
 		Body:    "blah",
 	}
-	err := q.Message(&m)
+	err := q.Message(context.TODO(), &m)
 	require.NoError(t, err)
 	fmt.Println(m)
 }
 
 func TestQ_Receive(t *testing.T) {
 	q := GetQueue(t)
-	ms, err := q.Receive()
+	ms, err := q.Receive(context.TODO())
 	require.NoError(t, err)
 	for _, x := range ms {
 		fmt.Println(x)
@@ -54,6 +55,14 @@ func TestQ_Receive(t *testing.T) {
 
 func TestQ_Delete(t *testing.T) {
 	q := GetQueue(t)
-	err := q.Delete("AQEBt6pj0R7OCNTC4BeCXzyWtiWvcB7sLv1HG8rohb5w2Qbuw22iS1sKiUcMveDgXbilP5SX0AmlaJPaItDzOC6Sp5GE2ANhuE83dMJ5trg2Numzuab9iwthAKbhYyF5YrJS2k1O3jO0GphIGjhAyIarGiHGxrR58+xaHs5EmacuUgG9i52FcSLvSePtFgNtJqJwuyVc/ikWPr5mBKkKqtjx0GfGHy7csrOUHk/JnmP7VZKXsB0mv0KAmEhg6H/nAxy/Y+rmVR2362j8+8FoNaGQsS+7Q61wd3Jh6Thk38Iy788=")
+	err := q.Delete(context.TODO(), &queue.M{
+		ID:            uuid.UUID{},
+		ReqID:         "",
+		GroupID:       "",
+		Body:          "",
+		ReceiptHandle: "",
+		MessageID:     "",
+		State:         "",
+	})
 	require.NoError(t, err)
 }

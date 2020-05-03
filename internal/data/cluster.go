@@ -11,6 +11,7 @@ type Cluster struct {
 	ID            string     `db:"id"`
 	Name          string     `db:"name"`
 	ProviderGroup string     `db:"provider_group"`
+	SchQueueUrl   string     `db:"sch_queue_url"`
 	CreatedAt     *time.Time `db:"created_at"`
 	UpdatedAt     *time.Time `db:"updated_at"`
 }

@@ -26,10 +26,11 @@ var (
 )
 
 type Q struct {
-	aws *sqs.SQS
-	c   Config
-	log *zap.Logger
-	id  uint64
+	aws  *sqs.SQS
+	c    Config
+	log  *zap.Logger
+	id   uint64
+	sess *session.Session
 }
 
 // Config struct
@@ -44,10 +45,11 @@ func NewQ(sess *session.Session, config Config) *Q {
 	qID := atomic.AddUint64(&queueID, 1)
 	awsQ := sqs.New(sess)
 	return &Q{
-		id:  qID,
-		c:   config,
-		aws: awsQ,
-		log: log.Logger.With(zap.String("queue_url", config.QueueURL), zap.Uint64("internal_queue_id", qID)),
+		id:   qID,
+		c:    config,
+		aws:  awsQ,
+		sess: sess,
+		log:  log.Logger.With(zap.String("queue_url", config.QueueURL), zap.Uint64("internal_queue_id", qID)),
 	}
 }
 
@@ -67,7 +69,7 @@ func (q *Q) logWith(m *M) *zap.Logger {
 		zap.String("req_id", m.ReqID))
 }
 
-func (q *Q) Message(m *M) error {
+func (q *Q) Message(ctx context.Context, m *M) error {
 	if len(m.State) == 0 {
 		m.State = "empty"
 	}
@@ -94,7 +96,7 @@ func (q *Q) Message(m *M) error {
 	}
 
 	now := time.Now()
-	result, err := q.aws.SendMessage(&awsM)
+	result, err := q.aws.SendMessageWithContext(ctx, &awsM)
 	if err != nil {
 		return errors.Wrap(err)
 	}

@@ -1,4 +1,4 @@
-package scheduler
+package http
 
 import (
 	"context"
@@ -13,14 +13,14 @@ import (
 )
 
 const (
-	userAgent = "eve-scheduler"
+	userAgent = "eve"
 )
 
-type HttpCallback struct {
+type Callback struct {
 	sling *sling.Sling
 }
 
-func NewHttpCallback(timeout time.Duration) *HttpCallback {
+func NewCallback(timeout time.Duration) *Callback {
 	var httpClient = &http.Client{
 		Timeout: timeout,
 	}
@@ -28,10 +28,10 @@ func NewHttpCallback(timeout time.Duration) *HttpCallback {
 	sling := sling.New().Client(httpClient).
 		Add("User-Agent", userAgent).
 		ResponseDecoder(json.NewJsonDecoder())
-	return &HttpCallback{sling: sling}
+	return &Callback{sling: sling}
 }
 
-func (c *HttpCallback) Post(ctx context.Context, url string) error {
+func (c *Callback) Post(ctx context.Context, url string) error {
 	var failure string
 	r, err := c.sling.New().Post(url).Request()
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	uuid "github.com/satori/go.uuid"
+	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/internal/cloud/queue"
 	"gitlab.unanet.io/devops/eve/internal/data"
@@ -18,6 +19,7 @@ type DeploymentQueueRepo interface {
 	DeployedDatabaseInstancesByNamespaceID(ctx context.Context, namespaceID int) (data.DatabaseInstances, error)
 	UpdateDeploymentS3PlanLocation(ctx context.Context, id uuid.UUID, location string) error
 	UpdateDeploymentS3ResultLocation(ctx context.Context, id uuid.UUID, location string) (*data.Deployment, error)
+	ClusterByID(ctx context.Context, id int) (*data.Cluster, error)
 }
 
 type CloudUploader interface {
@@ -122,6 +124,7 @@ type NSDeploymentPlan struct {
 	Services        DeployServices    `json:"services,omitempty"`
 	Migrations      DeployMigrations  `json:"migrations,omitempty"`
 	Messages        []string          `json:"messages,omitempty"`
+	SchQueueUrl     string            `json:"-"`
 }
 
 func (ns *NSDeploymentPlan) GroupID() string {
@@ -137,20 +140,25 @@ type messageLogger func(format string, a ...interface{})
 type DeploymentQueue struct {
 	worker   QueueWorker
 	repo     DeploymentQueueRepo
-	schQueue QWriter
 	uploader CloudUploader
+	callback HttpCallback
 }
 
-func NewDeploymentQueue(worker QueueWorker,
+func NewDeploymentQueue(
+	worker QueueWorker,
 	repo DeploymentQueueRepo,
-	schQueue QWriter,
-	uploader CloudUploader) *DeploymentQueue {
+	uploader CloudUploader,
+	httpCallBack HttpCallback) *DeploymentQueue {
 	return &DeploymentQueue{
 		worker:   worker,
 		repo:     repo,
-		schQueue: schQueue,
 		uploader: uploader,
+		callback: httpCallBack,
 	}
+}
+
+func (dq *DeploymentQueue) Logger(ctx context.Context) *zap.Logger {
+	return queue.GetLogger(ctx)
 }
 
 func (dq *DeploymentQueue) Start() {
@@ -183,15 +191,23 @@ func (dq *DeploymentQueue) matchArtifact(a *DeployArtifact, options NamespacePla
 	a.Deploy = true
 }
 
-func (dq *DeploymentQueue) setupNSDeploymentPlan(options NamespacePlanOptions) *NSDeploymentPlan {
+func (dq *DeploymentQueue) setupNSDeploymentPlan(ctx context.Context, options NamespacePlanOptions) (*NSDeploymentPlan, error) {
+	cluster, err := dq.repo.ClusterByID(ctx, options.NamespaceRequest.ClusterID)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
 	return &NSDeploymentPlan{
 		Namespace:       options.NamespaceRequest,
 		EnvironmentName: options.EnvironmentName,
-	}
+		SchQueueUrl:     cluster.SchQueueUrl,
+	}, nil
 }
 
 func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, options NamespacePlanOptions) (*NSDeploymentPlan, error) {
-	nSDeploymentPlan := dq.setupNSDeploymentPlan(options)
+	nSDeploymentPlan, err := dq.setupNSDeploymentPlan(ctx, options)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
 	dataServices, err := dq.repo.DeployedServicesByNamespaceID(ctx, options.NamespaceRequest.ID)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -211,7 +227,10 @@ func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, options
 }
 
 func (dq *DeploymentQueue) createMigrationsDeployment(ctx context.Context, options NamespacePlanOptions) (*NSDeploymentPlan, error) {
-	nSDeploymentPlan := dq.setupNSDeploymentPlan(options)
+	nSDeploymentPlan, err := dq.setupNSDeploymentPlan(ctx, options)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
 	dataDatabaseInstances, err := dq.repo.DeployedDatabaseInstancesByNamespaceID(ctx, options.NamespaceRequest.ID)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -252,12 +271,12 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 		return errors.Wrap(err)
 	}
 
-	//if len(options.CallbackURL) == 0 {
-	//	err := dq.callback.Post(ctx, options.CallbackURL)
-	//	if err != nil {
-	//		log.Logger.Warn("callback failed", zap.String("callback_url", options.CallbackURL), zap.String("req_id", queue.GetReqID(ctx)))
-	//	}
-	//}
+	if len(options.CallbackURL) == 0 {
+		err := dq.callback.Post(ctx, options.CallbackURL)
+		if err != nil {
+			dq.Logger(ctx).Warn("callback failed", zap.String("callback_url", options.CallbackURL))
+		}
+	}
 
 	if options.DryRun {
 		err := dq.worker.DeleteMessage(ctx, m)
@@ -268,7 +287,8 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 	}
 
 	location, err := dq.uploader.UploadText(ctx, fmt.Sprintf("plan-%s", deployment.ID), nsDeploymentPlanText.String())
-	err = dq.schQueue.Message(&queue.M{
+
+	err = dq.worker.Message(ctx, nsDeploymentPlan.SchQueueUrl, &queue.M{
 		ID:      deployment.ID,
 		ReqID:   queue.GetReqID(ctx),
 		GroupID: nsDeploymentPlan.GroupID(),

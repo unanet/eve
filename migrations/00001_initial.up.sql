@@ -105,6 +105,7 @@ ALTER TABLE ONLY environment ADD CONSTRAINT environment_pk PRIMARY KEY (id);
 CREATE TABLE cluster (
     id integer NOT NULL,
     name character varying(50) NOT NULL,
+    sch_queue_url character varying(200) NOT NULL,
     provider_group provider_group NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL
@@ -294,8 +295,7 @@ INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (202, 'platform
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (203, 'exago', 'docker', 'unanet');
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (204, 'sql-migration-scripts', 'docker', 'unanet');
 
-INSERT INTO cluster(id, name, provider_group) VALUES (1, 'int-clearview-cluster', 'clearview');
-INSERT INTO cluster(id, name, provider_group) VALUES (2, 'qa-clearview-cluster', 'clearview');
+INSERT INTO cluster(id, name, provider_group, sch_queue_url) VALUES (1, 'cvs-nonprod-zxrjdqr67u', 'clearview', 'https://sqs.us-east-2.amazonaws.com/580107804399/cvs-nonprod-zxrjdqr67u.fifo');
 
 INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id, domain) VALUES (1, 'cvs-prev-int', 'cvs-prev', 1, '2020.2', 1, 'prev.int.infocus.app');
 INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id, domain) VALUES (2, 'cvs-int', 'cvs', 1, '2020.2', 1, 'int.infocus.app');

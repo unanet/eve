@@ -95,9 +95,10 @@ func (ad ArtifactDefinitions) UnMatched() ArtifactDefinitions {
 }
 
 type NamespaceRequest struct {
-	ID    int    `json:"id"`
-	Alias string `json:"alias"`
-	Name  string `json:"name"`
+	ID        int    `json:"id"`
+	Alias     string `json:"alias"`
+	Name      string `json:"name"`
+	ClusterID int    `json:"cluster_id"`
 }
 
 func (ns *NamespaceRequest) getQueueGroupID() string {
@@ -231,7 +232,7 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 			ReqID:   middleware.GetReqID(ctx),
 			State:   DeploymentStateQueued,
 		}
-		if err := d.q.Message(&queueM); err != nil {
+		if err := d.q.Message(ctx, &queueM); err != nil {
 			return errors.WrapTx(tx, err)
 		}
 		err = d.repo.UpdateDeploymentMessageIDTx(ctx, tx, queueM.ID, queueM.MessageID)
@@ -367,9 +368,10 @@ func (d *DeploymentPlanGenerator) validateNamespaces(ctx context.Context, env *d
 	var namespaceRequests NamespaceRequests
 	for _, x := range namespacesToDeploy {
 		namespaceRequests = append(namespaceRequests, &NamespaceRequest{
-			ID:    x.ID,
-			Name:  x.Name,
-			Alias: x.Alias,
+			ID:        x.ID,
+			Name:      x.Name,
+			Alias:     x.Alias,
+			ClusterID: x.ClusterID,
 		})
 	}
 
