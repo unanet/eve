@@ -9,7 +9,7 @@
       <env name="EVE_ARTIFACTORY_BASE_URL" value="https://unanet.jfrog.io/unanet/api" />
       <env name="EVE_GITLAB_BASE_URL" value="https://gitlab.unanet.io/api" />
       <env name="EVE_VAULT_ADDR" value="https://vault.unanet.io" />
-      <env name="EVE_API_Q_URL" value="https://sqs.us-east-2.amazonaws.com/580107804399/eve-api-dev.fifo" />
+      <env name="EVE_API_Q_URL" value="https://sqs.us-east-2.amazonaws.com/580107804399/eve-api-prod.fifo" />
       <env name="EVE_S3_BUCKET" value="unanet-eve-queue" />
       <env name="EVE_AWS_REGION" value="us-east-2" />
       <env name="EVE_DB_CONNECTION_TIMEOUT" value="60s" />

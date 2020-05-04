@@ -18,8 +18,9 @@ import (
 )
 
 const (
-	MessageAttributeReqID string = "eve_req_id"
-	MessageAttributeState string = "eve_state"
+	MessageAttributeReqID   string = "eve_req_id"
+	MessageAttributeCommand string = "eve_cmd"
+	MessageAttributeID      string = "eve_id"
 )
 
 var (
@@ -67,7 +68,9 @@ type M struct {
 func (q *Q) logWith(m *M) *zap.Logger {
 	return q.log.With(
 		zap.String("message_id", m.ID.String()),
-		zap.String("req_id", m.ReqID))
+		zap.String("req_id", m.ReqID),
+		zap.String("group_id", m.GroupID),
+		zap.String("command", m.Command))
 }
 
 func (q *Q) Message(ctx context.Context, m *M) error {
@@ -80,14 +83,17 @@ func (q *Q) Message(ctx context.Context, m *M) error {
 				DataType:    aws.String("String"),
 				StringValue: aws.String(m.ReqID),
 			},
-			MessageAttributeState: {
+			MessageAttributeCommand: {
 				DataType:    aws.String("String"),
 				StringValue: aws.String(m.Command),
 			},
+			MessageAttributeID: {
+				DataType:    aws.String("String"),
+				StringValue: aws.String(m.ID.String()),
+			},
 		},
-		MessageGroupId:         aws.String(m.GroupID),
-		MessageDeduplicationId: aws.String(m.ID.String()),
-		QueueUrl:               &q.c.QueueURL,
+		MessageGroupId: aws.String(m.GroupID),
+		QueueUrl:       &q.c.QueueURL,
 	}
 
 	if len(m.Body) > 0 {
@@ -110,9 +116,7 @@ func (q *Q) Message(ctx context.Context, m *M) error {
 func (q *Q) Receive(ctx context.Context) ([]*M, error) {
 	awsM := sqs.ReceiveMessageInput{
 		AttributeNames: []*string{
-			aws.String(MessageAttributeReqID),
 			aws.String(sqs.MessageSystemAttributeNameMessageGroupId),
-			aws.String(sqs.MessageSystemAttributeNameMessageDeduplicationId),
 		},
 		MessageAttributeNames: []*string{
 			aws.String(sqs.QueueAttributeNameAll),
@@ -132,12 +136,12 @@ func (q *Q) Receive(ctx context.Context) ([]*M, error) {
 
 	var returnMs []*M
 	for _, x := range result.Messages {
-		id := uuid.FromStringOrNil(*x.Attributes[sqs.MessageSystemAttributeNameMessageDeduplicationId])
+		id := uuid.FromStringOrNil(*x.MessageAttributes[MessageAttributeID].StringValue)
 		m := M{
 			ID:            id,
 			GroupID:       *x.Attributes[sqs.MessageSystemAttributeNameMessageGroupId],
 			ReqID:         *x.MessageAttributes[MessageAttributeReqID].StringValue,
-			Command:       *x.MessageAttributes[MessageAttributeState].StringValue,
+			Command:       *x.MessageAttributes[MessageAttributeCommand].StringValue,
 			Body:          json.Text(*x.Body),
 			ReceiptHandle: *x.ReceiptHandle,
 			MessageID:     *x.MessageId,
