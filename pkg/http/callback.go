@@ -31,9 +31,9 @@ func NewCallback(timeout time.Duration) *Callback {
 	return &Callback{sling: sling}
 }
 
-func (c *Callback) Post(ctx context.Context, url string) error {
+func (c *Callback) Post(ctx context.Context, url string, body interface{}) error {
 	var failure string
-	r, err := c.sling.New().Post(url).Request()
+	r, err := c.sling.New().Post(url).BodyJSON(body).Request()
 	if err != nil {
 		return errors.Wrap(err)
 	}

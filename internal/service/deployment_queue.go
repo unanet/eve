@@ -41,7 +41,7 @@ const (
 )
 
 type HttpCallback interface {
-	Post(ctx context.Context, url string) error
+	Post(ctx context.Context, url string, body interface{}) error
 }
 
 func fromDataService(s data.Service) *eve.DeployService {
@@ -249,7 +249,7 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 	}
 
 	if len(options.CallbackURL) > 0 {
-		err := dq.callback.Post(ctx, options.CallbackURL)
+		err := dq.callback.Post(ctx, options.CallbackURL, nsDeploymentPlan)
 		if err != nil {
 			dq.Logger(ctx).Warn("callback failed", zap.String("callback_url", options.CallbackURL))
 		}
