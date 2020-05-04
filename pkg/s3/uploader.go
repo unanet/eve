@@ -1,8 +1,8 @@
 package s3
 
 import (
+	"bytes"
 	"context"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -33,8 +33,8 @@ func NewUploader(sess *session.Session, config Config) *Uploader {
 	}
 }
 
-func (u Uploader) UploadText(ctx context.Context, key string, body string) (*Location, error) {
-	bodyReader := strings.NewReader(body)
+func (u Uploader) Upload(ctx context.Context, key string, body []byte) (*Location, error) {
+	bodyReader := bytes.NewReader(body)
 	result, err := u.s3.UploadWithContext(ctx, &s3manager.UploadInput{
 		Body:   bodyReader,
 		Bucket: aws.String(u.Bucket),

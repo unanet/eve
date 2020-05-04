@@ -26,7 +26,7 @@ type DeploymentQueueRepo interface {
 }
 
 type CloudUploader interface {
-	UploadText(ctx context.Context, key string, body string) (*s3.Location, error)
+	Upload(ctx context.Context, key string, body []byte) (*s3.Location, error)
 }
 
 // API Queue Commands
@@ -253,7 +253,7 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 		return nil
 	}
 
-	location, err := dq.uploader.UploadText(ctx, fmt.Sprintf("plan-%s", deployment.ID), nsDeploymentPlanText.String())
+	location, err := dq.uploader.Upload(ctx, fmt.Sprintf("%s-plan", deployment.ID), nsDeploymentPlanText)
 	if err != nil {
 		return dq.rollbackError(ctx, m, err)
 	}
@@ -303,7 +303,7 @@ func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) err
 		return errors.Wrap(err)
 	}
 
-	// TODO: Update successfull deployed db values in the database.
+	// TODO: Update successful deployed db values in the database.
 
 	// Here we are deleting the original deploy message which unblocks deployments for a namespace in an environment
 	// We will need to add some additional logic to this to account for certain scenarios where we should

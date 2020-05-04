@@ -59,7 +59,7 @@ type NamespaceRequest struct {
 }
 
 func (ns *NamespaceRequest) GetQueueGroupID() string {
-	return fmt.Sprintf("eve_api-%s", ns.Name)
+	return fmt.Sprintf("deploy-%s", ns.Name)
 }
 
 type NamespaceRequests []*NamespaceRequest
