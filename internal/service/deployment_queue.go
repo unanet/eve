@@ -238,7 +238,7 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 		return dq.rollbackError(ctx, m, err)
 	}
 
-	if len(options.CallbackURL) == 0 {
+	if len(options.CallbackURL) > 0 {
 		err := dq.callback.Post(ctx, options.CallbackURL)
 		if err != nil {
 			dq.Logger(ctx).Warn("callback failed", zap.String("callback_url", options.CallbackURL))
