@@ -53,6 +53,7 @@ func fromDataService(s data.Service) *eve.DeployService {
 			RequestedVersion: s.RequestedVersion,
 			DeployedVersion:  s.DeployedVersion.String,
 			Metadata:         s.Metadata.AsMap(),
+			Result:           eve.DeployArtifactResultNoop,
 		},
 	}
 }
@@ -150,11 +151,20 @@ func (dq *DeploymentQueue) setupNSDeploymentPlan(ctx context.Context, options Na
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-	return &eve.NSDeploymentPlan{
+	plan := eve.NSDeploymentPlan{
 		Namespace:       options.NamespaceRequest,
 		EnvironmentName: options.EnvironmentName,
+		CallbackUrl:     options.CallbackURL,
 		SchQueueUrl:     cluster.SchQueueUrl,
-	}, nil
+	}
+
+	if options.DryRun == true {
+		plan.Status = eve.DeploymentPlanStatusDryrun
+	} else {
+		plan.Status = eve.DeploymentPlanStatusPending
+	}
+
+	return &plan, nil
 }
 
 func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
@@ -321,6 +331,13 @@ func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) err
 	if err != nil {
 		return errors.Wrap(err)
 	}
+
+	//if len(options.CallbackURL) > 0 {
+	//	err := dq.callback.Post(ctx, options.CallbackURL)
+	//	if err != nil {
+	//		dq.Logger(ctx).Warn("callback failed", zap.String("callback_url", options.CallbackURL))
+	//	}
+	//}
 
 	return nil
 }

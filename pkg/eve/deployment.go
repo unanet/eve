@@ -4,6 +4,23 @@ import (
 	"fmt"
 )
 
+type DeployArtifactResult string
+
+const (
+	DeployArtifactResultNoop      DeployArtifactResult = "noop"
+	DeployArtifactResultSucceeded DeployArtifactResult = "succeeded"
+	DeployArtifactResultFailed    DeployArtifactResult = "failed"
+)
+
+type DeploymentPlanStatus string
+
+const (
+	DeploymentPlanStatusPending  DeploymentPlanStatus = "pending"
+	DeploymentPlanStatusDryrun   DeploymentPlanStatus = "dryrun"
+	DeploymentPlanStatusErrors   DeploymentPlanStatus = "errors"
+	DeploymentPlanStatusComplete DeploymentPlanStatus = "complete"
+)
+
 type DeployArtifact struct {
 	ArtifactID       int                    `json:"artifact_id"`
 	ArtifactName     string                 `json:"artifact_name"`
@@ -13,6 +30,7 @@ type DeployArtifact struct {
 	Metadata         map[string]interface{} `json:"metadata"`
 	ArtifactoryFeed  string                 `json:"artifactory_feed"`
 	ArtifactoryPath  string                 `json:"artifactory_path"`
+	Result           DeployArtifactResult   `json:"result"`
 	Deploy           bool                   `json:"-"`
 }
 
@@ -73,12 +91,14 @@ func (n NamespaceRequests) ToIDs() []int {
 }
 
 type NSDeploymentPlan struct {
-	Namespace       *NamespaceRequest `json:"namespace"`
-	EnvironmentName string            `json:"environment_name"`
-	Services        DeployServices    `json:"services,omitempty"`
-	Migrations      DeployMigrations  `json:"migrations,omitempty"`
-	Messages        []string          `json:"messages,omitempty"`
-	SchQueueUrl     string            `json:"-"`
+	Namespace       *NamespaceRequest    `json:"namespace"`
+	EnvironmentName string               `json:"environment_name"`
+	Services        DeployServices       `json:"services,omitempty"`
+	Migrations      DeployMigrations     `json:"migrations,omitempty"`
+	Messages        []string             `json:"messages,omitempty"`
+	SchQueueUrl     string               `json:"-"`
+	CallbackUrl     string               `json:"callback_url"`
+	Status          DeploymentPlanStatus `json:"status"`
 }
 
 func (ns *NSDeploymentPlan) GroupID() string {
