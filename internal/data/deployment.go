@@ -70,9 +70,6 @@ func (r *Repo) UpdateDeploymentS3ResultLocation(ctx context.Context, id uuid.UUI
 
 	err := row.StructScan(&deployment)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			return nil, NotFoundErrorf("deployment with id: %d, not found", id)
-		}
 		return nil, errors.Wrap(err)
 	}
 
@@ -85,9 +82,6 @@ func (r *Repo) DeploymentByID(ctx context.Context, id uuid.UUID) (*Deployment, e
 	row := r.db.QueryRowxContext(ctx, "select * from deployment where id = $1", id)
 	err := row.StructScan(&deployment)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			return nil, NotFoundErrorf("deployment with id: %d, not found", id)
-		}
 		return nil, errors.Wrap(err)
 	}
 
