@@ -102,9 +102,6 @@ func (r *Repo) UpdateDeploymentReceiptHandle(ctx context.Context, id uuid.UUID, 
 	`, receiptHandle, time.Now().UTC(), id)
 	err := row.StructScan(&deployment)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			return nil, NotFoundErrorf("deployment with id: %d, not found", id)
-		}
 		return nil, errors.Wrap(err)
 	}
 
