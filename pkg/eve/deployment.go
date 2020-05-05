@@ -30,6 +30,7 @@ type DeployArtifact struct {
 	Metadata         map[string]interface{} `json:"metadata"`
 	ArtifactoryFeed  string                 `json:"artifactory_feed"`
 	ArtifactoryPath  string                 `json:"artifactory_path"`
+	ArtifactFnPtr    string                 `json:"artifact_fn"`
 	Result           DeployArtifactResult   `json:"result"`
 	Deploy           bool                   `json:"-"`
 }

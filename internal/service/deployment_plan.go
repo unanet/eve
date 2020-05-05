@@ -48,6 +48,7 @@ type ArtifactDefinition struct {
 	AvailableVersion string `json:"available_version"`
 	ArtifactoryFeed  string `json:"artifactory_feed"`
 	ArtifactoryPath  string `json:"artifactory_path"`
+	FunctionPointer  string `json:"function_pointer"`
 	Matched          bool   `json:"-"`
 }
 
@@ -257,6 +258,7 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 				RequestedVersion: x.RequestedVersion,
 				ArtifactoryFeed:  x.FeedName,
 				ArtifactoryPath:  x.Path(),
+				FunctionPointer:  x.FunctionPointer,
 			})
 		}
 	}

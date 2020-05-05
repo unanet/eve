@@ -71,7 +71,7 @@ func (r *Repo) UpdateDeploymentS3ResultLocation(ctx context.Context, id uuid.UUI
 	err := row.StructScan(&deployment)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			return nil, NotFoundErrorf("environment with id: %d, not found", id)
+			return nil, NotFoundErrorf("deployment with id: %d, not found", id)
 		}
 		return nil, errors.Wrap(err)
 	}
@@ -86,7 +86,7 @@ func (r *Repo) DeploymentByID(ctx context.Context, id uuid.UUID) (*Deployment, e
 	err := row.StructScan(&deployment)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			return nil, NotFoundErrorf("environment with id: %d, not found", id)
+			return nil, NotFoundErrorf("deployment with id: %d, not found", id)
 		}
 		return nil, errors.Wrap(err)
 	}
@@ -103,7 +103,7 @@ func (r *Repo) UpdateDeploymentReceiptHandle(ctx context.Context, id uuid.UUID, 
 	err := row.StructScan(&deployment)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			return nil, NotFoundErrorf("environment with id: %d, not found", id)
+			return nil, NotFoundErrorf("deployment with id: %d, not found", id)
 		}
 		return nil, errors.Wrap(err)
 	}

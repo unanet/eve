@@ -140,6 +140,7 @@ func (dq *DeploymentQueue) matchArtifact(a *eve.DeployArtifact, options Namespac
 	a.AvailableVersion = match.AvailableVersion
 	a.ArtifactoryPath = match.ArtifactoryPath
 	a.ArtifactoryFeed = match.ArtifactoryFeed
+	a.ArtifactFnPtr = match.FunctionPointer
 	if a.AvailableVersion == "" || (a.DeployedVersion == a.AvailableVersion && !options.ForceDeploy) {
 		return
 	}
