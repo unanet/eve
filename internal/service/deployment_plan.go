@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql/driver"
 	"fmt"
 	"sort"
 	"strconv"
@@ -26,8 +25,8 @@ type DeploymentPlanRepo interface {
 	ServiceArtifacts(ctx context.Context, namespaceIDs []int) (data.RequestArtifacts, error)
 	DatabaseInstanceArtifacts(ctx context.Context, namespaceIDs []int) (data.RequestArtifacts, error)
 	RequestArtifactByEnvironment(ctx context.Context, artifactName string, environmentID int) (*data.RequestArtifact, error)
-	CreateDeploymentTx(ctx context.Context, d *data.Deployment) (driver.Tx, error)
-	UpdateDeploymentMessageIDTx(ctx context.Context, tx driver.Tx, id uuid.UUID, messageID string) error
+	CreateDeployment(ctx context.Context, d *data.Deployment) error
+	UpdateDeploymentMessageID(ctx context.Context, id uuid.UUID, messageID string) error
 }
 
 type VersionQuery interface {
@@ -177,7 +176,7 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 	}
 
 	for _, ns := range namespaceRequests {
-		nsPlanOptions, err := json.StructToJson(&NamespacePlanOptions{
+		nsPlanOptions, marshalErr := json.StructToJson(&NamespacePlanOptions{
 			NamespaceRequest:  ns,
 			ArtifactsSupplied: artifactsSupplied,
 			Artifacts:         options.Artifacts,
@@ -188,8 +187,8 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 			EnvironmentName:   env.Name,
 			Type:              options.Type,
 		})
-		if err != nil {
-			return errors.Wrap(err)
+		if marshalErr != nil {
+			return errors.Wrap(marshalErr)
 		}
 		dataDeployment := data.Deployment{
 			EnvironmentID: env.ID,
@@ -198,9 +197,9 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 			PlanOptions:   nsPlanOptions,
 			User:          options.User,
 		}
-		tx, err := d.repo.CreateDeploymentTx(ctx, &dataDeployment)
-		if err != nil {
-			return errors.WrapTx(tx, err)
+		repoErr := d.repo.CreateDeployment(ctx, &dataDeployment)
+		if repoErr != nil {
+			return errors.Wrap(repoErr)
 		}
 		queueM := queue.M{
 			ID:      dataDeployment.ID,
@@ -208,16 +207,12 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 			ReqID:   middleware.GetReqID(ctx),
 			Command: CommandScheduleDeployment,
 		}
-		if err := d.q.Message(ctx, &queueM); err != nil {
-			return errors.WrapTx(tx, err)
+		if qErr := d.q.Message(ctx, &queueM); qErr != nil {
+			return errors.Wrap(qErr)
 		}
-		err = d.repo.UpdateDeploymentMessageIDTx(ctx, tx, queueM.ID, queueM.MessageID)
-		if err != nil {
-			return errors.WrapTx(tx, err)
-		}
-		err = tx.Commit()
-		if err != nil {
-			return errors.Wrap(err)
+		repoErr = d.repo.UpdateDeploymentMessageID(ctx, queueM.ID, queueM.MessageID)
+		if repoErr != nil {
+			return errors.Wrap(repoErr)
 		}
 	}
 	return nil
@@ -277,6 +272,7 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 		}
 
 		// if this version is already in the list, don't include it again
+		//noinspection GoNilness
 		if artifacts.ContainsVersion(a.Name, version) {
 			continue
 		}

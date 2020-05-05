@@ -3,11 +3,8 @@ package data
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
-	"fmt"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	uuid "github.com/satori/go.uuid"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
@@ -38,13 +35,8 @@ type Deployment struct {
 	UpdatedAt        sql.NullTime    `db:"updated_at"`
 }
 
-func (r *Repo) UpdateDeploymentMessageIDTx(ctx context.Context, tx driver.Tx, id uuid.UUID, messageID string) error {
-	sTx, ok := tx.(*sqlx.Tx)
-	if !ok {
-		return fmt.Errorf("could not cast tx to sqlx.Tx")
-	}
-
-	_, err := sTx.ExecContext(ctx, "update deployment set message_id = $1, updated_at = $2 where id = $3", messageID, time.Now().UTC(), id)
+func (r *Repo) UpdateDeploymentMessageID(ctx context.Context, id uuid.UUID, messageID string) error {
+	_, err := r.db.ExecContext(ctx, "update deployment set message_id = $1, updated_at = $2 where id = $3", messageID, time.Now().UTC(), id)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -102,16 +94,7 @@ func (r *Repo) UpdateDeploymentReceiptHandle(ctx context.Context, id uuid.UUID, 
 	return &deployment, nil
 }
 
-func (r *Repo) CreateDeploymentTx(ctx context.Context, d *Deployment) (driver.Tx, error) {
-	tx, err := r.db.BeginTxx(ctx, &sql.TxOptions{
-		Isolation: 0,
-		ReadOnly:  false,
-	})
-
-	if err != nil {
-		return nil, errors.Wrap(err)
-	}
-
+func (r *Repo) CreateDeployment(ctx context.Context, d *Deployment) error {
 	now := time.Now().UTC()
 	d.CreatedAt = sql.NullTime{
 		Time:  now,
@@ -122,7 +105,7 @@ func (r *Repo) CreateDeploymentTx(ctx context.Context, d *Deployment) (driver.Tx
 		Valid: true,
 	}
 
-	err = tx.QueryRowxContext(ctx, `
+	err := r.db.QueryRowxContext(ctx, `
 	
 	insert into deployment(environment_id, namespace_id, req_id, plan_options, s3_plan_location, s3_result_location, state, "user", created_at, updated_at) 
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -132,8 +115,8 @@ func (r *Repo) CreateDeploymentTx(ctx context.Context, d *Deployment) (driver.Tx
 		Scan(&d.ID)
 
 	if err != nil {
-		return nil, errors.Wrap(err)
+		errors.Wrap(err)
 	}
 
-	return tx, nil
+	return nil
 }
