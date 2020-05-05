@@ -67,6 +67,7 @@ func (r *Repo) DatabaseInstanceArtifacts(ctx context.Context, namespaceIDs []int
 			 	a.id as artifact_id,
 				a.name as artifact_name,
 				a.provider_group as provider_group,
+				a.function_pointer as function_pointer,
 				f.name as feed_name,
 			    a.metadata as artifact_metadata,
 				ds.metadata as server_metadata,
