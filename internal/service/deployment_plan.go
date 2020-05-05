@@ -11,12 +11,14 @@ import (
 	"github.com/go-chi/chi/middleware"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	uuid "github.com/satori/go.uuid"
+	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/eve/pkg/json"
+	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
 )
 
@@ -202,6 +204,7 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 		if err != nil {
 			return errors.WrapTx(tx, err)
 		}
+		log.Logger.Debug("created deploymentID", zap.String("id", dataDeployment.ID.String()))
 		queueM := queue.M{
 			ID:      dataDeployment.ID,
 			GroupID: ns.GetQueueGroupID(),
