@@ -159,6 +159,8 @@ func (dq *DeploymentQueue) setupNSDeploymentPlan(ctx context.Context, options Na
 		SchQueueUrl:     cluster.SchQueueUrl,
 	}
 
+	plan.Namespace.ClusterName = cluster.Name
+
 	if options.DryRun == true {
 		plan.Status = eve.DeploymentPlanStatusDryrun
 	} else {

@@ -10,7 +10,6 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/api"
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
-	"gitlab.unanet.io/devops/eve/pkg/http"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/mux"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
@@ -73,7 +72,7 @@ func main() {
 		Bucket: config.S3Bucket,
 	})
 
-	httpCallBack := http.NewCallback(config.HttpCallbackTimeout)
+	httpCallBack := service.NewCallback(config.HttpCallbackTimeout)
 
 	deploymentQueue := service.NewDeploymentQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, s3Uploader, httpCallBack)
 	deploymentQueue.Start()

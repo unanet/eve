@@ -71,10 +71,11 @@ func (ds DeployMigrations) ToDeploy() DeployMigrations {
 }
 
 type NamespaceRequest struct {
-	ID        int    `json:"id"`
-	Alias     string `json:"alias"`
-	Name      string `json:"name"`
-	ClusterID int    `json:"cluster_id"`
+	ID          int    `json:"id"`
+	Alias       string `json:"alias"`
+	Name        string `json:"name"`
+	ClusterID   int    `json:"cluster_id"`
+	ClusterName string `json:"cluster_name"`
 }
 
 func (ns *NamespaceRequest) GetQueueGroupID() string {
