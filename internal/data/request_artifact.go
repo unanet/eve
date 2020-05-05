@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
@@ -9,14 +10,14 @@ import (
 )
 
 type RequestArtifact struct {
-	ArtifactID       int       `db:"artifact_id"`
-	ArtifactName     string    `db:"artifact_name"`
-	ProviderGroup    string    `db:"provider_group"`
-	FeedName         string    `db:"feed_name"`
-	FunctionPointer  string    `db:"function_pointer"`
-	ArtifactMetadata json.Text `db:"artifact_metadata"`
-	ServerMetadata   json.Text `db:"server_metadata"`
-	RequestedVersion string    `db:"requested_version"`
+	ArtifactID       int            `db:"artifact_id"`
+	ArtifactName     string         `db:"artifact_name"`
+	ProviderGroup    string         `db:"provider_group"`
+	FeedName         string         `db:"feed_name"`
+	FunctionPointer  sql.NullString `db:"function_pointer"`
+	ArtifactMetadata json.Text      `db:"artifact_metadata"`
+	ServerMetadata   json.Text      `db:"server_metadata"`
+	RequestedVersion string         `db:"requested_version"`
 }
 
 func (ra *RequestArtifact) Path() string {

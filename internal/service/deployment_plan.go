@@ -233,7 +233,7 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 			x.ArtifactoryFeed = ra.FeedName
 			x.ArtifactoryPath = ra.Path()
 			x.ID = ra.ArtifactID
-			x.FunctionPointer = ra.FunctionPointer
+			x.FunctionPointer = ra.FunctionPointer.String
 		}
 	} else {
 		// If no services were supplied, we get all services for the supplied namespaces
@@ -254,7 +254,7 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 				RequestedVersion: x.RequestedVersion,
 				ArtifactoryFeed:  x.FeedName,
 				ArtifactoryPath:  x.Path(),
-				FunctionPointer:  x.FunctionPointer,
+				FunctionPointer:  x.FunctionPointer.String,
 			})
 		}
 	}
