@@ -309,7 +309,7 @@ func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) err
 	}
 
 	for _, x := range plan.Services {
-		if x.Result != eve.DeployArtifactResultSucceeded {
+		if x.Result != eve.DeployArtifactResultSuccess {
 			continue
 		}
 
@@ -320,7 +320,7 @@ func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) err
 	}
 
 	for _, x := range plan.Migrations {
-		if x.Result != eve.DeployArtifactResultSucceeded {
+		if x.Result != eve.DeployArtifactResultSuccess {
 			continue
 		}
 

@@ -10,17 +10,17 @@ import (
 type DeployArtifactResult string
 
 const (
-	DeployArtifactResultNoop      DeployArtifactResult = "noop"
-	DeployArtifactResultSucceeded DeployArtifactResult = "succeeded"
-	DeployArtifactResultFailed    DeployArtifactResult = "failed"
+	DeployArtifactResultNoop    DeployArtifactResult = "noop"
+	DeployArtifactResultSuccess DeployArtifactResult = "success"
+	DeployArtifactResultFailed  DeployArtifactResult = "failed"
 )
 
 func ParseDeployArtifactResult(value string) DeployArtifactResult {
 	switch strings.ToLower(value) {
 	case "noop":
 		return DeployArtifactResultNoop
-	case "succeeded":
-		return DeployArtifactResultSucceeded
+	case "success":
+		return DeployArtifactResultSuccess
 	case "failed":
 		return DeployArtifactResultFailed
 	default:
