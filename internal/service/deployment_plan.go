@@ -48,6 +48,7 @@ type ArtifactDefinition struct {
 	ArtifactoryFeed  string `json:"artifactory_feed"`
 	ArtifactoryPath  string `json:"artifactory_path"`
 	FunctionPointer  string `json:"function_pointer"`
+	FeedType         string `json:"feed_type"`
 	Matched          bool   `json:"-"`
 }
 
@@ -234,6 +235,7 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 			x.ArtifactoryPath = ra.Path()
 			x.ID = ra.ArtifactID
 			x.FunctionPointer = ra.FunctionPointer.String
+			x.FeedType = ra.FeedType
 		}
 	} else {
 		// If no services were supplied, we get all services for the supplied namespaces
@@ -255,6 +257,7 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 				ArtifactoryFeed:  x.FeedName,
 				ArtifactoryPath:  x.Path(),
 				FunctionPointer:  x.FunctionPointer.String,
+				FeedType:         x.FeedType,
 			})
 		}
 	}

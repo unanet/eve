@@ -10,6 +10,10 @@ import (
 type DeployArtifactResult string
 
 const (
+	ArtifactoryFeedType = "docker"
+)
+
+const (
 	DeployArtifactResultNoop    DeployArtifactResult = "noop"
 	DeployArtifactResultSuccess DeployArtifactResult = "success"
 	DeployArtifactResultFailed  DeployArtifactResult = "failed"
@@ -38,17 +42,18 @@ const (
 )
 
 type DeployArtifact struct {
-	ArtifactID       int                    `json:"artifact_id"`
-	ArtifactName     string                 `json:"artifact_name"`
-	RequestedVersion string                 `json:"requested_version"`
-	DeployedVersion  string                 `json:"deployed_version"`
-	AvailableVersion string                 `json:"available_version"`
-	Metadata         map[string]interface{} `json:"metadata"`
-	ArtifactoryFeed  string                 `json:"artifactory_feed"`
-	ArtifactoryPath  string                 `json:"artifactory_path"`
-	ArtifactFnPtr    string                 `json:"artifact_fn"`
-	Result           DeployArtifactResult   `json:"result"`
-	Deploy           bool                   `json:"-"`
+	ArtifactID          int                    `json:"artifact_id"`
+	ArtifactName        string                 `json:"artifact_name"`
+	RequestedVersion    string                 `json:"requested_version"`
+	DeployedVersion     string                 `json:"deployed_version"`
+	AvailableVersion    string                 `json:"available_version"`
+	Metadata            map[string]interface{} `json:"metadata"`
+	ArtifactoryFeed     string                 `json:"artifactory_feed"`
+	ArtifactoryPath     string                 `json:"artifactory_path"`
+	ArtifactFnPtr       string                 `json:"artifact_fn"`
+	ArtifactoryFeedType string                 `json:"artifactory_feed_type"`
+	Result              DeployArtifactResult   `json:"result"`
+	Deploy              bool                   `json:"-"`
 }
 
 type DeployService struct {

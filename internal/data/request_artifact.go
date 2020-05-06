@@ -14,6 +14,7 @@ type RequestArtifact struct {
 	ArtifactName     string         `db:"artifact_name"`
 	ProviderGroup    string         `db:"provider_group"`
 	FeedName         string         `db:"feed_name"`
+	FeedType         string         `db:"feed_type"`
 	FunctionPointer  sql.NullString `db:"function_pointer"`
 	ArtifactMetadata json.Text      `db:"artifact_metadata"`
 	ServerMetadata   json.Text      `db:"server_metadata"`
@@ -33,6 +34,7 @@ func (r *Repo) RequestArtifactByEnvironment(ctx context.Context, artifactName st
 		select a.id as artifact_id,
 		       a.name as artifact_name,
 		       a.function_pointer as function_pointer,
+		       a.feed_type as feed_type,
 		       a.provider_group as provider_group,
 		       f.name as feed_name
 		from artifact as a

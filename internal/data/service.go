@@ -79,6 +79,7 @@ func (r *Repo) ServiceArtifacts(ctx context.Context, namespaceIDs []int) (Reques
 		                a.metadata as artifact_metadata,
 		                a.name as artifact_name, 
 		                a.provider_group as provider_group,
+		                a.feed_type as feed_type,
 		                f.name as feed_name,
 		                COALESCE(s.override_version, ns.requested_version) as requested_version 
 		from service as s 
