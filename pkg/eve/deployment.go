@@ -124,6 +124,38 @@ func (ns *NSDeploymentPlan) GroupID() string {
 	return ns.Namespace.Name
 }
 
+func (ns *NSDeploymentPlan) NoopExist() bool {
+	for _, x := range ns.Services {
+		if x.Result == DeployArtifactResultNoop {
+			return true
+		}
+	}
+
+	for _, x := range ns.Migrations {
+		if x.Result == DeployArtifactResultNoop {
+			return true
+		}
+	}
+
+	return true
+}
+
+func (ns *NSDeploymentPlan) Failed() bool {
+	for _, x := range ns.Services {
+		if x.Result == DeployArtifactResultFailed {
+			return true
+		}
+	}
+
+	for _, x := range ns.Migrations {
+		if x.Result == DeployArtifactResultFailed {
+			return true
+		}
+	}
+
+	return true
+}
+
 func (ns *NSDeploymentPlan) Message(format string, a ...interface{}) {
 	ns.Messages = append(ns.Messages, fmt.Sprintf(format, a...))
 }
