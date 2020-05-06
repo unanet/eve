@@ -39,7 +39,6 @@ func (r *Repo) DeployedDatabaseInstancesByNamespaceID(ctx context.Context, names
 			COALESCE(di.migration_override_version, ns.requested_version) as requested_version
 		from database_instance as di 
 		    left join database_server ds on di.database_server_id = ds.id
-		    left join customer c on di.customer_id = c.id
 			left join database_type dt on di.database_type_id = dt.id
 		    left join artifact a on dt.migration_artifact_id = a.id
 		    left join namespace ns on di.namespace_id = ns.id

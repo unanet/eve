@@ -186,8 +186,7 @@ CREATE UNIQUE INDEX database_server_name_uindex ON database_server USING btree (
 CREATE TABLE database_type (
     id integer NOT NULL,
     name character varying(50),
-    migration_artifact_id integer,
-    customer_specific boolean DEFAULT false NOT NULL
+    migration_artifact_id integer
 );
 ALTER TABLE ONLY database_type ADD CONSTRAINT database_type_pk PRIMARY KEY (id);
 CREATE UNIQUE INDEX database_type_name_uindex ON database_type USING btree (name);
@@ -198,7 +197,6 @@ CREATE TABLE database_instance (
     name character varying(50),
     database_type_id integer NOT NULL,
     database_server_id integer NOT NULL,
-    customer_id integer,
     namespace_id integer NOT NULL,
     migration_override_version character varying(50),
     migration_deployed_version character varying(50),
@@ -281,20 +279,22 @@ INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 7);
 INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 8);
 
 /* ================== CLEARVIEW APPS ================== */
-INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer) VALUES (101, 'infocus-reports', 'generic', 'clearview', 'https://cv-cloud-ops.azurewebsites.net/api/sites/reports/create?code=t53fcHpiz/vFgusYI89ByflzmA/h8o8d61I95UfWo0I9spFXW5tMfw==');
-INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (102, 'infocus-cloud-client', 'docker', 'clearview');
-INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (103, 'infocus-documents', 'docker', 'clearview');
-INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (104, 'infocus-proxy', 'docker', 'clearview');
-INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (105, 'infocus-web', 'docker', 'clearview');
-INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (106, 'infocus-windows', 'generic', 'clearview');
-INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (107, 'cvs-migrations', 'docker', 'clearview');
-INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer) VALUES (108, 'support', 'generic', 'clearview', 'https://cv-cloud-ops.azurewebsites.net/api/sites/support/create?code=t53fcHpiz/vFgusYI89ByflzmA/h8o8d61I95UfWo0I9spFXW5tMfw==');
+INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer) VALUES (101, 'infocus-reports', 'generic', 'clearview', 'https://cv-cloud-ops.azurewebsites.net/api/sites/reports/create');
+INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer) VALUES (102, 'support', 'generic', 'clearview', 'https://cv-cloud-ops.azurewebsites.net/api/sites/support/create');
+INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (103, 'infocus-cloud-client', 'docker', 'clearview');
+INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (104, 'infocus-documents', 'docker', 'clearview');
+INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (105, 'infocus-proxy', 'docker', 'clearview');
+INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (106, 'infocus-web', 'docker', 'clearview');
+INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (107, 'infocus-windows', 'generic', 'clearview');
+
+INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (185, 'cvs-migrations', 'docker', 'clearview');
 
 /* ================== UNANET APPS ================== */
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (201, 'unanet', 'docker', 'unanet');
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (202, 'platform', 'docker', 'unanet');
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (203, 'exago', 'docker', 'unanet');
-INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (204, 'sql-migration-scripts', 'docker', 'unanet');
+
+INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (285, 'sql-migration-scripts', 'docker', 'unanet');
 
 INSERT INTO cluster(id, name, provider_group, sch_queue_url) VALUES (1, 'cvs-nonprod-zxrjdqr67u', 'clearview', 'https://sqs.us-east-2.amazonaws.com/580107804399/cvs-nonprod-zxrjdqr67u.fifo');
 
@@ -314,7 +314,7 @@ INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_ve
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (4, 1, 104, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (5, 1, 105, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (6, 1, 106, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (37, 1, 108, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (37, 1, 107, NULL, NULL);
 
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (7, 2, 101, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (8, 2, 102, NULL, NULL);
@@ -322,7 +322,7 @@ INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_ve
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (10, 2, 104, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (11, 2, 105, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (12, 2, 106, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (38, 2, 108, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (38, 2, 107, NULL, NULL);
 
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (13, 3, 101, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (14, 3, 102, NULL, NULL);
@@ -330,7 +330,7 @@ INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_ve
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (16, 3, 104, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (17, 3, 105, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (18, 3, 106, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (39, 3, 108, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (39, 3, 107, NULL, NULL);
 
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (19, 4, 101, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (20, 4, 102, NULL, NULL);
@@ -338,7 +338,7 @@ INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_ve
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (22, 4, 104, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (23, 4, 105, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (24, 4, 106, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (40, 4, 108, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (40, 4, 107, NULL, NULL);
 
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (25, 5, 101, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (26, 5, 102, NULL, NULL);
@@ -346,7 +346,7 @@ INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_ve
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (28, 5, 104, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (29, 5, 105, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (30, 5, 106, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (41, 5, 108, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (41, 5, 107, NULL, NULL);
 
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (31, 6, 101, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (32, 6, 102, NULL, NULL);
@@ -354,7 +354,7 @@ INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_ve
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (34, 6, 104, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (35, 6, 105, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (36, 6, 106, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (42, 6, 108, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (42, 6, 107, NULL, NULL);
 
 SELECT pg_catalog.setval('service_id_seq', 36, true);
 
@@ -389,91 +389,42 @@ INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (6, 2);
 INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (6, 3);
 INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (6, 4);
 
-INSERT INTO database_type(id, name, migration_artifact_id, customer_specific) VALUES (101, 'cvs-infocus', 107, true);
-INSERT INTO database_type(id, name, migration_artifact_id, customer_specific) VALUES (102, 'cvs-support', NULL, false);
-INSERT INTO database_type(id, name, migration_artifact_id, customer_specific) VALUES (103, 'cvs-cloud', NULL, false);
+INSERT INTO database_type(id, name, migration_artifact_id) VALUES (101, 'cvs-cloud', 185);
+INSERT INTO database_type(id, name, migration_artifact_id) VALUES (102, 'cvs-support', NULL);
 
 INSERT INTO database_server(id, name) VALUES (101, 'cvs-nonprod-01');
 
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(1, 'cvs-int-infocus-dev', 101, 101, 1, 1, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(2, 'cvs-int-infocus-casco', 101, 101, 2, 1, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(3, 'cvs-int-infocus-auto', 101, 101, 3, 1, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(4, 'cvs-int-infocus-duke', 101, 101, 4, 1, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(5, 'cvs-int-support', 102, 101, NULL, 1, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(6, 'cvs-int-cloud', 103, 101, NULL, 1, NULL, NULL);
+INSERT INTO database_instance(id, name, database_type_id, database_server_id, namespace_id, migration_override_version, migration_deployed_version)
+    VALUES(1, 'cvs-int-cloud', 101, 101, 1, NULL, NULL);
+INSERT INTO database_instance(id, name, database_type_id, database_server_id, namespace_id, migration_override_version, migration_deployed_version)
+    VALUES(2, 'cvs-int-support', 102, 101, 1, NULL, NULL);
 
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(7, 'cvs-prev-int-infocus-dev', 101, 101, 1, 2, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(8, 'cvs-prev-int-infocus-casco', 101, 101, 2, 2, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(9, 'cvs-prev-int-infocus-auto', 101, 101, 3, 2, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(10, 'cvs-prev-int-infocus-duke', 101, 101, 4, 2, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(11, 'cvs-prev-int-support', 102, 101, NULL, 2, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(12, 'cvs-prev-int-cloud', 103, 101, NULL, 2, NULL, NULL);
+INSERT INTO database_instance(id, name, database_type_id, database_server_id, namespace_id, migration_override_version, migration_deployed_version)
+    VALUES(3, 'cvs-prev-int-cloud', 101, 101, 2, NULL, NULL);
+INSERT INTO database_instance(id, name, database_type_id, database_server_id, namespace_id, migration_override_version, migration_deployed_version)
+    VALUES(4, 'cvs-prev-int-support', 102, 101, 2, NULL, NULL);
 
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(13, 'cvs-next-int-infocus-dev', 101, 101, 1, 3, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(14, 'cvs-next-int-infocus-casco', 101, 101, 2, 3, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(15, 'cvs-next-int-infocus-auto', 101, 101, 3, 3, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(16, 'cvs-next-int-infocus-duke', 101, 101, 4, 3, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(17, 'cvs-next-int-support', 102, 101, NULL, 3, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(18, 'cvs-next-int-cloud', 103, 101, NULL, 3, NULL, NULL);
+INSERT INTO database_instance(id, name, database_type_id, database_server_id, namespace_id, migration_override_version, migration_deployed_version)
+    VALUES(5, 'cvs-next-int-cloud', 101, 101, 3, NULL, NULL);
+INSERT INTO database_instance(id, name, database_type_id, database_server_id, namespace_id, migration_override_version, migration_deployed_version)
+    VALUES(6, 'cvs-next-int-support', 102, 101, 3, NULL, NULL);
 
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(19, 'cvs-qa-infocus-dev', 101, 101, 1, 4, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(20, 'cvs-qa-infocus-casco', 101, 101, 2, 4, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(21, 'cvs-qa-infocus-auto', 101, 101, 3, 4, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(22, 'cvs-qa-infocus-duke', 101, 101, 4, 4, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(23, 'cvs-qa-support', 102, 101, NULL, 4, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(24, 'cvs-qa-cloud', 103, 101, NULL, 4, NULL, NULL);
+INSERT INTO database_instance(id, name, database_type_id, database_server_id, namespace_id, migration_override_version, migration_deployed_version)
+    VALUES(7, 'cvs-qa-cloud', 101, 101, 4, NULL, NULL);
+INSERT INTO database_instance(id, name, database_type_id, database_server_id, namespace_id, migration_override_version, migration_deployed_version)
+    VALUES(8, 'cvs-qa-support', 102, 101, 4, NULL, NULL);
 
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(25, 'cvs-prev-qa-infocus-dev', 101, 101, 1, 5, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(26, 'cvs-prev-qa-infocus-casco', 101, 101, 2, 5, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(27, 'cvs-prev-qa-infocus-auto', 101, 101, 3, 5, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(28, 'cvs-prev-qa-infocus-duke', 101, 101, 4, 5, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(29, 'cvs-prev-qa-support', 102, 101, NULL, 5, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(30, 'cvs-prev-qa-cloud', 103, 101, NULL, 5, NULL, NULL);
+INSERT INTO database_instance(id, name, database_type_id, database_server_id, namespace_id, migration_override_version, migration_deployed_version)
+    VALUES(9, 'cvs-prev-qa-cloud', 101, 101, 5, NULL, NULL);
+INSERT INTO database_instance(id, name, database_type_id, database_server_id, namespace_id, migration_override_version, migration_deployed_version)
+    VALUES(10, 'cvs-prev-qa-support', 102, 101, 5, NULL, NULL);
 
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(31, 'cvs-next-qa-infocus-dev', 101, 101, 1, 6, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(32, 'cvs-next-qa-infocus-casco', 101, 101, 2, 6, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(33, 'cvs-next-qa-infocus-auto', 101, 101, 3, 6, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(34, 'cvs-next-qa-infocus-duke', 101, 101, 4, 6, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(35, 'cvs-next-qa-support', 102, 101, NULL, 6, NULL, NULL);
-INSERT INTO database_instance(id, name, database_type_id, database_server_id, customer_id, namespace_id, migration_override_version, migration_deployed_version)
-    VALUES(36, 'cvs-next-qa-cloud', 103, 101, NULL, 6, NULL, NULL);
+INSERT INTO database_instance(id, name, database_type_id, database_server_id, namespace_id, migration_override_version, migration_deployed_version)
+    VALUES(11, 'cvs-next-qa-cloud', 101, 101, 6, NULL, NULL);
+INSERT INTO database_instance(id, name, database_type_id, database_server_id, namespace_id, migration_override_version, migration_deployed_version)
+    VALUES(12, 'cvs-next-qa-support', 102, 101, 6, NULL, NULL);
 
-SELECT pg_catalog.setval('database_instance_id_seq', 36, true);
+SELECT pg_catalog.setval('database_instance_id_seq', 12, true);
 
 /* ====================================== END SEED DATA ============================================= */
 
@@ -482,8 +433,6 @@ SELECT pg_catalog.setval('automation_job_id_seq', 1, false);
 ALTER TABLE ONLY database_type
     ADD CONSTRAINT database_type_migration_artifact_id_fk FOREIGN KEY (migration_artifact_id) REFERENCES artifact(id);
 
-ALTER TABLE ONLY database_instance
-    ADD CONSTRAINT database_instance_customer_id_fk FOREIGN KEY (customer_id) REFERENCES customer(id);
 ALTER TABLE ONLY database_instance
     ADD CONSTRAINT database_instance_namespace_id_fk FOREIGN KEY (namespace_id) REFERENCES namespace(id);
 ALTER TABLE ONLY database_instance
