@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
@@ -13,7 +12,6 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	json2 "gitlab.unanet.io/devops/eve/pkg/json"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
-	"gitlab.unanet.io/devops/eve/pkg/s3"
 )
 
 type DeploymentQueueRepo interface {
@@ -23,10 +21,8 @@ type DeploymentQueueRepo interface {
 	UpdateDeploymentS3PlanLocation(ctx context.Context, id uuid.UUID, location json2.Text) error
 	UpdateDeploymentS3ResultLocation(ctx context.Context, id uuid.UUID, location json2.Text) (*data.Deployment, error)
 	ClusterByID(ctx context.Context, id int) (*data.Cluster, error)
-}
-
-type CloudUploader interface {
-	Upload(ctx context.Context, key string, body []byte) (*s3.Location, error)
+	UpdateDeployedServiceVersion(ctx context.Context, id int, version string) error
+	UpdateDeployedMigrationVersion(ctx context.Context, id int, version string) error
 }
 
 // API Queue Commands
@@ -91,22 +87,25 @@ func fromDataDatabaseInstances(d data.DatabaseInstances) eve.DeployMigrations {
 type messageLogger func(format string, a ...interface{})
 
 type DeploymentQueue struct {
-	worker   QueueWorker
-	repo     DeploymentQueueRepo
-	uploader CloudUploader
-	callback HttpCallback
+	worker     QueueWorker
+	repo       DeploymentQueueRepo
+	uploader   eve.CloudUploader
+	callback   HttpCallback
+	downloader eve.CloudDownloader
 }
 
 func NewDeploymentQueue(
 	worker QueueWorker,
 	repo DeploymentQueueRepo,
-	uploader CloudUploader,
+	uploader eve.CloudUploader,
+	downloader eve.CloudDownloader,
 	httpCallBack HttpCallback) *DeploymentQueue {
 	return &DeploymentQueue{
-		worker:   worker,
-		repo:     repo,
-		uploader: uploader,
-		callback: httpCallBack,
+		worker:     worker,
+		repo:       repo,
+		uploader:   uploader,
+		downloader: downloader,
+		callback:   httpCallBack,
 	}
 }
 
@@ -147,7 +146,7 @@ func (dq *DeploymentQueue) matchArtifact(a *eve.DeployArtifact, options Namespac
 	a.Deploy = true
 }
 
-func (dq *DeploymentQueue) setupNSDeploymentPlan(ctx context.Context, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
+func (dq *DeploymentQueue) setupNSDeploymentPlan(ctx context.Context, deploymentID uuid.UUID, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
 	cluster, err := dq.repo.ClusterByID(ctx, options.NamespaceRequest.ClusterID)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -157,6 +156,7 @@ func (dq *DeploymentQueue) setupNSDeploymentPlan(ctx context.Context, options Na
 		EnvironmentName: options.EnvironmentName,
 		CallbackUrl:     options.CallbackURL,
 		SchQueueUrl:     cluster.SchQueueUrl,
+		DeploymentID:    deploymentID,
 	}
 
 	plan.Namespace.ClusterName = cluster.Name
@@ -170,8 +170,8 @@ func (dq *DeploymentQueue) setupNSDeploymentPlan(ctx context.Context, options Na
 	return &plan, nil
 }
 
-func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
-	nSDeploymentPlan, err := dq.setupNSDeploymentPlan(ctx, options)
+func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, deploymentID uuid.UUID, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
+	nSDeploymentPlan, err := dq.setupNSDeploymentPlan(ctx, deploymentID, options)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
@@ -193,8 +193,8 @@ func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, options
 	return nSDeploymentPlan, nil
 }
 
-func (dq *DeploymentQueue) createMigrationsDeployment(ctx context.Context, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
-	nSDeploymentPlan, err := dq.setupNSDeploymentPlan(ctx, options)
+func (dq *DeploymentQueue) createMigrationsDeployment(ctx context.Context, deploymentID uuid.UUID, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
+	nSDeploymentPlan, err := dq.setupNSDeploymentPlan(ctx, deploymentID, options)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
@@ -238,15 +238,10 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 
 	var nsDeploymentPlan *eve.NSDeploymentPlan
 	if options.Type == DeploymentPlanTypeApplication {
-		nsDeploymentPlan, err = dq.createServicesDeployment(ctx, options)
+		nsDeploymentPlan, err = dq.createServicesDeployment(ctx, deployment.ID, options)
 	} else {
-		nsDeploymentPlan, err = dq.createMigrationsDeployment(ctx, options)
+		nsDeploymentPlan, err = dq.createMigrationsDeployment(ctx, deployment.ID, options)
 	}
-	if err != nil {
-		return dq.rollbackError(ctx, m, err)
-	}
-
-	nsDeploymentPlanText, err := json2.StructToJson(nsDeploymentPlan)
 	if err != nil {
 		return dq.rollbackError(ctx, m, err)
 	}
@@ -266,28 +261,20 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 		return nil
 	}
 
-	location, err := dq.uploader.Upload(ctx, fmt.Sprintf("%s-plan", deployment.ID), nsDeploymentPlanText)
-	if err != nil {
-		return dq.rollbackError(ctx, m, err)
-	}
-
-	locationJson, err := json2.StructToJson(&location)
-	if err != nil {
-		return dq.rollbackError(ctx, m, err)
-	}
+	mBody, err := eve.MarshalNSDeploymentPlanToS3LocationBody(ctx, dq.uploader, nsDeploymentPlan)
 
 	err = dq.worker.Message(ctx, nsDeploymentPlan.SchQueueUrl, &queue.M{
 		ID:      deployment.ID,
 		ReqID:   queue.GetReqID(ctx),
 		GroupID: nsDeploymentPlan.GroupID(),
-		Body:    locationJson,
+		Body:    mBody,
 		Command: CommandDeployNamespace,
 	})
 	if err != nil {
 		return dq.rollbackError(ctx, m, err)
 	}
 
-	err = dq.repo.UpdateDeploymentS3PlanLocation(ctx, deployment.ID, locationJson)
+	err = dq.repo.UpdateDeploymentS3PlanLocation(ctx, deployment.ID, mBody)
 	if err != nil {
 		return dq.rollbackError(ctx, m, err)
 	}
@@ -316,7 +303,32 @@ func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) err
 		return errors.Wrap(err)
 	}
 
-	// TODO: Update successful deployed db values in the database.
+	nsDeploymentPlan, err := eve.UnMarshalNSDeploymentFromS3LocationBody(ctx, dq.downloader, m.Body)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	for _, x := range nsDeploymentPlan.Services {
+		if x.Result != eve.DeployArtifactResultSucceeded {
+			continue
+		}
+
+		err = dq.repo.UpdateDeployedServiceVersion(ctx, x.ServiceID, x.RequestedVersion)
+		if err != nil {
+			return errors.Wrap(err)
+		}
+	}
+
+	for _, x := range nsDeploymentPlan.Migrations {
+		if x.Result != eve.DeployArtifactResultSucceeded {
+			continue
+		}
+
+		err = dq.repo.UpdateDeployedMigrationVersion(ctx, x.DatabaseID, x.RequestedVersion)
+		if err != nil {
+			return errors.Wrap(err)
+		}
+	}
 
 	// Here we are deleting the original deploy message which unblocks deployments for a namespace in an environment
 	// We will need to add some additional logic to this to account for certain scenarios where we should

@@ -392,7 +392,7 @@ INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (6, 4);
 INSERT INTO database_type(id, name, migration_artifact_id) VALUES (101, 'cvs-cloud', 185);
 INSERT INTO database_type(id, name, migration_artifact_id) VALUES (102, 'cvs-support', NULL);
 
-INSERT INTO database_server(id, name) VALUES (101, 'cvs-nonprod-01');
+INSERT INTO database_server(id, name) VALUES (101, 'cvs-nonprod-zxrjdqr67u');
 
 INSERT INTO database_instance(id, name, database_type_id, database_server_id, namespace_id, migration_override_version, migration_deployed_version)
     VALUES(1, 'cvs-int-cloud', 101, 101, 1, NULL, NULL);

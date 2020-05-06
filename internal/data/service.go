@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
@@ -22,6 +23,14 @@ type Service struct {
 }
 
 type Services []Service
+
+func (r *Repo) UpdateDeployedServiceVersion(ctx context.Context, id int, version string) error {
+	_, err := r.db.ExecContext(ctx, "update service set deployed_version = $1, updated_at = $2 where id = $3", version, time.Now().UTC(), id)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
 
 func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID int) (Services, error) {
 	rows, err := r.db.QueryxContext(ctx, `

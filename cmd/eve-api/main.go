@@ -72,9 +72,11 @@ func main() {
 		Bucket: config.S3Bucket,
 	})
 
+	s3Downloader := s3.NewDownloader(awsSession)
+
 	httpCallBack := service.NewCallback(config.HttpCallbackTimeout)
 
-	deploymentQueue := service.NewDeploymentQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, s3Uploader, httpCallBack)
+	deploymentQueue := service.NewDeploymentQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, s3Uploader, s3Downloader, httpCallBack)
 	deploymentQueue.Start()
 
 	api.Start(func() {

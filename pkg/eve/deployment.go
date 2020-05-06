@@ -2,6 +2,9 @@ package eve
 
 import (
 	"fmt"
+	"strings"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 type DeployArtifactResult string
@@ -11,6 +14,19 @@ const (
 	DeployArtifactResultSucceeded DeployArtifactResult = "succeeded"
 	DeployArtifactResultFailed    DeployArtifactResult = "failed"
 )
+
+func ParseDeployArtifactResult(value string) DeployArtifactResult {
+	switch strings.ToLower(value) {
+	case "noop":
+		return DeployArtifactResultNoop
+	case "succeeded":
+		return DeployArtifactResultSucceeded
+	case "failed":
+		return DeployArtifactResultFailed
+	default:
+		return DeployArtifactResultNoop
+	}
+}
 
 type DeploymentPlanStatus string
 
@@ -93,6 +109,7 @@ func (n NamespaceRequests) ToIDs() []int {
 }
 
 type NSDeploymentPlan struct {
+	DeploymentID    uuid.UUID            `json:"deploymend_id"`
 	Namespace       *NamespaceRequest    `json:"namespace"`
 	EnvironmentName string               `json:"environment_name"`
 	Services        DeployServices       `json:"services,omitempty"`

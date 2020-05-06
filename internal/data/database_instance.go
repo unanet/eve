@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -24,6 +25,14 @@ type DatabaseInstance struct {
 }
 
 type DatabaseInstances []DatabaseInstance
+
+func (r *Repo) UpdateDeployedMigrationVersion(ctx context.Context, id int, version string) error {
+	_, err := r.db.ExecContext(ctx, "update database_instance set migration_deployed_version = $1, updated_at = $2 where id = $3", version, time.Now().UTC(), id)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
 
 func (r *Repo) DeployedDatabaseInstancesByNamespaceID(ctx context.Context, namespaceID int) (DatabaseInstances, error) {
 	rows, err := r.db.QueryxContext(ctx, `
