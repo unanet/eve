@@ -10,7 +10,7 @@ import (
 type DeployArtifactResult string
 
 const (
-	ArtifactoryFeedType = "docker"
+	ArtifactoryFeedTypeDocker = "docker"
 )
 
 const (
