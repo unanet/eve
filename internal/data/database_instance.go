@@ -38,7 +38,7 @@ func (r *Repo) UpdateDeployedMigrationVersion(ctx context.Context, id int, versi
 	}
 
 	if affected == 0 {
-		return errors.Wrapf("the following id: %s was not found to update in database_instance table", id)
+		return errors.Wrapf("the following id: %d was not found to update in database_instance table", id)
 	}
 	return nil
 }

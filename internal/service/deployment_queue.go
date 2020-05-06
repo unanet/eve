@@ -354,12 +354,5 @@ func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) err
 		return errors.Wrap(err)
 	}
 
-	//if len(options.CallbackURL) > 0 {
-	//	err := dq.callback.Post(ctx, options.CallbackURL)
-	//	if err != nil {
-	//		dq.Logger(ctx).Warn("callback failed", zap.String("callback_url", options.CallbackURL))
-	//	}
-	//}
-
 	return nil
 }

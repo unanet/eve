@@ -36,7 +36,7 @@ func (r *Repo) UpdateDeployedServiceVersion(ctx context.Context, id int, version
 	}
 
 	if affected == 0 {
-		return errors.Wrapf("the following id: %s was not found to update in service table", id)
+		return errors.Wrapf("the following id: %d was not found to update in service table", id)
 	}
 	return nil
 }
