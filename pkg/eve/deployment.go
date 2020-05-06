@@ -137,7 +137,7 @@ func (ns *NSDeploymentPlan) NoopExist() bool {
 		}
 	}
 
-	return true
+	return false
 }
 
 func (ns *NSDeploymentPlan) Failed() bool {
@@ -153,7 +153,7 @@ func (ns *NSDeploymentPlan) Failed() bool {
 		}
 	}
 
-	return true
+	return false
 }
 
 func (ns *NSDeploymentPlan) Message(format string, a ...interface{}) {
