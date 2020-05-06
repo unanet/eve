@@ -73,7 +73,7 @@ func (r *Repo) UpdateDeploymentResult(ctx context.Context, id uuid.UUID) (*Deplo
 	var deployment Deployment
 
 	row := r.db.QueryRowxContext(ctx, `
-		update deployment set state = $1, updated_at = $2 where id = $4
+		update deployment set state = $1, updated_at = $2 where id = $3
 		returning *
 		`, DeploymentStateCompleted, time.Now().UTC(), id)
 
