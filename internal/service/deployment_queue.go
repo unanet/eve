@@ -313,7 +313,7 @@ func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) err
 			continue
 		}
 
-		err = dq.repo.UpdateDeployedServiceVersion(ctx, x.ServiceID, x.RequestedVersion)
+		err = dq.repo.UpdateDeployedServiceVersion(ctx, x.ServiceID, x.AvailableVersion)
 		if err != nil {
 			return errors.Wrap(err)
 		}
@@ -324,7 +324,7 @@ func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) err
 			continue
 		}
 
-		err = dq.repo.UpdateDeployedMigrationVersion(ctx, x.DatabaseID, x.RequestedVersion)
+		err = dq.repo.UpdateDeployedMigrationVersion(ctx, x.DatabaseID, x.AvailableVersion)
 		if err != nil {
 			return errors.Wrap(err)
 		}
