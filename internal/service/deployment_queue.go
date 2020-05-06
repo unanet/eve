@@ -154,7 +154,7 @@ func (dq *DeploymentQueue) setupNSDeploymentPlan(ctx context.Context, deployment
 	plan := eve.NSDeploymentPlan{
 		Namespace:       options.NamespaceRequest,
 		EnvironmentName: options.EnvironmentName,
-		CallbackUrl:     options.CallbackURL,
+		CallbackURL:     options.CallbackURL,
 		SchQueueUrl:     cluster.SchQueueUrl,
 		DeploymentID:    deploymentID,
 	}
@@ -303,12 +303,12 @@ func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) err
 		return errors.Wrap(err)
 	}
 
-	nsDeploymentPlan, err := eve.UnMarshalNSDeploymentFromS3LocationBody(ctx, dq.downloader, m.Body)
+	plan, err := eve.UnMarshalNSDeploymentFromS3LocationBody(ctx, dq.downloader, m.Body)
 	if err != nil {
 		return errors.Wrap(err)
 	}
 
-	for _, x := range nsDeploymentPlan.Services {
+	for _, x := range plan.Services {
 		if x.Result != eve.DeployArtifactResultSucceeded {
 			continue
 		}
@@ -319,7 +319,7 @@ func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) err
 		}
 	}
 
-	for _, x := range nsDeploymentPlan.Migrations {
+	for _, x := range plan.Migrations {
 		if x.Result != eve.DeployArtifactResultSucceeded {
 			continue
 		}
@@ -327,6 +327,13 @@ func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) err
 		err = dq.repo.UpdateDeployedMigrationVersion(ctx, x.DatabaseID, x.RequestedVersion)
 		if err != nil {
 			return errors.Wrap(err)
+		}
+	}
+
+	if len(plan.CallbackURL) > 0 {
+		err := dq.callback.Post(ctx, plan.CallbackURL, plan)
+		if err != nil {
+			dq.Logger(ctx).Warn("callback failed", zap.String("callback_url", plan.CallbackURL))
 		}
 	}
 

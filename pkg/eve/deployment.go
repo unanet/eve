@@ -116,7 +116,7 @@ type NSDeploymentPlan struct {
 	Migrations      DeployMigrations     `json:"migrations,omitempty"`
 	Messages        []string             `json:"messages,omitempty"`
 	SchQueueUrl     string               `json:"-"`
-	CallbackUrl     string               `json:"callback_url"`
+	CallbackURL     string               `json:"callback_url"`
 	Status          DeploymentPlanStatus `json:"status"`
 }
 
