@@ -25,9 +25,18 @@ type Service struct {
 type Services []Service
 
 func (r *Repo) UpdateDeployedServiceVersion(ctx context.Context, id int, version string) error {
-	_, err := r.db.ExecContext(ctx, "update service set deployed_version = $1, updated_at = $2 where id = $3", version, time.Now().UTC(), id)
+	result, err := r.db.ExecContext(ctx, "update service set deployed_version = $1, updated_at = $2 where id = $3", version, time.Now().UTC(), id)
 	if err != nil {
 		return errors.Wrap(err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if affected == 0 {
+		return errors.Wrapf("the following id: %s was not found to update in service table", id)
 	}
 	return nil
 }
@@ -64,7 +73,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 }
 
 func (r *Repo) ServiceArtifacts(ctx context.Context, namespaceIDs []int) (RequestArtifacts, error) {
-	sql, args, err := sqlx.In(`
+	esql, args, err := sqlx.In(`
 		select distinct s.artifact_id, 
 		                a.function_pointer as function_pointer,
 		                a.metadata as artifact_metadata,
@@ -82,8 +91,8 @@ func (r *Repo) ServiceArtifacts(ctx context.Context, namespaceIDs []int) (Reques
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-	sql = r.db.Rebind(sql)
-	rows, err := r.db.QueryxContext(ctx, sql, args...)
+	esql = r.db.Rebind(esql)
+	rows, err := r.db.QueryxContext(ctx, esql, args...)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}

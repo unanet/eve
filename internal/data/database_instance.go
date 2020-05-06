@@ -27,9 +27,18 @@ type DatabaseInstance struct {
 type DatabaseInstances []DatabaseInstance
 
 func (r *Repo) UpdateDeployedMigrationVersion(ctx context.Context, id int, version string) error {
-	_, err := r.db.ExecContext(ctx, "update database_instance set migration_deployed_version = $1, updated_at = $2 where id = $3", version, time.Now().UTC(), id)
+	result, err := r.db.ExecContext(ctx, "update database_instance set migration_deployed_version = $1, updated_at = $2 where id = $3", version, time.Now().UTC(), id)
 	if err != nil {
 		return errors.Wrap(err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if affected == 0 {
+		return errors.Wrapf("the following id: %s was not found to update in database_instance table", id)
 	}
 	return nil
 }
@@ -70,7 +79,7 @@ func (r *Repo) DeployedDatabaseInstancesByNamespaceID(ctx context.Context, names
 }
 
 func (r *Repo) DatabaseInstanceArtifacts(ctx context.Context, namespaceIDs []int) (RequestArtifacts, error) {
-	sql, args, err := sqlx.In(`
+	esql, args, err := sqlx.In(`
 			select distinct
 			 	a.id as artifact_id,
 				a.name as artifact_name,
@@ -92,8 +101,8 @@ func (r *Repo) DatabaseInstanceArtifacts(ctx context.Context, namespaceIDs []int
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-	sql = r.db.Rebind(sql)
-	rows, err := r.db.QueryxContext(ctx, sql, args...)
+	esql = r.db.Rebind(esql)
+	rows, err := r.db.QueryxContext(ctx, esql, args...)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}

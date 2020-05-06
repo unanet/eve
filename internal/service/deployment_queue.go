@@ -18,8 +18,8 @@ type DeploymentQueueRepo interface {
 	UpdateDeploymentReceiptHandle(ctx context.Context, id uuid.UUID, receiptHandle string) (*data.Deployment, error)
 	DeployedServicesByNamespaceID(ctx context.Context, namespaceID int) (data.Services, error)
 	DeployedDatabaseInstancesByNamespaceID(ctx context.Context, namespaceID int) (data.DatabaseInstances, error)
-	UpdateDeploymentS3PlanLocation(ctx context.Context, id uuid.UUID, location json2.Text) error
-	UpdateDeploymentS3ResultLocation(ctx context.Context, id uuid.UUID, location json2.Text) (*data.Deployment, error)
+	UpdateDeploymentPlanLocation(ctx context.Context, id uuid.UUID, location json2.Text) error
+	UpdateDeploymentResult(ctx context.Context, id uuid.UUID) (*data.Deployment, error)
 	ClusterByID(ctx context.Context, id int) (*data.Cluster, error)
 	UpdateDeployedServiceVersion(ctx context.Context, id int, version string) error
 	UpdateDeployedMigrationVersion(ctx context.Context, id int, version string) error
@@ -274,7 +274,7 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 		return dq.rollbackError(ctx, m, err)
 	}
 
-	err = dq.repo.UpdateDeploymentS3PlanLocation(ctx, deployment.ID, mBody)
+	err = dq.repo.UpdateDeploymentPlanLocation(ctx, deployment.ID, mBody)
 	if err != nil {
 		return dq.rollbackError(ctx, m, err)
 	}
@@ -298,7 +298,7 @@ func (dq *DeploymentQueue) handleMessage(ctx context.Context, m *queue.M) error 
 }
 
 func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) error {
-	deployment, err := dq.repo.UpdateDeploymentS3ResultLocation(ctx, m.ID, m.Body)
+	deployment, err := dq.repo.UpdateDeploymentResult(ctx, m.ID)
 	if err != nil {
 		return errors.Wrap(err)
 	}

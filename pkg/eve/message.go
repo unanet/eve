@@ -43,7 +43,7 @@ func MarshalNSDeploymentPlanToS3LocationBody(ctx context.Context, cu CloudUpload
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-	location, err := cu.Upload(ctx, fmt.Sprintf("%s-plan", plan.DeploymentID), nsDeploymentJson)
+	location, err := cu.Upload(ctx, fmt.Sprintf("%s.json", plan.DeploymentID), nsDeploymentJson)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}

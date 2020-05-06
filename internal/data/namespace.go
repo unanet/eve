@@ -99,8 +99,8 @@ func (r *Repo) NamespacesByEnvironmentID(ctx context.Context, environmentID int)
 }
 
 func (r *Repo) namespaces(ctx context.Context, whereArgs ...WhereArg) (Namespaces, error) {
-	sql, args := CheckWhereArgs("SELECT * FROM namespace", whereArgs)
-	rows, err := r.db.QueryxContext(ctx, sql, args...)
+	esql, args := CheckWhereArgs("SELECT * FROM namespace", whereArgs)
+	rows, err := r.db.QueryxContext(ctx, esql, args...)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
