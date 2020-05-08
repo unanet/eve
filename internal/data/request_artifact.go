@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
-	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 type RequestArtifact struct {
@@ -16,8 +15,6 @@ type RequestArtifact struct {
 	FeedName         string         `db:"feed_name"`
 	FeedType         string         `db:"feed_type"`
 	FunctionPointer  sql.NullString `db:"function_pointer"`
-	ArtifactMetadata json.Text      `db:"artifact_metadata"`
-	ServerMetadata   json.Text      `db:"server_metadata"`
 	RequestedVersion string         `db:"requested_version"`
 }
 

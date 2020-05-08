@@ -44,8 +44,6 @@ func TestRepo_CreateDeployment(t *testing.T) {
 		ArtifactName:     "lbah",
 		ProviderGroup:    "blah",
 		FeedName:         "",
-		ArtifactMetadata: nil,
-		ServerMetadata:   nil,
 		RequestedVersion: "",
 	}
 	jsonText, err := json.StructToJson(&blah)

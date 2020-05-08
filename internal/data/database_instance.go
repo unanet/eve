@@ -21,6 +21,7 @@ type DatabaseInstance struct {
 	RequestedVersion string         `db:"requested_version"`
 	DeployedVersion  sql.NullString `db:"deployed_version"`
 	Metadata         json.Text      `db:"metadata"`
+	InjectVaultPath  sql.NullString `db:"inject_vault_path"`
 	DatabaseName     string         `db:"database_name"`
 }
 
@@ -51,6 +52,7 @@ func (r *Repo) DeployedDatabaseInstancesByNamespaceID(ctx context.Context, names
 		    ns.name as namespace_name,
 		    a.id as artifact_id, 
 			a.name as artifact_name,
+		    di.inject_vault_path,
 		    di.migration_deployed_version as deployed_version,
 		    di.name as database_name,
 			jsonb_merge(e.metadata, jsonb_merge(ns.metadata, jsonb_merge(a.metadata, jsonb_merge(ds.metadata, di.metadata)))) as metadata,
@@ -87,8 +89,6 @@ func (r *Repo) DatabaseInstanceArtifacts(ctx context.Context, namespaceIDs []int
 				a.function_pointer as function_pointer,
 				a.feed_type as feed_type,
 				f.name as feed_name,
-			    a.metadata as artifact_metadata,
-				ds.metadata as server_metadata,
 				COALESCE(di.migration_override_version, ns.requested_version) as requested_version
 			from database_instance as di
 			    left join database_server ds on di.database_server_id = ds.id

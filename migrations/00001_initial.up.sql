@@ -149,6 +149,7 @@ CREATE TABLE service (
     override_version character varying(50),
     deployed_version character varying(50),
     metadata jsonb DEFAULT '{}'::json NOT NULL,
+    inject_vault_path character varying(50),
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL
 );
@@ -201,6 +202,7 @@ CREATE TABLE database_instance (
     migration_override_version character varying(50),
     migration_deployed_version character varying(50),
     metadata jsonb DEFAULT '{}'::json NOT NULL,
+    inject_vault_path character varying(50),
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL
 );
