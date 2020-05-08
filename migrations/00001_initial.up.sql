@@ -280,11 +280,11 @@ INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 8);
 /* ================== CLEARVIEW APPS ================== */
 INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer) VALUES (101, 'infocus-reports', 'generic', 'clearview', 'https://cv-cloud-ops.azurewebsites.net/api/sites/reports/create');
 INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer) VALUES (102, 'support', 'generic', 'clearview', 'https://cv-cloud-ops.azurewebsites.net/api/sites/support/create');
-INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (103, 'infocus-cloud-client', 'docker', 'clearview');
-INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (104, 'infocus-documents', 'docker', 'clearview');
-INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (105, 'infocus-proxy', 'docker', 'clearview');
-INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (106, 'infocus-web', 'docker', 'clearview');
-INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (107, 'infocus-windows', 'generic', 'clearview');
+INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer) VALUES (103, 'infocus-windows', 'generic', 'clearview', 'https://cv-windows-client.azurewebsites.net/api/setup/client');
+INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (104, 'infocus-cloud-client', 'docker', 'clearview');
+INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (105, 'infocus-documents', 'docker', 'clearview');
+INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (106, 'infocus-proxy', 'docker', 'clearview');
+INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (107, 'infocus-web', 'docker', 'clearview');
 
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (185, 'cvs-migrations', 'docker', 'clearview');
 
