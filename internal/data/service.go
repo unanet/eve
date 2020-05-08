@@ -18,7 +18,7 @@ type Service struct {
 	RequestedVersion string         `db:"requested_version"`
 	DeployedVersion  sql.NullString `db:"deployed_version"`
 	Metadata         json.Text      `db:"metadata"`
-	InjectVaultPath  sql.NullString `db:"inject_vault_path"`
+	InjectVaultPaths sql.NullString `db:"inject_vault_paths"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
 }
@@ -48,7 +48,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		   s.artifact_id,
 		   a.name as artifact_name, 
 		   s.deployed_version,
-		   s.inject_vault_path,
+		   s.inject_vault_paths,
 		   jsonb_merge(e.metadata, jsonb_merge(n.metadata, jsonb_merge(a.metadata, s.metadata))) as metadata,
 		   COALESCE(s.override_version, n.requested_version) as requested_version,
 		   s.created_at,
