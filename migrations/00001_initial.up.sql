@@ -313,30 +313,30 @@ INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluste
 
 SELECT pg_catalog.setval('namespace_id_seq', 8, true);
 
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (1, 1, 101, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, inject_vault_path) VALUES (1, 1, 101, 'cvs-nonprod-zxrjdqr67u');
 
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (2, 2, 105, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (3, 2, 106, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (4, 2, 120, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (5, 2, 121, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (6, 2, 122, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (7, 2, 123, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id, inject_vault_path) VALUES (2, 2, 105, 'cvs-nonprod-zxrjdqr67u');
+INSERT INTO service(id, namespace_id, artifact_id, inject_vault_path) VALUES (3, 2, 106, 'cvs-nonprod-zxrjdqr67u');
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (4, 2, 120);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (5, 2, 121);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (6, 2, 122);
+INSERT INTO service(id, namespace_id, artifact_id, inject_vault_path, metadata) VALUES (7, 2, 123,'cvs-nonprod-zxrjdqr67u', '{"cloud_db_name": "cvs_int_cloud", "support_db_name": "cvs_int_support"}');
 
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (8, 3, 105, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (9, 3, 106, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (10, 3, 120, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (11, 3, 121, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (12, 3, 122, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (13, 3, 123, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (8, 3, 105);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (9, 3, 106);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (10, 3, 120);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (11, 3, 121);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (12, 3, 122);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (13, 3, 123);
 
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (14, 4, 105, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (15, 4, 106, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (16, 4, 120, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (17, 4, 121, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (18, 4, 122, NULL, NULL);
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (19, 4, 123, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (14, 4, 105);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (15, 4, 106);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (16, 4, 120);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (17, 4, 121);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (18, 4, 122);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (19, 4, 123);
 
-INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (20, 5, 101, NULL, NULL);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (20, 5, 101);
 
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (21, 6, 105, NULL, NULL);
 INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_version) VALUES (22, 6, 106, NULL, NULL);
