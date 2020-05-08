@@ -16,14 +16,14 @@ func init() {
 			var restError *errors.RestError
 			if goErrors.As(err, &restError) {
 				render.Status(r, restError.Code)
-				Log(r).Debug("Known Internal Server Error", zap.Error(err))
+				LogFromRequest(r).Debug("Known Internal Server Error", zap.Error(err))
 				render.DefaultResponder(w, r, restError)
 				return
 			}
 
 			render.Status(r, 500)
 			internalServerError := errors.RestError{Code: http.StatusInternalServerError, Message: "Internal Server Error", OriginalError: err}
-			Log(r).Error("Unknown Internal Server Error", zap.Error(err))
+			LogFromRequest(r).Error("Unknown Internal Server Error", zap.Error(err))
 			render.DefaultResponder(w, r, internalServerError)
 			return
 		}

@@ -45,13 +45,13 @@ var DefaultLogRequest = func(req *http.Request) {
 	if cv, ok := ctx.Value(ContextKeyRequestStart).(*contextValue); ok {
 		fields = append(fields, zap.String("client_req_id", cv.reqID))
 	}
-	middleware.Log(req).Info("Outgoing HTTP Request", fields...)
+	middleware.LogFromRequest(req).Info("Outgoing HTTP Request", fields...)
 }
 
 // Used if transport.LogResponse is not set.
 var DefaultLogResponse = func(resp *http.Response) {
 	ctx := resp.Request.Context()
-	logger := middleware.Log(resp.Request)
+	logger := middleware.LogFromRequest(resp.Request)
 	fields := []zap.Field{
 		zap.Int("status", resp.StatusCode),
 		zap.String("uri", resp.Request.URL.String()),

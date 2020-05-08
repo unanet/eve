@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -59,8 +60,12 @@ func (l *LogEntryConstructor) NewLogEntry(r *http.Request) middleware.LogEntry {
 	return entry
 }
 
-func Log(r *http.Request) *zap.Logger {
-	v := r.Context().Value(middleware.LogEntryCtxKey)
+func LogFromRequest(r *http.Request) *zap.Logger {
+	return Log(r.Context())
+}
+
+func Log(ctx context.Context) *zap.Logger {
+	v := ctx.Value(middleware.LogEntryCtxKey)
 	if v == nil {
 		return log.Logger
 	}
