@@ -49,7 +49,6 @@ func fromDataService(s data.Service) *eve.DeployService {
 			RequestedVersion: s.RequestedVersion,
 			DeployedVersion:  s.DeployedVersion.String,
 			Metadata:         s.Metadata.AsMap(),
-			InjectVaultPaths: s.InjectVaultPaths.String,
 			Result:           eve.DeployArtifactResultNoop,
 		},
 	}
@@ -73,7 +72,6 @@ func fromDataDatabaseInstance(s data.DatabaseInstance) *eve.DeployMigration {
 			RequestedVersion: s.RequestedVersion,
 			DeployedVersion:  s.DeployedVersion.String,
 			Metadata:         s.Metadata.AsMap(),
-			InjectVaultPaths: s.InjectVaultPaths.String,
 			Result:           eve.DeployArtifactResultNoop,
 		},
 	}

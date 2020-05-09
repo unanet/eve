@@ -149,7 +149,6 @@ CREATE TABLE service (
     override_version character varying(50),
     deployed_version character varying(50),
     metadata jsonb DEFAULT '{}'::json NOT NULL,
-    inject_vault_paths character varying(50),
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL
 );
@@ -202,7 +201,6 @@ CREATE TABLE database_instance (
     migration_override_version character varying(50),
     migration_deployed_version character varying(50),
     metadata jsonb DEFAULT '{}'::json NOT NULL,
-    inject_vault_paths character varying(50),
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL
 );
@@ -313,14 +311,14 @@ INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluste
 
 SELECT pg_catalog.setval('namespace_id_seq', 8, true);
 
-INSERT INTO service(id, namespace_id, artifact_id, inject_vault_paths) VALUES (1, 1, 101, 'cvs-nonprod-zxrjdqr67u');
+INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (1, 1, 101, 'cvs-nonprod-zxrjdqr67u');
 
-INSERT INTO service(id, namespace_id, artifact_id, inject_vault_paths) VALUES (2, 2, 105, 'cvs-nonprod-zxrjdqr67u');
-INSERT INTO service(id, namespace_id, artifact_id, inject_vault_paths) VALUES (3, 2, 106, 'cvs-nonprod-zxrjdqr67u');
+INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (2, 2, 105, 'cvs-nonprod-zxrjdqr67u');
+INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (3, 2, 106, 'cvs-nonprod-zxrjdqr67u');
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (4, 2, 120);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (5, 2, 121);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (6, 2, 122);
-INSERT INTO service(id, namespace_id, artifact_id, inject_vault_paths, metadata) VALUES (7, 2, 123,'cvs-nonprod-zxrjdqr67u', '{"cloud_db_name": "cvs_int_cloud", "support_db_name": "cvs_int_support"}');
+INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (7, 2, 123, '{"inject_vault_paths":"cvs-nonprod-zxrjdqr67u","cloud_db_name": "cvs_int_cloud", "support_db_name": "cvs_int_support"}');
 
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (8, 3, 105);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (9, 3, 106);

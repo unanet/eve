@@ -52,7 +52,6 @@ type DeployArtifact struct {
 	ArtifactoryPath     string                 `json:"artifactory_path"`
 	ArtifactFnPtr       string                 `json:"artifact_fn"`
 	ArtifactoryFeedType string                 `json:"artifactory_feed_type"`
-	InjectVaultPaths    string                 `json:"inject_vault_paths"`
 	Result              DeployArtifactResult   `json:"result"`
 	Deploy              bool                   `json:"-"`
 }
