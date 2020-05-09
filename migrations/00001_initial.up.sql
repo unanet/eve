@@ -278,9 +278,12 @@ INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 7);
 INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 8);
 
 /* ================== CLEARVIEW APPS ================== */
-INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer) VALUES (101, 'support', 'generic', 'clearview', 'https://cv-cloud-ops.azurewebsites.net/api/sites/support/create');
-INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer) VALUES (105, 'infocus-reports', 'generic', 'clearview', 'https://cv-cloud-ops.azurewebsites.net/api/sites/reports/create');
-INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer) VALUES (106, 'infocus-windows', 'generic', 'clearview', 'https://cv-windows-client.azurewebsites.net/api/setup/client');
+INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer, metadata) VALUES (101, 'support', 'generic', 'clearview', 'https://cv-cloud-ops.azurewebsites.net/api/sites/support/create',
+    '{"environment": "{{ .Plan.EnvironmentName }}", "namespace": "{{ .Plan.Namespace.Alias }}", "cluster": "{{ Plan.Namespace.ClusterName }}", "artifact_name": "{{ .Service.ArtifactName }}", "artifact_version": "{{ .Service.AvailableVersion }}", "artifact_repo":"{{ .Service.ArtifactoryFeed }}", "artifact_path": "{{ .Service.ArtifactoryPath }}" }');
+INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer, metadata) VALUES (105, 'infocus-reports', 'generic', 'clearview', 'https://cv-cloud-ops.azurewebsites.net/api/sites/reports/create',
+    '{"environment": "{{ .Plan.EnvironmentName }}", "namespace": "{{ .Plan.Namespace.Alias }}", "cluster": "{{ Plan.Namespace.ClusterName }}", "artifact_name": "{{ .Service.ArtifactName }}", "artifact_version": "{{ .Service.AvailableVersion }}", "artifact_repo":"{{ .Service.ArtifactoryFeed }}", "artifact_path": "{{ .Service.ArtifactoryPath }}" }');
+INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer, metadata) VALUES (106, 'infocus-windows', 'generic', 'clearview', 'https://cv-windows-client.azurewebsites.net/api/setup/client',
+    '{"environment": "{{ .Plan.EnvironmentName }}", "namespace": "{{ .Plan.Namespace.Alias }}", "cluster": "{{ Plan.Namespace.ClusterName }}", "artifact_name": "{{ .Service.ArtifactName }}", "artifact_version": "{{ .Service.AvailableVersion }}", "artifact_repo":"{{ .Service.ArtifactoryFeed }}", "artifact_path": "{{ .Service.ArtifactoryPath }}" }');
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (120, 'infocus-cloud-client', 'docker', 'clearview');
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (121, 'infocus-documents', 'docker', 'clearview');
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (122, 'infocus-proxy', 'docker', 'clearview');
