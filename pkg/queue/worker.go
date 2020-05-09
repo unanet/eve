@@ -113,7 +113,7 @@ func (worker *Worker) run(h Handler, messages []*M) {
 	wg.Add(numMessages)
 	for i := range messages {
 		go func(m *M) {
-			ctx, cancel := context.WithTimeout(context.WithValue(context.Background(), RequestIDKey, m.ReqID), time.Duration(120)*time.Second)
+			ctx, cancel := context.WithTimeout(context.WithValue(context.Background(), RequestIDKey, m.ReqID), worker.timeout)
 			defer cancel()
 			defer wg.Done()
 			if err := h.HandleMessage(ctx, m); err != nil {
