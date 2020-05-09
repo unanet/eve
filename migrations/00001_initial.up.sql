@@ -279,15 +279,16 @@ INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 8);
 
 /* ================== CLEARVIEW APPS ================== */
 INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer, metadata) VALUES (101, 'support', 'generic', 'clearview', 'https://cv-cloud-ops.azurewebsites.net/api/sites/support/create',
-    '{"environment": "{{ .Plan.EnvironmentName }}", "namespace": "{{ .Plan.Namespace.Alias }}", "cluster": "{{ .Plan.Namespace.ClusterName }}", "artifact_name": "{{ .Service.ArtifactName }}", "artifact_version": "{{ .Service.AvailableVersion }}", "artifact_repo":"{{ .Service.ArtifactoryFeed }}", "artifact_path": "{{ .Service.ArtifactoryPath }}" }');
+    '{"inject_vault_paths":"{{ .Plan.Namespace.ClusterName }}", "environment": "{{ .Plan.EnvironmentName }}", "namespace": "{{ .Plan.Namespace.Alias }}", "cluster": "{{ .Plan.Namespace.ClusterName }}", "artifact_name": "{{ .Service.ArtifactName }}", "artifact_version": "{{ .Service.AvailableVersion }}", "artifact_repo":"{{ .Service.ArtifactoryFeed }}", "artifact_path": "{{ .Service.ArtifactoryPath }}" }');
 INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer, metadata) VALUES (105, 'infocus-reports', 'generic', 'clearview', 'https://cv-cloud-ops.azurewebsites.net/api/sites/reports/create',
-    '{"environment": "{{ .Plan.EnvironmentName }}", "namespace": "{{ .Plan.Namespace.Alias }}", "cluster": "{{ .Plan.Namespace.ClusterName }}", "artifact_name": "{{ .Service.ArtifactName }}", "artifact_version": "{{ .Service.AvailableVersion }}", "artifact_repo":"{{ .Service.ArtifactoryFeed }}", "artifact_path": "{{ .Service.ArtifactoryPath }}" }');
+    '{"inject_vault_paths":"{{ .Plan.Namespace.ClusterName }}", "environment": "{{ .Plan.EnvironmentName }}", "namespace": "{{ .Plan.Namespace.Alias }}", "cluster": "{{ .Plan.Namespace.ClusterName }}", "artifact_name": "{{ .Service.ArtifactName }}", "artifact_version": "{{ .Service.AvailableVersion }}", "artifact_repo":"{{ .Service.ArtifactoryFeed }}", "artifact_path": "{{ .Service.ArtifactoryPath }}" }');
 INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer, metadata) VALUES (106, 'infocus-windows', 'generic', 'clearview', 'https://cv-windows-client.azurewebsites.net/api/setup/client',
-    '{"environment": "{{ .Plan.EnvironmentName }}", "namespace": "{{ .Plan.Namespace.Alias }}", "cluster": "{{ .Plan.Namespace.ClusterName }}", "artifact_name": "{{ .Service.ArtifactName }}", "artifact_version": "{{ .Service.AvailableVersion }}", "artifact_repo":"{{ .Service.ArtifactoryFeed }}", "artifact_path": "{{ .Service.ArtifactoryPath }}" }');
+    '{"inject_vault_paths":"{{ .Plan.Namespace.ClusterName }}", "environment": "{{ .Plan.EnvironmentName }}", "namespace": "{{ .Plan.Namespace.Alias }}", "cluster": "{{ .Plan.Namespace.ClusterName }}", "artifact_name": "{{ .Service.ArtifactName }}", "artifact_version": "{{ .Service.AvailableVersion }}", "artifact_repo":"{{ .Service.ArtifactoryFeed }}", "artifact_path": "{{ .Service.ArtifactoryPath }}" }');
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (120, 'infocus-cloud-client', 'docker', 'clearview');
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (121, 'infocus-documents', 'docker', 'clearview');
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (122, 'infocus-proxy', 'docker', 'clearview');
-INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (123, 'infocus-web', 'docker', 'clearview');
+INSERT INTO artifact(id, name, feed_type, provider_group, metadata) VALUES (123, 'infocus-web', 'docker', 'clearview',
+    '{"inject_vault_paths":"{{ .Plan.Namespace.ClusterName }}", "cloud_db_name": "cvs_{{ .Plan.EnvironmentName }}_cloud", "support_db_name": "cvs_{{ .Plan.EnvironmentName }}_support" }');
 
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (185, 'cvs-migrations', 'docker', 'clearview');
 
@@ -314,14 +315,14 @@ INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluste
 
 SELECT pg_catalog.setval('namespace_id_seq', 8, true);
 
-INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (1, 1, 101, '{"inject_vault_paths":"{{ .Plan.Namespace.ClusterName }}"}');
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (1, 1, 101);
 
-INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (2, 2, 105, '{"inject_vault_paths":"{{ .Plan.Namespace.ClusterName }}"}');
-INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (3, 2, 106, '{"inject_vault_paths":"{{ .Plan.Namespace.ClusterName }}"}');
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (2, 2, 105);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (3, 2, 106);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (4, 2, 120);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (5, 2, 121);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (6, 2, 122);
-INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (7, 2, 123, '{"inject_vault_paths":"{{ .Plan.Namespace.ClusterName }}","cloud_db_name": "cvs_int_cloud", "support_db_name": "cvs_int_support"}');
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (7, 2, 123);
 
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (8, 3, 105);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (9, 3, 106);
