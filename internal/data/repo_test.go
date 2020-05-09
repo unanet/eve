@@ -4,7 +4,6 @@ package data_test
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -33,8 +32,6 @@ func TestRepo_CreateDeployment(t *testing.T) {
 	repo := getRepo(t)
 	result, err := repo.DeployedServicesByNamespaceID(context.TODO(), 1)
 	require.NoError(t, err)
-	json, err := json.Marshal(result)
-	require.NoError(t, err)
-	fmt.Println(string(json))
+	fmt.Println(string(result[0].Metadata))
 
 }
