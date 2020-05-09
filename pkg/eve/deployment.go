@@ -19,6 +19,10 @@ const (
 	DeployArtifactResultFailed  DeployArtifactResult = "failed"
 )
 
+func (dar DeployArtifactResult) String() string {
+	return string(dar)
+}
+
 func ParseDeployArtifactResult(value string) DeployArtifactResult {
 	switch strings.ToLower(value) {
 	case "noop":
@@ -40,6 +44,10 @@ const (
 	DeploymentPlanStatusErrors   DeploymentPlanStatus = "errors"
 	DeploymentPlanStatusComplete DeploymentPlanStatus = "complete"
 )
+
+func (dps DeploymentPlanStatus) String() string {
+	return string(dps)
+}
 
 type DeployArtifact struct {
 	ArtifactID          int                    `json:"artifact_id"`
@@ -71,6 +79,27 @@ func (ds DeployServices) ToDeploy() DeployServices {
 		}
 	}
 	return list
+}
+
+// ArtifactDeployResultMap is used to convert the array of artifacts results into a map
+type ArtifactDeployResultMap map[DeployArtifactResult]DeployServices
+
+// TopResultMap conerts the array of results into a map by result
+func (ds DeployServices) TopResultMap() ArtifactDeployResultMap {
+	result := make(ArtifactDeployResultMap)
+
+	for _, svc := range ds {
+		switch svc.Result {
+		case DeployArtifactResultFailed:
+			result[DeployArtifactResultFailed] = append(result[DeployArtifactResultFailed], svc)
+		case DeployArtifactResultSuccess:
+			result[DeployArtifactResultSuccess] = append(result[DeployArtifactResultSuccess], svc)
+		case DeployArtifactResultNoop:
+			result[DeployArtifactResultNoop] = append(result[DeployArtifactResultNoop], svc)
+		}
+	}
+
+	return result
 }
 
 type DeployMigration struct {
@@ -124,6 +153,14 @@ type NSDeploymentPlan struct {
 	CallbackURL     string               `json:"callback_url"`
 	Status          DeploymentPlanStatus `json:"status"`
 }
+
+func (ns *NSDeploymentPlan) NothingToDeploy() bool {
+	if len(ns.Services) == 0 && len(ns.Migrations) == 0 {
+		return true
+	}
+	return false
+}
+
 
 func (ns *NSDeploymentPlan) GroupID() string {
 	return ns.Namespace.Name
