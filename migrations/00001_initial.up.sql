@@ -72,27 +72,6 @@ ALTER SEQUENCE automation_job_id_seq OWNED BY automation_job.id;
 ALTER TABLE ONLY automation_job ADD CONSTRAINT automation_job_pk PRIMARY KEY (id);
 
 
-CREATE TABLE customer (
-    id integer NOT NULL,
-    name character varying(200) NOT NULL,
-    subdomain character varying(50) NOT NULL,
-    created_at timestamp without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL
-);
-CREATE SEQUENCE customer_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER SEQUENCE customer_id_seq OWNED BY customer.id;
-ALTER TABLE ONLY customer ALTER COLUMN id SET DEFAULT nextval('customer_id_seq'::regclass);
-CREATE UNIQUE INDEX customer_name_uindex ON customer USING btree (name);
-CREATE UNIQUE INDEX customer_subdomain_uindex ON customer USING btree (subdomain);
-ALTER TABLE ONLY customer ADD CONSTRAINT customer_pk PRIMARY KEY (id);
-
-
 CREATE TABLE environment (
     id integer NOT NULL,
     name character varying(25) NOT NULL,
@@ -162,16 +141,6 @@ CREATE SEQUENCE service_id_seq
 ALTER SEQUENCE service_id_seq OWNED BY service.id;
 ALTER TABLE ONLY service ALTER COLUMN id SET DEFAULT nextval('service_id_seq'::regclass);
 ALTER TABLE ONLY service ADD CONSTRAINT service_pk PRIMARY KEY (id);
-
-
-CREATE TABLE customer_namespace_map (
-    namespace_id integer NOT NULL,
-    customer_id integer NOT NULL,
-    created_at timestamp without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL
-);
-CREATE UNIQUE INDEX customer_namespace_map_namespace_id_customer_id_uindex
-    ON customer_namespace_map (namespace_id, customer_id);
 
 
 CREATE TABLE database_server (
@@ -363,37 +332,6 @@ INSERT INTO service(id, namespace_id, artifact_id, override_version, deployed_ve
 
 SELECT pg_catalog.setval('service_id_seq', 38, true);
 
-INSERT INTO customer(id, name, subdomain) VALUES (1, 'dev-test', 'dev');
-INSERT INTO customer(id, name, subdomain) VALUES (2, 'casco-test', 'casco');
-INSERT INTO customer(id, name, subdomain) VALUES (3, 'auto-test', 'auto');
-INSERT INTO customer(id, name, subdomain) VALUES (4, 'duke-test', 'duke');
-SELECT pg_catalog.setval('service_id_seq', 4, true);
-
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (2, 1);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (2, 2);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (2, 3);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (2, 4);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (3, 1);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (3, 2);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (3, 3);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (3, 4);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (4, 1);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (4, 2);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (4, 3);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (4, 4);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (6, 1);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (6, 2);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (6, 3);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (6, 4);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (7, 1);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (7, 2);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (7, 3);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (7, 4);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (8, 1);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (8, 2);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (8, 3);
-INSERT INTO customer_namespace_map(namespace_id, customer_id) VALUES (8, 4);
-
 INSERT INTO database_type(id, name, migration_artifact_id) VALUES (101, 'cvs-cloud', 185);
 INSERT INTO database_type(id, name, migration_artifact_id) VALUES (102, 'cvs-support', NULL);
 
@@ -429,11 +367,6 @@ ALTER TABLE ONLY service
     ADD CONSTRAINT service_artifact_id_fk FOREIGN KEY (artifact_id) REFERENCES artifact(id);
 ALTER TABLE ONLY service
     ADD CONSTRAINT service_namespace_id_fk FOREIGN KEY (namespace_id) REFERENCES namespace(id);
-
-ALTER TABLE ONLY customer_namespace_map
-    ADD CONSTRAINT customer_namespace_map_customer_id_fk FOREIGN KEY (customer_id) REFERENCES customer(id);
-ALTER TABLE ONLY customer_namespace_map
-    ADD CONSTRAINT customer_namespace_map_namespace_id_fk FOREIGN KEY (namespace_id) REFERENCES namespace(id);
 
 ALTER TABLE ONLY automation_job_service_map
     ADD CONSTRAINT automation_job_service_map_automation_job_id_fk FOREIGN KEY (automation_job_id) REFERENCES automation_job(id);
