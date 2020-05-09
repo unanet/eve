@@ -4,6 +4,11 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+
+	"go.uber.org/zap"
+
+	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
 // JSONText is a json.RawMessage, which is a []byte underneath.
@@ -81,10 +86,10 @@ func (j *Text) Unmarshal(v interface{}) error {
 }
 
 func (j *Text) AsMap() map[string]interface{} {
-	var hash map[string]interface{}
-	err := j.Unmarshal(hash)
+	hash := make(map[string]interface{})
+	err := j.Unmarshal(&hash)
 	if err != nil {
-		// TODO: maybe log this, don't want to return an error
+		log.Logger.Error("failed to unmarshal the metadata as a map", zap.Error(errors.Wrap(err)))
 	}
 	return hash
 }

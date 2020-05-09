@@ -4,14 +4,15 @@ package data_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
+	"gitlab.unanet.io/devops/eve/internal/api"
 	"gitlab.unanet.io/devops/eve/internal/data"
-	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 var (
@@ -22,40 +23,18 @@ func getRepo(t *testing.T) *data.Repo {
 	if cachedRepo != nil {
 		return cachedRepo
 	}
-	db, err := data.GetDBWithTimeout(time.Second * 10)
+	db, err := data.GetDBWithTimeout(api.GetDBConfig().DbConnectionString(), 10*time.Second)
 	require.NoError(t, err)
 	cachedRepo = data.NewRepo(db)
 	return cachedRepo
 }
 
-func TestRepo_DatabaseInstancesByNamespaceIDs(t *testing.T) {
-	repo := getRepo(t)
-	var ids = []interface{}{1, 2, 3}
-
-	result, err := repo.DeployedDatabaseInstancesByNamespaceIDs(context.TODO(), ids)
-	require.NoError(t, err)
-	fmt.Println(result)
-}
-
 func TestRepo_CreateDeployment(t *testing.T) {
 	repo := getRepo(t)
-	blah := data.RequestArtifact{
-		ArtifactID:       1,
-		ArtifactName:     "lbah",
-		ProviderGroup:    "blah",
-		FeedName:         "",
-		RequestedVersion: "",
-	}
-	jsonText, err := json.StructToJson(&blah)
+	result, err := repo.DeployedServicesByNamespaceID(context.TODO(), 1)
 	require.NoError(t, err)
-	d := data.Deployment{
-		EnvironmentID: 1,
-		NamespaceID:   1,
-		ReqID:         "testing",
-		PlanOptions:   jsonText,
-	}
-	err = repo.CreateDeployment(context.TODO(), &d)
+	json, err := json.Marshal(result)
 	require.NoError(t, err)
-	fmt.Println(d)
+	fmt.Println(string(json))
 
 }
