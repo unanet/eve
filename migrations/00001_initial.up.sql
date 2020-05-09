@@ -311,14 +311,14 @@ INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluste
 
 SELECT pg_catalog.setval('namespace_id_seq', 8, true);
 
-INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (1, 1, 101, 'cvs-nonprod-zxrjdqr67u');
+INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (1, 1, 101, '{"inject_vault_paths":"{{ .Plan.Namespace.ClusterName }}"}');
 
-INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (2, 2, 105, 'cvs-nonprod-zxrjdqr67u');
-INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (3, 2, 106, 'cvs-nonprod-zxrjdqr67u');
+INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (2, 2, 105, '{"inject_vault_paths":"{{ .Plan.Namespace.ClusterName }}"}');
+INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (3, 2, 106, '{"inject_vault_paths":"{{ .Plan.Namespace.ClusterName }}"}');
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (4, 2, 120);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (5, 2, 121);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (6, 2, 122);
-INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (7, 2, 123, '{"inject_vault_paths":"cvs-nonprod-zxrjdqr67u","cloud_db_name": "cvs_int_cloud", "support_db_name": "cvs_int_support"}');
+INSERT INTO service(id, namespace_id, artifact_id, metadata) VALUES (7, 2, 123, '{"inject_vault_paths":"{{ .Plan.Namespace.ClusterName }}","cloud_db_name": "cvs_int_cloud", "support_db_name": "cvs_int_support"}');
 
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (8, 3, 105);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (9, 3, 106);
