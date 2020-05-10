@@ -37,8 +37,8 @@ func (r *Repo) RequestArtifactByEnvironment(ctx context.Context, artifactName st
 		from artifact as a
 		    left join environment e on e.id = $1
 		    left join environment_feed_map efm on e.id = efm.environment_id
-			left join feed f on efm.feed_id = f.id
-		where a.name = $2
+			left join feed f on efm.feed_id = f.id and f.feed_type = a.feed_type
+		where f.name is not null and a.name = $2
 	`, environmentID, artifactName)
 
 	err := row.StructScan(&requestedArtifact)

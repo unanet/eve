@@ -231,9 +231,9 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 				}
 				return errors.Wrap(err)
 			}
+			x.ID = ra.ArtifactID
 			x.ArtifactoryFeed = ra.FeedName
 			x.ArtifactoryPath = ra.Path()
-			x.ID = ra.ArtifactID
 			x.FunctionPointer = ra.FunctionPointer.String
 			x.FeedType = ra.FeedType
 		}
