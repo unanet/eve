@@ -9,6 +9,7 @@ import (
 	"github.com/dghubble/sling"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
+	ehttp "gitlab.unanet.io/devops/eve/pkg/http"
 	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
@@ -22,7 +23,8 @@ type Callback struct {
 
 func NewCallback(timeout time.Duration) *Callback {
 	var httpClient = &http.Client{
-		Timeout: timeout,
+		Timeout:   timeout,
+		Transport: ehttp.LoggingTransport,
 	}
 
 	sling := sling.New().Client(httpClient).
