@@ -286,13 +286,13 @@ INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluste
 SELECT pg_catalog.setval('namespace_id_seq', 8, true);
 
 INSERT INTO service(id, namespace_id, artifact_id, override_version) VALUES (1, 1, 101, '1.1');
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (1, 1, 102);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (2, 1, 102);
 
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (2, 2, 105);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (3, 2, 106);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (4, 2, 120);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (5, 2, 121);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (6, 2, 122);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (3, 2, 105);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (4, 2, 106);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (5, 2, 120);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (6, 2, 121);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (7, 2, 122);
 
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (8, 3, 105);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (9, 3, 106);
@@ -300,34 +300,34 @@ INSERT INTO service(id, namespace_id, artifact_id) VALUES (10, 3, 120);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (11, 3, 121);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (12, 3, 122);
 
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (14, 4, 105);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (15, 4, 106);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (16, 4, 120);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (17, 4, 121);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (18, 4, 122);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (13, 4, 105);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (14, 4, 106);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (15, 4, 120);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (16, 4, 121);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (17, 4, 122);
 
-INSERT INTO service(id, namespace_id, artifact_id, override_version) VALUES (1, 1, 101, '1.1');
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (1, 1, 102);
+INSERT INTO service(id, namespace_id, artifact_id, override_version) VALUES (18, 1, 101, '1.1');
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (19, 1, 102);
 
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (21, 6, 105);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (22, 6, 106);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (23, 6, 120);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (24, 6, 121);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (25, 6, 122);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (20, 6, 105);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (21, 6, 106);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (22, 6, 120);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (23, 6, 121);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (24, 6, 122);
 
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (27, 7, 105);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (28, 7, 106);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (29, 7, 120);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (30, 7, 121);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (31, 7, 122);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (25, 7, 105);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (26, 7, 106);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (27, 7, 120);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (28, 7, 121);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (29, 7, 122);
 
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (33, 8, 105);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (34, 8, 106);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (35, 8, 120);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (36, 8, 121);
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (37, 8, 122);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (30, 8, 105);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (31, 8, 106);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (32, 8, 120);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (33, 8, 121);
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (34, 8, 122);
 
-SELECT pg_catalog.setval('service_id_seq', 38, true);
+SELECT pg_catalog.setval('service_id_seq', 34, true);
 
 INSERT INTO database_type(id, name, migration_artifact_id) VALUES (101, 'cvs-cloud', 185);
 INSERT INTO database_type(id, name, migration_artifact_id) VALUES (102, 'cvs-support', NULL);
