@@ -140,6 +140,7 @@ CREATE SEQUENCE service_id_seq
     CACHE 1;
 ALTER SEQUENCE service_id_seq OWNED BY service.id;
 ALTER TABLE ONLY service ALTER COLUMN id SET DEFAULT nextval('service_id_seq'::regclass);
+CREATE UNIQUE INDEX service_namespace_id_artifact_id_uindex ON service (namespace_id, artifact_id);
 ALTER TABLE ONLY service ADD CONSTRAINT service_pk PRIMARY KEY (id);
 
 
@@ -247,7 +248,7 @@ INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 7);
 INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 8);
 
 /* ================== CLEARVIEW APPS ================== */
-INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (101, 'infocus-proxy', 'docker', 'clearview');
+INSERT INTO artifact(id, name, feed_type, provider_group, metadata) VALUES (101, 'infocus-proxy', 'docker', 'clearview', '{"environment": "{{ .Plan.EnvironmentName}}"}');
 INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer, metadata) VALUES (102, 'support', 'generic', 'clearview', 'https://cv-cloud-ops.azurewebsites.net/api/sites/support/create',
     '{"inject_vault_paths":"{{ .Plan.Namespace.ClusterName }}", "environment": "{{ .Plan.EnvironmentName }}", "namespace": "{{ .Plan.Namespace.Alias }}", "cluster": "{{ .Plan.Namespace.ClusterName }}", "artifact_name": "{{ .Service.ArtifactName }}", "artifact_version": "{{ .Service.AvailableVersion }}", "artifact_repo":"{{ .Service.ArtifactoryFeed }}", "artifact_path": "{{ .Service.ArtifactoryPath }}" }');
 
@@ -306,8 +307,8 @@ INSERT INTO service(id, namespace_id, artifact_id) VALUES (15, 4, 120);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (16, 4, 121);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (17, 4, 122);
 
-INSERT INTO service(id, namespace_id, artifact_id, override_version) VALUES (18, 1, 101, '1.1');
-INSERT INTO service(id, namespace_id, artifact_id) VALUES (19, 1, 102);
+INSERT INTO service(id, namespace_id, artifact_id, override_version) VALUES (18, 5, 101, '1.1');
+INSERT INTO service(id, namespace_id, artifact_id) VALUES (19, 5, 102);
 
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (20, 6, 105);
 INSERT INTO service(id, namespace_id, artifact_id) VALUES (21, 6, 106);
