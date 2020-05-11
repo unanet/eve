@@ -98,7 +98,6 @@ CREATE TABLE namespace (
     name character varying(50) NOT NULL,
     alias character varying(50) NOT NULL,
     environment_id integer NOT NULL,
-    domain character varying(200) NOT NULL,
     requested_version character varying(50) NOT NULL,
     explicit_deploy_only boolean DEFAULT false NOT NULL,
     cluster_id integer NOT NULL,
@@ -116,7 +115,6 @@ CREATE SEQUENCE namespace_id_seq
 ALTER SEQUENCE namespace_id_seq OWNED BY namespace.id;
 ALTER TABLE ONLY namespace ALTER COLUMN id SET DEFAULT nextval('namespace_id_seq'::regclass);
 CREATE UNIQUE INDEX namespace_name_uindex ON namespace USING btree (name);
-CREATE UNIQUE INDEX namespace_domain_uindex ON namespace USING btree (domain);
 CREATE UNIQUE INDEX namespace_environment_id_alias_uindex ON namespace (environment_id, alias);
 ALTER TABLE ONLY namespace ADD CONSTRAINT namespace_pk PRIMARY KEY (id);
 
@@ -230,22 +228,39 @@ INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (6, 'generic-stag
 INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (7, 'docker-prod', 3, 'docker');
 INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (8, 'generic-prod', 3, 'generic');
 
-INSERT INTO environment (id, name) VALUES(1, 'int');
-INSERT INTO environment (id, name) VALUES(2, 'qa');
-INSERT INTO environment (id, name) VALUES(3, 'demo');
-INSERT INTO environment (id, name) VALUES(4, 'stage');
-INSERT INTO environment (id, name) VALUES(5, 'prod');
+INSERT INTO environment (id, name) VALUES(101, 'cvs-int');
+INSERT INTO environment (id, name) VALUES(102, 'cvs-qa');
+INSERT INTO environment (id, name) VALUES(103, 'cvs-demo');
+INSERT INTO environment (id, name) VALUES(104, 'cvs-stage');
+INSERT INTO environment (id, name) VALUES(105, 'cvs-prod');
 
-INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (1, 1);
-INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (1, 2);
-INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (2, 3);
-INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (2, 4);
-INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (3, 3);
-INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (3, 4);
-INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 5);
-INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 6);
-INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 7);
-INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (4, 8);
+INSERT INTO environment (id, name) VALUES(201, 'una-int');
+INSERT INTO environment (id, name) VALUES(202, 'una-qa');
+INSERT INTO environment (id, name) VALUES(203, 'una-demo');
+INSERT INTO environment (id, name) VALUES(204, 'una-stage');
+INSERT INTO environment (id, name) VALUES(205, 'una-prod');
+
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (101, 1);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (101, 2);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (102, 3);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (102, 4);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (103, 3);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (103, 4);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (104, 5);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (104, 6);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (105, 7);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (105, 8);
+
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (201, 1);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (201, 2);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (202, 3);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (202, 4);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (203, 3);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (203, 4);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (204, 5);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (204, 6);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (205, 7);
+INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (205, 8);
 
 /* ================== CLEARVIEW APPS ================== */
 INSERT INTO artifact(id, name, feed_type, provider_group, metadata) VALUES (101, 'infocus-proxy', 'docker', 'clearview', '{"environment": "{{ .Plan.EnvironmentName}}"}');
@@ -272,17 +287,17 @@ INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (285, 'sql-migr
 
 INSERT INTO cluster(id, name, provider_group, sch_queue_url) VALUES (1, 'cvs-nonprod-zxrjdqr67u', 'clearview', 'https://sqs.us-east-2.amazonaws.com/580107804399/cvs-nonprod-zxrjdqr67u.fifo');
 
-INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id, domain) VALUES (1, 'cvs-int', 'cvs', 1, '2020', 1, 'int.infocus.app');
+INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id) VALUES (1, 'root-cvs-int', 'root', 101, '2020', 1);
 
-INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id, domain) VALUES (2, 'cvs-prev-int', 'cvs-prev', 1, '2020.2', 1, 'prev-int.infocus.app');
-INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id, domain) VALUES (3, 'cvs-curr-int', 'cvs-curr', 1, '2020.2', 1, 'curr-int.infocus.app');
-INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id, domain) VALUES (4, 'cvs-next-int', 'cvs-next', 1, '2020', 1, 'next-int.infocus.app');
+INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id) VALUES (2, 'prev-cvs-int', 'prev', 101, '2020.2', 1);
+INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id) VALUES (3, 'curr-cvs-int', 'curr', 101, '2020.2', 1);
+INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id) VALUES (4, 'next-cvs-int', 'next', 101, '2020', 1);
 
-INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id, domain) VALUES (5, 'cvs-qa', 'cvs', 2, '2020', 1, 'qa.infocus.app');
+INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id) VALUES (5, 'std-cvs-qa', 'root', 201, '2020', 1);
 
-INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id, domain) VALUES (6, 'cvs-prev-qa', 'cvs-prev', 2, '2020.2', 1, 'prev-qa.infocus.app');
-INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id, domain) VALUES (7, 'cvs-curr-qa', 'cvs-curr', 2, '2020.2', 1, 'curr.qa-infocus.app');
-INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id, domain) VALUES (8, 'cvs-next-qa', 'cvs-next', 2, '2020', 1, 'next-qa.infocus.app');
+INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id) VALUES (6, 'prev-cvs-qa', 'prev', 201, '2020.2', 1);
+INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id) VALUES (7, 'curr-cvs-qa', 'curr', 201, '2020.2', 1);
+INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id) VALUES (8, 'next-cvs-qa', 'next', 201, '2020', 1);
 
 SELECT pg_catalog.setval('namespace_id_seq', 8, true);
 

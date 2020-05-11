@@ -149,7 +149,7 @@ func NewDeploymentPlanGenerator(r DeploymentPlanRepo, v VersionQuery, q QWriter)
 }
 
 func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, options *DeploymentPlanOptions) error {
-	// make sure the environment name is valid and get the metadata
+	// make sure the environment name is valid
 	env, err := d.repo.EnvironmentByName(ctx, options.Environment)
 	if err != nil {
 		if _, ok := err.(data.NotFoundError); ok {
