@@ -154,11 +154,12 @@ func (dq *DeploymentQueue) setupNSDeploymentPlan(ctx context.Context, deployment
 		return nil, errors.Wrap(err)
 	}
 	plan := eve.NSDeploymentPlan{
-		Namespace:       options.NamespaceRequest,
-		EnvironmentName: options.EnvironmentName,
-		CallbackURL:     options.CallbackURL,
-		SchQueueUrl:     cluster.SchQueueUrl,
-		DeploymentID:    deploymentID,
+		Namespace:        options.NamespaceRequest,
+		EnvironmentName:  options.EnvironmentName,
+		EnvironmentAlias: options.EnvironmentAlias,
+		CallbackURL:      options.CallbackURL,
+		SchQueueUrl:      cluster.SchQueueUrl,
+		DeploymentID:     deploymentID,
 	}
 
 	plan.Namespace.ClusterName = cluster.Name

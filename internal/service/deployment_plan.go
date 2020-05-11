@@ -112,6 +112,7 @@ type NamespacePlanOptions struct {
 	CallbackURL       string                `json:"callback_url"`
 	EnvironmentID     int                   `json:"environment_id"`
 	EnvironmentName   string                `json:"environment_name"`
+	EnvironmentAlias  string                `json:"environment_alias"`
 	Type              DeploymentPlanType    `json:"type"`
 }
 
@@ -186,6 +187,7 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 			CallbackURL:       options.CallbackURL,
 			EnvironmentID:     env.ID,
 			EnvironmentName:   env.Name,
+			EnvironmentAlias:  env.Alias,
 			Type:              options.Type,
 		})
 		if marshalErr != nil {

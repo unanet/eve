@@ -75,6 +75,7 @@ ALTER TABLE ONLY automation_job ADD CONSTRAINT automation_job_pk PRIMARY KEY (id
 CREATE TABLE environment (
     id integer NOT NULL,
     name character varying(25) NOT NULL,
+    alias character varying(25) NOT NULL,
     metadata jsonb DEFAULT '{}'::json NOT NULL
 );
 CREATE UNIQUE INDEX environment_name_uindex ON environment USING btree (name);
@@ -228,17 +229,17 @@ INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (6, 'generic-stag
 INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (7, 'docker-prod', 3, 'docker');
 INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (8, 'generic-prod', 3, 'generic');
 
-INSERT INTO environment (id, name) VALUES(101, 'cvs-int');
-INSERT INTO environment (id, name) VALUES(102, 'cvs-qa');
-INSERT INTO environment (id, name) VALUES(103, 'cvs-demo');
-INSERT INTO environment (id, name) VALUES(104, 'cvs-stage');
-INSERT INTO environment (id, name) VALUES(105, 'cvs-prod');
+INSERT INTO environment (id, name, alias) VALUES(101, 'cvs-int', 'int');
+INSERT INTO environment (id, name, alias) VALUES(102, 'cvs-qa', 'qa');
+INSERT INTO environment (id, name, alias) VALUES(103, 'cvs-demo', 'demo');
+INSERT INTO environment (id, name, alias) VALUES(104, 'cvs-stage', 'stage');
+INSERT INTO environment (id, name, alias) VALUES(105, 'cvs-prod', 'prod');
 
-INSERT INTO environment (id, name) VALUES(201, 'una-int');
-INSERT INTO environment (id, name) VALUES(202, 'una-qa');
-INSERT INTO environment (id, name) VALUES(203, 'una-demo');
-INSERT INTO environment (id, name) VALUES(204, 'una-stage');
-INSERT INTO environment (id, name) VALUES(205, 'una-prod');
+INSERT INTO environment (id, name, alias) VALUES(201, 'una-int', 'int');
+INSERT INTO environment (id, name, alias) VALUES(202, 'una-qa', 'qa');
+INSERT INTO environment (id, name, alias) VALUES(203, 'una-demo', 'demo');
+INSERT INTO environment (id, name, alias) VALUES(204, 'una-stage', 'stage');
+INSERT INTO environment (id, name, alias) VALUES(205, 'una-prod', 'prod');
 
 INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (101, 1);
 INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (101, 2);
@@ -263,7 +264,7 @@ INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (205, 7);
 INSERT INTO environment_feed_map(environment_id, feed_id) VALUES (205, 8);
 
 /* ================== CLEARVIEW APPS ================== */
-INSERT INTO artifact(id, name, feed_type, provider_group, metadata) VALUES (101, 'infocus-proxy', 'docker', 'clearview', '{"environment": "{{ .Plan.EnvironmentName}}"}');
+INSERT INTO artifact(id, name, feed_type, provider_group, metadata) VALUES (101, 'infocus-proxy', 'docker', 'clearview', '{"environment": "{{ .Plan.EnvironmentAlias }}"}');
 INSERT INTO artifact(id, name, feed_type, provider_group, function_pointer, metadata) VALUES (102, 'support', 'generic', 'clearview', 'https://cv-cloud-ops.azurewebsites.net/api/sites/support/create',
     '{"inject_vault_paths":"{{ .Plan.Namespace.ClusterName }}", "environment": "{{ .Plan.EnvironmentName }}", "namespace": "{{ .Plan.Namespace.Alias }}", "cluster": "{{ .Plan.Namespace.ClusterName }}", "artifact_name": "{{ .Service.ArtifactName }}", "artifact_version": "{{ .Service.AvailableVersion }}", "artifact_repo":"{{ .Service.ArtifactoryFeed }}", "artifact_path": "{{ .Service.ArtifactoryPath }}" }');
 

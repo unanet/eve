@@ -143,15 +143,16 @@ func (n NamespaceRequests) ToIDs() []int {
 }
 
 type NSDeploymentPlan struct {
-	DeploymentID    uuid.UUID            `json:"deploymend_id"`
-	Namespace       *NamespaceRequest    `json:"namespace"`
-	EnvironmentName string               `json:"environment_name"`
-	Services        DeployServices       `json:"services,omitempty"`
-	Migrations      DeployMigrations     `json:"migrations,omitempty"`
-	Messages        []string             `json:"messages,omitempty"`
-	SchQueueUrl     string               `json:"-"`
-	CallbackURL     string               `json:"callback_url"`
-	Status          DeploymentPlanStatus `json:"status"`
+	DeploymentID     uuid.UUID            `json:"deploymend_id"`
+	Namespace        *NamespaceRequest    `json:"namespace"`
+	EnvironmentName  string               `json:"environment_name"`
+	EnvironmentAlias string               `json:"environment_alias"`
+	Services         DeployServices       `json:"services,omitempty"`
+	Migrations       DeployMigrations     `json:"migrations,omitempty"`
+	Messages         []string             `json:"messages,omitempty"`
+	SchQueueUrl      string               `json:"-"`
+	CallbackURL      string               `json:"callback_url"`
+	Status           DeploymentPlanStatus `json:"status"`
 }
 
 func (ns *NSDeploymentPlan) NothingToDeploy() bool {
@@ -160,7 +161,6 @@ func (ns *NSDeploymentPlan) NothingToDeploy() bool {
 	}
 	return false
 }
-
 
 func (ns *NSDeploymentPlan) GroupID() string {
 	return ns.Namespace.Name
