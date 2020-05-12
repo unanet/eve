@@ -4,12 +4,14 @@ import (
 	"context"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 type Environment struct {
-	ID    int    `db:"id"`
-	Name  string `db:"name"`
-	Alias string `db:"alias"`
+	ID       int       `db:"id"`
+	Name     string    `db:"name"`
+	Alias    string    `db:"alias"`
+	Metadata json.Text `db:"metadata"`
 }
 
 type Environments []Environment
