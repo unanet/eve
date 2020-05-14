@@ -53,6 +53,7 @@ type Config struct {
 	ApiQVisibilityTimeout  int64         `split_words:"true" default:"3600"`
 	ApiQMaxNumberOfMessage int64         `split_words:"true" default:"10"`
 	ApiQWorkerTimeout      time.Duration `split_words:"true" default:"60s"`
+	CronTimeout            time.Duration `split_words:"true" default:"120s"`
 	HttpCallbackTimeout    time.Duration `split_words:"true" default:"8s"`
 	S3Bucket               string        `split_words:"true" required:"true"`
 	AWSRegion              string        `split_words:"true" required:"true"`

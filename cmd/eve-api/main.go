@@ -10,6 +10,7 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/api"
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
+	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/mux"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
@@ -59,7 +60,11 @@ func main() {
 	})
 
 	repo := data.NewRepo(db)
-	controllers, err := api.InitializeControllers(config, repo, apiQueue)
+
+	artifactoryClient := artifactory.NewClient(config.ArtifactoryConfig)
+	deploymentPlanGenerator := service.NewDeploymentPlanGenerator(repo, artifactoryClient, apiQueue)
+
+	controllers, err := api.InitializeControllers(deploymentPlanGenerator)
 	if err != nil {
 		log.Logger.Panic("Unable to Initialize the Controllers")
 	}
@@ -77,9 +82,14 @@ func main() {
 	httpCallBack := service.NewCallback(config.HttpCallbackTimeout)
 
 	deploymentQueue := service.NewDeploymentQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, s3Uploader, s3Downloader, httpCallBack)
+
+	cron := service.NewDeploymentCron(repo, deploymentPlanGenerator, config.CronTimeout)
+	cron.Start()
+
 	deploymentQueue.Start()
 
 	api.Start(func() {
+		cron.Stop()
 		deploymentQueue.Stop()
 	})
 }

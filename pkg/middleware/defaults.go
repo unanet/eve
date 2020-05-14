@@ -9,7 +9,7 @@ import (
 
 func SetupMiddleware(r chi.Router, timeout time.Duration) {
 	r.Use(Metrics)
-	r.Use(middleware.RequestID)
+	r.Use(RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(Logger())
 	r.Use(middleware.Recoverer)

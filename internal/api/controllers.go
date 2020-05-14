@@ -1,18 +1,11 @@
 package api
 
 import (
-	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
-	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/mux"
-	"gitlab.unanet.io/devops/eve/pkg/queue"
 )
 
-func InitializeControllers(c Config, repo *data.Repo, apiQueue *queue.Q) ([]mux.EveController, error) {
-
-	artifactoryClient := artifactory.NewClient(c.ArtifactoryConfig)
-	deploymentPlanGenerator := service.NewDeploymentPlanGenerator(repo, artifactoryClient, apiQueue)
-
+func InitializeControllers(deploymentPlanGenerator *service.DeploymentPlanGenerator) ([]mux.EveController, error) {
 	return []mux.EveController{
 		NewPingController(),
 		NewDeploymentPlanController(deploymentPlanGenerator),

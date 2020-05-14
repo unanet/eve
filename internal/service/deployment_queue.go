@@ -261,6 +261,10 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 		if err != nil {
 			return dq.rollbackError(ctx, m, err)
 		}
+		_, err = dq.repo.UpdateDeploymentResult(ctx, deployment.ID)
+		if err != nil {
+			return errors.Wrap(err)
+		}
 		return nil
 	}
 

@@ -34,21 +34,22 @@ type DeploymentCron struct {
 	dq      DeploymentQueuer
 }
 
-func NewDeploymentCron(repo DeploymentCronRepo, dq DeploymentQueuer) *DeploymentCron {
+func NewDeploymentCron(repo DeploymentCronRepo, dq DeploymentQueuer, timeout time.Duration) *DeploymentCron {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &DeploymentCron{
-		repo:   repo,
-		log:    log.Logger,
-		ctx:    ctx,
-		cancel: cancel,
-		dq:     dq,
-		done:   make(chan bool),
+		repo:    repo,
+		log:     log.Logger,
+		ctx:     ctx,
+		cancel:  cancel,
+		dq:      dq,
+		done:    make(chan bool),
+		timeout: timeout,
 	}
 }
 
 func (dc *DeploymentCron) Start() {
+	go dc.start()
 	dc.log.Info("deployment cron started")
-
 }
 
 func (dc *DeploymentCron) scheduler(ctx context.Context, job *data.DeploymentCronJob) ([]uuid.UUID, error) {
@@ -98,7 +99,8 @@ func (dc *DeploymentCron) start() {
 			close(dc.done)
 			return
 		default:
-			err := dc.run(context.TODO())
+			ctx, _ := context.WithTimeout(context.Background(), dc.timeout)
+			err := dc.run(ctx)
 			if err != nil {
 				dc.log.Error("an error occurred in the deployment cron scheduler", zap.Error(err))
 			}
@@ -109,5 +111,6 @@ func (dc *DeploymentCron) start() {
 }
 
 func (dc *DeploymentCron) Stop() {
-
+	dc.cancel()
+	<-dc.done
 }

@@ -2,24 +2,15 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"sync/atomic"
 	"time"
 
 	"go.uber.org/zap"
 
+	uuid "github.com/satori/go.uuid"
+
 	"gitlab.unanet.io/devops/eve/pkg/middleware"
 )
-
-var (
-	clientReqID uint64
-)
-
-func getRequestID() string {
-	myID := atomic.AddUint64(&clientReqID, 1)
-	return fmt.Sprintf("%06d", myID)
-}
 
 // Transport implements http.RoundTripper. When set as Transport of http.Client, it executes HTTP requests with logging.
 // No field is mandatory.
@@ -43,7 +34,7 @@ var DefaultLogRequest = func(req *http.Request) {
 		zap.String("url", req.URL.String()),
 	}
 	if cv, ok := ctx.Value(ContextKeyRequestStart).(*contextValue); ok {
-		fields = append(fields, zap.String("client_req_id", cv.reqID))
+		fields = append(fields, zap.String("context_id", cv.contextID))
 	}
 	middleware.LogFromRequest(req).Info("Outgoing HTTP Request", fields...)
 }
@@ -59,7 +50,7 @@ var DefaultLogResponse = func(resp *http.Response) {
 	}
 	if cv, ok := ctx.Value(ContextKeyRequestStart).(*contextValue); ok {
 		elapsed := float64(time.Since(cv.start).Nanoseconds()) / 1000000.0
-		fields = append(fields, zap.Float64("elapsed_ms", elapsed), zap.String("client_req_id", cv.reqID))
+		fields = append(fields, zap.Float64("elapsed_ms", elapsed), zap.String("context_id", cv.contextID))
 	}
 	logger.Info("Incoming HTTP Response", fields...)
 }
@@ -69,8 +60,8 @@ type contextKey struct {
 }
 
 type contextValue struct {
-	start time.Time
-	reqID string
+	start     time.Time
+	contextID string
 }
 
 var ContextKeyRequestStart = &contextKey{"RequestStart"}
@@ -79,8 +70,8 @@ var ContextKeyRequestStart = &contextKey{"RequestStart"}
 // Executes HTTP request with request/response logging.
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	ctx := context.WithValue(req.Context(), ContextKeyRequestStart, &contextValue{
-		start: time.Now(),
-		reqID: getRequestID(),
+		start:     time.Now(),
+		contextID: uuid.NewV4().String(),
 	})
 	req = req.WithContext(ctx)
 
