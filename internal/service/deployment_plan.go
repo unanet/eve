@@ -101,6 +101,7 @@ type DeploymentPlanOptions struct {
 	NamespaceAliases StringList          `json:"namespaces,omitempty"`
 	Messages         []string            `json:"messages,omitempty"`
 	Type             DeploymentPlanType  `json:"type"`
+	DeploymentIDs    []uuid.UUID         `json:"deployment_ids,omitempty"`
 }
 
 type NamespacePlanOptions struct {
@@ -159,6 +160,8 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 		return errors.Wrap(err)
 	}
 
+	options.DeploymentIDs = []uuid.UUID{}
+
 	// whether they explicitly supplied artifacts or whether they were generated
 	artifactsSupplied := len(options.Artifacts) > 0
 
@@ -204,6 +207,7 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 		if repoErr != nil {
 			return errors.Wrap(repoErr)
 		}
+		options.DeploymentIDs = append(options.DeploymentIDs, dataDeployment.ID)
 		queueM := queue.M{
 			ID:      dataDeployment.ID,
 			GroupID: ns.GetQueueGroupID(),

@@ -4,11 +4,13 @@ CREATE TYPE feed_type AS ENUM (
     'generic'
     );
 
+
 DROP TYPE IF EXISTS provider_group;
 CREATE TYPE provider_group AS ENUM (
     'unanet',
     'clearview'
     );
+
 
 DROP TYPE IF EXISTS deployment_state;
 CREATE TYPE deployment_state AS ENUM (
@@ -16,6 +18,14 @@ CREATE TYPE deployment_state AS ENUM (
     'scheduled',
     'completed'
     );
+
+
+DROP TYPE IF EXISTS deployment_cron_state;
+CREATE TYPE deployment_cron_state AS ENUM (
+    'idle',
+    'running'
+    );
+
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -34,6 +44,7 @@ RETURNS jsonb LANGUAGE sql AS $$
     FROM jsonb_each(orig) e1(keyOrig, valOrig)
     FULL JOIN jsonb_each(delta) e2(keyDelta, valDelta) ON keyOrig = keyDelta
 $$;
+
 
 CREATE TABLE feed (
     id integer NOT NULL,
@@ -218,7 +229,26 @@ CREATE TABLE deployment (
     updated_at timestamp without time zone DEFAULT now() NOT NULL
 );
 
+
+CREATE TABLE deployment_cron (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    plan_options jsonb NOT NULL,
+    schedule character varying(25) NOT NULL,
+    state deployment_cron_state DEFAULT 'idle' NOT NULL,
+    last_run timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+CREATE TABLE deployment_cron_job (
+    deployment_cron_id UUID NOT NULL,
+    deployment_id UUID NOT NULL
+);
+
 /* ====================================== SEED DATA ============================================= */
+
+INSERT INTO deployment_cron(plan_options, schedule) VALUES (
+    '{"type":"application","callback_url":"https://eve-bot.unanet.io/eve-callback?channel=GR24SP001","environment":"cvs-int","user":"cron"}',
+    '*/15 * * * *');
 
 INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (1, 'docker-int', 0, 'docker');
 INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (2, 'generic-int', 0, 'generic');
@@ -396,3 +426,8 @@ ALTER TABLE ONLY deployment
     ADD CONSTRAINT deployment_environment_id FOREIGN KEY (environment_id) REFERENCES environment(id);
 ALTER TABLE ONLY deployment
     ADD CONSTRAINT deployment_namespace_id FOREIGN KEY (namespace_id) REFERENCES namespace(id);
+
+ALTER TABLE ONLY deployment_cron_job
+    ADD CONSTRAINT deployment_cron_job_deployment_id FOREIGN KEY (deployment_id) REFERENCES deployment(id);
+ALTER TABLE ONLY deployment_cron_job
+    ADD CONSTRAINT deployment_cron_job_deployment_cron_id FOREIGN KEY (deployment_cron_id) REFERENCES deployment_cron(id);
