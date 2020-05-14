@@ -61,8 +61,6 @@ dist: build
 deploy:
 	-@kubectl delete -f .kube/migration.yaml
 	-@kubectl delete -f .kube/drop-db.yaml
-	kubectl apply -f .kube/drop-db.yaml
-	kubectl wait --for=condition=complete job -l app=eve-api-v1-drop-db
 	kubectl apply -f .kube/migration.yaml
 	kubectl wait --for=condition=complete job -l app=eve-api-v1-migration
 	kubectl apply -f .kube/manifest.yaml
