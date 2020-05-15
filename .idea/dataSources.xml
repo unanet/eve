@@ -11,7 +11,7 @@
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://devops-prod-eve-db.unanet.io:5432/eve</jdbc-url>
+      <jdbc-url>jdbc:postgresql://devops-prod-db.unanet.io:5432/eve</jdbc-url>
     </data-source>
   </component>
 </project>

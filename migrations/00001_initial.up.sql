@@ -26,7 +26,6 @@ CREATE TYPE deployment_cron_state AS ENUM (
     'running'
     );
 
--- You have to comment this out if you're running this with limited perms and run this with high perms
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE OR REPLACE FUNCTION jsonb_merge(orig jsonb, delta jsonb)
