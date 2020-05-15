@@ -27,7 +27,7 @@ CREATE TYPE deployment_cron_state AS ENUM (
     );
 
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE OR REPLACE FUNCTION jsonb_merge(orig jsonb, delta jsonb)
 RETURNS jsonb LANGUAGE sql AS $$
@@ -247,7 +247,7 @@ CREATE TABLE deployment_cron_job (
 /* ====================================== SEED DATA ============================================= */
 
 INSERT INTO deployment_cron(plan_options, schedule) VALUES (
-    '{"type":"application","callback_url":"https://eve-bot.unanet.io/eve-callback?channel=GR24SP001","environment":"cvs-int","user":"cron"}',
+    '{"type": "application", "user": "cron", "environment": "cvs-int", "callback_url": "https://eve-bot.unanet.io/eve-cron-callback?channel=G013FGP8R3Q"}',
     '*/15 * * * *');
 
 INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (1, 'docker-int', 0, 'docker');

@@ -7,7 +7,7 @@
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://localhost:5432/eve-api</jdbc-url>
     </data-source>
-    <data-source source="LOCAL" name="production-eve" uuid="b5177b41-32c3-4229-a34b-5adba3a12d80">
+    <data-source source="LOCAL" name="production-eve" uuid="95c03abb-5c95-44dc-8ef8-24f73d9342ce">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
