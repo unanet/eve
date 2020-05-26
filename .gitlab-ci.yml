@@ -2,6 +2,7 @@ stages:
   - test
   - dist
   - deploy
+  - scan
 
 Dist:
   stage: dist
@@ -25,6 +26,15 @@ Deploy:
   stage: deploy
   script:
     - make deploy
+  tags:
+    - linux
+  only:
+    - master
+
+Sonar Scan:
+  stage: scan
+  script:
+    - make scan
   tags:
     - linux
   only:
