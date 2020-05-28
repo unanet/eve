@@ -60,15 +60,15 @@ type DeployArtifact struct {
 	ArtifactoryPath     string                 `json:"artifactory_path"`
 	ArtifactFnPtr       string                 `json:"artifact_fn"`
 	ArtifactoryFeedType string                 `json:"artifactory_feed_type"`
-	ServicePort         int                    `json:"service_port"`
-	MetricsPort         int                    `json:"metrics_port"`
 	Result              DeployArtifactResult   `json:"result"`
 	Deploy              bool                   `json:"-"`
 }
 
 type DeployService struct {
 	*DeployArtifact
-	ServiceID int `json:"service_id"`
+	ServiceID   int `json:"service_id"`
+	ServicePort int `json:"service_port"`
+	MetricsPort int `json:"metrics_port"`
 }
 
 type DeployServices []*DeployService
