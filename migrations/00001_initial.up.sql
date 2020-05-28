@@ -8,7 +8,8 @@ CREATE TYPE feed_type AS ENUM (
 DROP TYPE IF EXISTS provider_group;
 CREATE TYPE provider_group AS ENUM (
     'unanet',
-    'clearview'
+    'clearview',
+    'ops'
     );
 
 
@@ -236,7 +237,8 @@ CREATE TABLE deployment_cron (
     plan_options jsonb NOT NULL,
     schedule character varying(25) NOT NULL,
     state deployment_cron_state DEFAULT 'idle' NOT NULL,
-    last_run timestamp without time zone DEFAULT now() NOT NULL
+    last_run timestamp without time zone DEFAULT now() NOT NULL,
+    disabled bool DEFAULT false NOT NULL
 );
 
 

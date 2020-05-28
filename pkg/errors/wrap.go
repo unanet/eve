@@ -23,7 +23,7 @@ type txError struct {
 }
 
 func (tx txError) Error() string {
-	return tx.TxError.Error()
+	return tx.OriginalError.Error()
 }
 
 func (tx txError) Unwrap() error {

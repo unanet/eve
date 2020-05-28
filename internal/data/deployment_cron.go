@@ -27,12 +27,13 @@ type DeploymentCronJob struct {
 	Schedule    string              `db:"schedule"`
 	LastRun     sql.NullTime        `db:"last_run"`
 	State       DeploymentCronState `db:"state"`
+	Disabled    bool                `db:"disabled"`
 }
 
 type DeploymentCronJobs []*DeploymentCronJob
 
 func (r *Repo) getDeploymentCronJobs(ctx context.Context, tx *sqlx.Tx) (DeploymentCronJobs, error) {
-	rows, err := tx.QueryxContext(ctx, "select * from deployment_cron where state = 'idle' for update")
+	rows, err := tx.QueryxContext(ctx, "select * from deployment_cron where state = 'idle' and disabled = false for update")
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
