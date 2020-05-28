@@ -315,7 +315,7 @@ INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (203, 'exago', 
 
 INSERT INTO artifact(id, name, feed_type, provider_group) VALUES (285, 'sql-migration-scripts', 'docker', 'unanet');
 
-INSERT INTO cluster(id, name, provider_group, sch_queue_url) VALUES (1, 'cvs-nonprod-zxrjdqr67u', 'clearview', 'https://sqs.us-east-2.amazonaws.com/580107804399/cvs-nonprod-zxrjdqr67u.fifo');
+INSERT INTO cluster(id, name, provider_group, sch_queue_url) VALUES (1, 'cvs-nonprod-zxrjdqr67u', 'clearview', '');
 
 INSERT INTO namespace(id, name, alias, environment_id, requested_version, cluster_id) VALUES (1, 'root-cvs-int', 'root', 101, '2020', 1);
 

@@ -200,3 +200,7 @@ func (ns *NSDeploymentPlan) Failed() bool {
 func (ns *NSDeploymentPlan) Message(format string, a ...interface{}) {
 	ns.Messages = append(ns.Messages, fmt.Sprintf(format, a...))
 }
+
+func (ns *NSDeploymentPlan) K8sNamespace() string {
+	return fmt.Sprintf("%s-%s", ns.Namespace.Alias, ns.EnvironmentName)
+}
