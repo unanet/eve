@@ -125,8 +125,8 @@ CREATE SEQUENCE namespace_id_seq
     CACHE 1;
 ALTER SEQUENCE namespace_id_seq OWNED BY namespace.id;
 ALTER TABLE ONLY namespace ALTER COLUMN id SET DEFAULT nextval('namespace_id_seq'::regclass);
-CREATE UNIQUE INDEX namespace_name_uindex ON namespace USING btree (name);
-CREATE UNIQUE INDEX namespace_environment_id_alias_uindex ON namespace (environment_id, alias);
+CREATE UNIQUE INDEX namespace_name_cluster_id_uindex ON namespace (name, cluster_id);
+CREATE UNIQUE INDEX namespace_environment_id_cluster_id_alias_uindex ON namespace (environment_id, cluster_id, alias);
 ALTER TABLE ONLY namespace ADD CONSTRAINT namespace_pk PRIMARY KEY (id);
 
 
@@ -136,6 +136,8 @@ CREATE TABLE service (
     artifact_id integer NOT NULL,
     override_version character varying(50),
     deployed_version character varying(50),
+    service_port integer default 80 NOT NULL,
+    metrics_port integer default 0 NOT NULL,
     metadata jsonb DEFAULT '{}'::json NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL
