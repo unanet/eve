@@ -63,7 +63,7 @@ dist: build
 	docker push ${IMAGE_NAME}:${PATCH_VERSION}
 	curl --fail -H "X-JFrog-Art-Api:${JFROG_API_KEY}" \
 		-X PUT \
-		https://unanet.jfrog.io/unanet/api/storage/docker-local/eve-api/${PATCH_VERSION}\?properties=version=${VERSION}%7Cgitlab-build-properties.project-id=${CI_PROJECT_ID}%7Cgitlab-build-properties.git-sha=${CI_COMMIT_SHORT_SHA}%7Cgitlab-build-properties.git-branch=${CI_COMMIT_BRANCH}
+		https://unanet.jfrog.io/unanet/api/storage/docker-local/ops/eve-api/${PATCH_VERSION}\?properties=version=${VERSION}%7Cgitlab-build-properties.project-id=${CI_PROJECT_ID}%7Cgitlab-build-properties.git-sha=${CI_COMMIT_SHORT_SHA}%7Cgitlab-build-properties.git-branch=${CI_COMMIT_BRANCH}
 
 deploy:
 	-@kubectl delete -f .kube/migration.yaml
