@@ -1,29 +1,29 @@
 version: "3.7"
 
 services:
-#  eve-api:
-#    image: unanet-docker.jfrog.io/eve-api:0.1.0
-#    container_name: eve_api
-#    volumes:
-#      - ~/.vault-token:/root/.vault-token
-#    environment:
-#      - VAULT_ADDR=https://vault.unanet.io/
-#      - VAULT_TOKEN_PARSER=root
-#      - EVE_ARTIFACTORY_BASE_URL=${EVE_ARTIFACTORY_BASE_URL}
-#      - EVE_SERVICE_NAME=eve-api
-#      - EVE_DB_HOST=db
-#      - EVE_ARTIFACTORY_API_KEY=vault:devops/eve#EVE_ARTIFACTORY_API_KEY
-#      - EVE_GITLAB_API_KEY=vault:devops/eve#EVE_GITLAB_API_KEY
-#    ports:
-#      - "8080:8080"
-#      - "3000:3000"
-#    networks:
-#      - eve-net
-#    links:
-#      - eve-db:db
-#    depends_on:
-#      - eve-db
-#    command: env
+  eve-api:
+    image: unanet-docker.jfrog.io/eve-api:0.1.0
+    container_name: eve_api
+    volumes:
+      - ~/.vault-token:/root/.vault-token
+    environment:
+      - VAULT_ADDR=https://vault.unanet.io/
+      - VAULT_TOKEN_PARSER=root
+      - EVE_ARTIFACTORY_BASE_URL=${EVE_ARTIFACTORY_BASE_URL}
+      - EVE_SERVICE_NAME=eve-api
+      - EVE_DB_HOST=db
+      - EVE_ARTIFACTORY_API_KEY=vault:devops/eve#EVE_ARTIFACTORY_API_KEY
+      - EVE_GITLAB_API_KEY=vault:devops/eve#EVE_GITLAB_API_KEY
+    ports:
+      - "8080:8080"
+      - "3000:3000"
+    networks:
+      - eve-net
+    links:
+      - eve-db:db
+    depends_on:
+      - eve-db
+    command: env
 
   eve-db:
     image: postgres:11.4

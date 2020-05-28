@@ -10,6 +10,7 @@ import (
 
 type Namespace struct {
 	ID                 int          `db:"id"`
+	Name               string       `db:"name"`
 	Alias              string       `db:"alias"`
 	EnvironmentID      int          `db:"environment_id"`
 	Domain             string       `db:"domain"`
@@ -41,7 +42,7 @@ func (n Namespaces) ToIDs() []int {
 
 func (n Namespaces) Contains(name string) bool {
 	for _, x := range n {
-		if x.Alias == name {
+		if x.Alias == name || x.Name == name {
 			return true
 		}
 	}

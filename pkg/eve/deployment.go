@@ -123,12 +123,13 @@ func (ds DeployMigrations) ToDeploy() DeployMigrations {
 type NamespaceRequest struct {
 	ID          int    `json:"id"`
 	Alias       string `json:"alias"`
+	Name        string `json:"name"`
 	ClusterID   int    `json:"cluster_id"`
 	ClusterName string `json:"cluster_name"`
 }
 
 func (ns *NamespaceRequest) GetQueueGroupID() string {
-	return fmt.Sprintf("deploy-ns-%d", ns.ID)
+	return fmt.Sprintf("deploy-%s", ns.Name)
 }
 
 type NamespaceRequests []*NamespaceRequest
@@ -142,7 +143,7 @@ func (n NamespaceRequests) ToIDs() []int {
 }
 
 type NSDeploymentPlan struct {
-	DeploymentID     uuid.UUID            `json:"deployment_id"`
+	DeploymentID     uuid.UUID            `json:"deploymend_id"`
 	Namespace        *NamespaceRequest    `json:"namespace"`
 	EnvironmentName  string               `json:"environment_name"`
 	EnvironmentAlias string               `json:"environment_alias"`
@@ -162,7 +163,7 @@ func (ns *NSDeploymentPlan) NothingToDeploy() bool {
 }
 
 func (ns *NSDeploymentPlan) GroupID() string {
-	return fmt.Sprintf("deploy-ns-%d", ns.Namespace.ID)
+	return ns.Namespace.Name
 }
 
 func (ns *NSDeploymentPlan) NoopExist() bool {
