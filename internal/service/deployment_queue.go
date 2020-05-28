@@ -273,7 +273,7 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 	err = dq.worker.Message(ctx, nsDeploymentPlan.SchQueueUrl, &queue.M{
 		ID:      deployment.ID,
 		ReqID:   queue.GetReqID(ctx),
-		GroupID: nsDeploymentPlan.GroupID(),
+		GroupID: nsDeploymentPlan.Namespace.GetQueueGroupID(),
 		Body:    mBody,
 		Command: CommandDeployNamespace,
 	})

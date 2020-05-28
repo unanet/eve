@@ -129,7 +129,7 @@ type NamespaceRequest struct {
 }
 
 func (ns *NamespaceRequest) GetQueueGroupID() string {
-	return fmt.Sprintf("deploy-%s", ns.Name)
+	return fmt.Sprintf("deploy-ns-%d", ns.ID)
 }
 
 type NamespaceRequests []*NamespaceRequest
@@ -143,7 +143,7 @@ func (n NamespaceRequests) ToIDs() []int {
 }
 
 type NSDeploymentPlan struct {
-	DeploymentID     uuid.UUID            `json:"deploymend_id"`
+	DeploymentID     uuid.UUID            `json:"deployment_id"`
 	Namespace        *NamespaceRequest    `json:"namespace"`
 	EnvironmentName  string               `json:"environment_name"`
 	EnvironmentAlias string               `json:"environment_alias"`
@@ -160,10 +160,6 @@ func (ns *NSDeploymentPlan) NothingToDeploy() bool {
 		return true
 	}
 	return false
-}
-
-func (ns *NSDeploymentPlan) GroupID() string {
-	return ns.Namespace.Name
 }
 
 func (ns *NSDeploymentPlan) NoopExist() bool {
@@ -200,8 +196,4 @@ func (ns *NSDeploymentPlan) Failed() bool {
 
 func (ns *NSDeploymentPlan) Message(format string, a ...interface{}) {
 	ns.Messages = append(ns.Messages, fmt.Sprintf(format, a...))
-}
-
-func (ns *NSDeploymentPlan) K8sNamespace() string {
-	return fmt.Sprintf("%s-%s", ns.Namespace.Alias, ns.EnvironmentName)
 }
