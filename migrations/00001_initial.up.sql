@@ -139,6 +139,7 @@ CREATE TABLE service (
     deployed_version character varying(50),
     service_port integer default 80 NOT NULL,
     metrics_port integer default 0 NOT NULL,
+    service_account character varying (50) DEFAULT 'unanet',
     metadata jsonb DEFAULT '{}'::json NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL

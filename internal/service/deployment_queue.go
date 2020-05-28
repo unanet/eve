@@ -50,6 +50,7 @@ func fromDataService(s data.Service) *eve.DeployService {
 			ArtifactName:     s.ArtifactName,
 			RequestedVersion: s.RequestedVersion,
 			DeployedVersion:  s.DeployedVersion.String,
+			ServiceAccount:   s.ServiceAccount,
 			Metadata:         s.Metadata.AsMap(),
 			Result:           eve.DeployArtifactResultNoop,
 		},

@@ -55,6 +55,7 @@ type DeployArtifact struct {
 	RequestedVersion    string                 `json:"requested_version"`
 	DeployedVersion     string                 `json:"deployed_version"`
 	AvailableVersion    string                 `json:"available_version"`
+	ServiceAccount      string                 `json:"service_account"`
 	Metadata            map[string]interface{} `json:"metadata"`
 	ArtifactoryFeed     string                 `json:"artifactory_feed"`
 	ArtifactoryPath     string                 `json:"artifactory_path"`

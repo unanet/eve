@@ -19,6 +19,7 @@ type Service struct {
 	DeployedVersion  sql.NullString `db:"deployed_version"`
 	ServicePort      int            `db:"service_port"`
 	MetricsPort      int            `db:"metrics_port"`
+	ServiceAccount   string         `db:"service_account"`
 	Metadata         json.Text      `db:"metadata"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
@@ -48,6 +49,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		select s.id as service_id,
 		   s.service_port,
 		   s.metrics_port,
+		   s.service_account,
 		   s.artifact_id,
 		   a.name as artifact_name, 
 		   s.deployed_version,
