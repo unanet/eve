@@ -60,6 +60,8 @@ type DeployArtifact struct {
 	ArtifactoryPath     string                 `json:"artifactory_path"`
 	ArtifactFnPtr       string                 `json:"artifact_fn"`
 	ArtifactoryFeedType string                 `json:"artifactory_feed_type"`
+	ServicePort         int                    `json:"service_port"`
+	MetricsPort         int                    `json:"metrics_port"`
 	Result              DeployArtifactResult   `json:"result"`
 	Deploy              bool                   `json:"-"`
 }
@@ -84,7 +86,7 @@ func (ds DeployServices) ToDeploy() DeployServices {
 // ArtifactDeployResultMap is used to convert the array of artifacts results into a map
 type ArtifactDeployResultMap map[DeployArtifactResult]DeployServices
 
-// TopResultMap conerts the array of results into a map by result
+// TopResultMap converts the array of results into a map by result
 func (ds DeployServices) TopResultMap() ArtifactDeployResultMap {
 	result := make(ArtifactDeployResultMap)
 

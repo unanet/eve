@@ -49,6 +49,8 @@ func fromDataService(s data.Service) *eve.DeployService {
 			RequestedVersion: s.RequestedVersion,
 			DeployedVersion:  s.DeployedVersion.String,
 			Metadata:         s.Metadata.AsMap(),
+			ServicePort:      s.ServicePort,
+			MetricsPort:      s.MetricsPort,
 			Result:           eve.DeployArtifactResultNoop,
 		},
 	}

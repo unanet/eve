@@ -17,6 +17,8 @@ type Service struct {
 	ArtifactName     string         `db:"artifact_name"`
 	RequestedVersion string         `db:"requested_version"`
 	DeployedVersion  sql.NullString `db:"deployed_version"`
+	ServicePort      int            `db:"service_port"`
+	MetricsPort      int            `db:"metrics_port"`
 	Metadata         json.Text      `db:"metadata"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
@@ -43,7 +45,9 @@ func (r *Repo) UpdateDeployedServiceVersion(ctx context.Context, id int, version
 
 func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID int) (Services, error) {
 	rows, err := r.db.QueryxContext(ctx, `
-		select s.id as service_id, 
+		select s.id as service_id,
+		   s.service_port,
+		   s.metrics_port,
 		   s.artifact_id,
 		   a.name as artifact_name, 
 		   s.deployed_version,
