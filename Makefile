@@ -18,7 +18,7 @@ DOCKER_GID = $(shell id -g)
 CUR_DIR := $(shell pwd)
 
 BUILD_IMAGE := unanet-docker.jfrog.io/golang
-IMAGE_NAME := unanet-docker.jfrog.io/eve-api
+IMAGE_NAME := unanet-docker.jfrog.io/ops/eve-api
 IMAGE_DIGEST = $(shell docker inspect -f '{{index .RepoDigests 0}}' ${IMAGE_NAME}:${PATCH_VERSION})
 
 LABEL_PREFIX := com.unanet
