@@ -68,11 +68,11 @@ type DeployArtifact struct {
 
 func (da DeployArtifact) EvalImageTag() string {
 	imageTag := da.ImageTag
-	versionSplit := strings.Split(da.RequestedVersion, ".")
+	versionSplit := strings.Split(da.AvailableVersion, ".")
 	replacementMap := make(map[string]string)
 	replacementMap["$version"] = da.RequestedVersion
 	for i, x := range versionSplit {
-		replacementMap[fmt.Sprintf("$%d", i)] = x
+		replacementMap[fmt.Sprintf("$%d", i+1)] = x
 	}
 	for k, v := range replacementMap {
 		imageTag = strings.Replace(imageTag, k, v, -1)
