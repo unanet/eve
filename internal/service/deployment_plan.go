@@ -259,6 +259,7 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 				}
 				return errors.Wrap(err)
 			}
+			log.Logger.Info("----------#############" + x.RequestedVersion)
 			x.ID = ra.ArtifactID
 			x.ArtifactName = ra.ArtifactName
 			x.ArtifactoryFeed = ra.FeedName
