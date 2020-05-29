@@ -15,7 +15,6 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/eve/pkg/json"
-	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/middleware"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
 )
@@ -76,12 +75,9 @@ func (ad ArtifactDefinitions) ContainsVersion(name string, version string) bool 
 }
 
 func (ad ArtifactDefinitions) Match(artifactID int, optName string, requestedVersion string) *ArtifactDefinition {
-	log.Logger.Info(fmt.Sprintf("#################### %d-%s-%s", artifactID, optName, requestedVersion))
-
 	for _, x := range ad {
-		log.Logger.Info(fmt.Sprintf("#################### %s-%s", x.Name, x.RequestedVersion))
 		if x.Name != "" {
-			if x.Name == optName && strings.HasPrefix(x.RequestedVersion, requestedVersion) {
+			if x.Name == optName && strings.HasPrefix(x.AvailableVersion, requestedVersion) {
 				return x
 			}
 		} else if x.ID == artifactID && strings.HasPrefix(x.AvailableVersion, requestedVersion) {
@@ -259,7 +255,6 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 				}
 				return errors.Wrap(err)
 			}
-			log.Logger.Info("----------#############" + x.RequestedVersion)
 			x.ID = ra.ArtifactID
 			x.ArtifactName = ra.ArtifactName
 			x.ArtifactoryFeed = ra.FeedName
