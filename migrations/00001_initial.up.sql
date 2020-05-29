@@ -133,6 +133,7 @@ ALTER TABLE ONLY namespace ADD CONSTRAINT namespace_pk PRIMARY KEY (id);
 
 CREATE TABLE service (
     id integer NOT NULL,
+    name varchar(50) NOT NULL,
     namespace_id integer NOT NULL,
     artifact_id integer NOT NULL,
     override_version character varying(50),
@@ -155,6 +156,7 @@ CREATE SEQUENCE service_id_seq
 ALTER SEQUENCE service_id_seq OWNED BY service.id;
 ALTER TABLE ONLY service ALTER COLUMN id SET DEFAULT nextval('service_id_seq'::regclass);
 CREATE UNIQUE INDEX service_namespace_id_artifact_id_uindex ON service (namespace_id, artifact_id);
+CREATE UNIQUE INDEX service_namespace_id_name_uindex ON service (name, namespace_id);
 ALTER TABLE ONLY service ADD CONSTRAINT service_pk PRIMARY KEY (id);
 
 

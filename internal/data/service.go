@@ -13,6 +13,7 @@ import (
 
 type Service struct {
 	ServiceID        int            `db:"service_id"`
+	ServiceName      string         `db:"service_name"`
 	ArtifactID       int            `db:"artifact_id"`
 	ArtifactName     string         `db:"artifact_name"`
 	RequestedVersion string         `db:"requested_version"`
@@ -52,6 +53,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		   s.image_tag,
 		   s.metrics_port,
 		   s.service_account,
+           s.name as service_name,
 		   s.artifact_id,
 		   a.name as artifact_name, 
 		   s.deployed_version,

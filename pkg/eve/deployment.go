@@ -82,9 +82,10 @@ func (da DeployArtifact) EvalImageTag() string {
 
 type DeployService struct {
 	*DeployArtifact
-	ServiceID   int `json:"service_id"`
-	ServicePort int `json:"service_port"`
-	MetricsPort int `json:"metrics_port"`
+	ServiceID   int    `json:"service_id"`
+	ServicePort int    `json:"service_port"`
+	MetricsPort int    `json:"metrics_port"`
+	ServiceName string `json:"service_name"`
 }
 
 type DeployServices []*DeployService

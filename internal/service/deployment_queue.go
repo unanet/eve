@@ -45,6 +45,7 @@ func fromDataService(s data.Service) *eve.DeployService {
 		ServiceID:   s.ServiceID,
 		ServicePort: s.ServicePort,
 		MetricsPort: s.MetricsPort,
+		ServiceName: s.ServiceName,
 		DeployArtifact: &eve.DeployArtifact{
 			ArtifactID:       s.ArtifactID,
 			ArtifactName:     s.ArtifactName,
