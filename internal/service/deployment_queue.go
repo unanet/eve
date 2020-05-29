@@ -131,9 +131,10 @@ func (dq *DeploymentQueue) Stop() {
 	dq.worker.Stop()
 }
 
-func (dq *DeploymentQueue) matchArtifact(a *eve.DeployArtifact, options NamespacePlanOptions, logger messageLogger) {
+func (dq *DeploymentQueue) matchArtifact(a *eve.DeployArtifact, optName string, options NamespacePlanOptions, logger messageLogger) {
 	// match services to be deployed
-	match := options.Artifacts.Match(a.ArtifactID, a.RequestedVersion)
+	// we need to pass in the service/database name here to match if it was supplied as we should only match services/databases that were specified
+	match := options.Artifacts.Match(a.ArtifactID, optName, a.RequestedVersion)
 	if match == nil {
 		return
 	}
@@ -191,7 +192,7 @@ func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, deploym
 	}
 	services := fromDataServices(dataServices)
 	for _, x := range services {
-		dq.matchArtifact(x.DeployArtifact, options, nSDeploymentPlan.Message)
+		dq.matchArtifact(x.DeployArtifact, x.ServiceName, options, nSDeploymentPlan.Message)
 	}
 	if options.ArtifactsSupplied {
 		unmatched := options.Artifacts.UnMatched()
@@ -214,7 +215,7 @@ func (dq *DeploymentQueue) createMigrationsDeployment(ctx context.Context, deplo
 	}
 	migrations := fromDataDatabaseInstances(dataDatabaseInstances)
 	for _, x := range migrations {
-		dq.matchArtifact(x.DeployArtifact, options, nSDeploymentPlan.Message)
+		dq.matchArtifact(x.DeployArtifact, x.DatabaseName, options, nSDeploymentPlan.Message)
 	}
 	if options.ArtifactsSupplied {
 		unmatched := options.Artifacts.UnMatched()

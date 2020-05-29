@@ -24,7 +24,8 @@ type DeploymentPlanRepo interface {
 	NamespacesByEnvironmentID(ctx context.Context, environmentID int) (data.Namespaces, error)
 	ServiceArtifacts(ctx context.Context, namespaceIDs []int) (data.RequestArtifacts, error)
 	DatabaseInstanceArtifacts(ctx context.Context, namespaceIDs []int) (data.RequestArtifacts, error)
-	RequestArtifactByEnvironment(ctx context.Context, artifactName string, environmentID int) (*data.RequestArtifact, error)
+	RequestServiceArtifactByEnvironment(ctx context.Context, artifactName string, environmentID int) (*data.RequestArtifact, error)
+	RequestDatabaseArtifactByEnvironment(ctx context.Context, databaseName string, environmentID int) (*data.RequestArtifact, error)
 	CreateDeployment(ctx context.Context, d *data.Deployment) error
 	UpdateDeploymentMessageID(ctx context.Context, id uuid.UUID, messageID string) error
 }
@@ -43,6 +44,7 @@ const (
 type ArtifactDefinition struct {
 	ID               int    `json:"id"`
 	Name             string `json:"name"`
+	ArtifactName     string `json:"artifact_name"`
 	RequestedVersion string `json:"requested_version,omitempty"`
 	AvailableVersion string `json:"available_version"`
 	ArtifactoryFeed  string `json:"artifactory_feed"`
@@ -65,16 +67,20 @@ type ArtifactDefinitions []*ArtifactDefinition
 
 func (ad ArtifactDefinitions) ContainsVersion(name string, version string) bool {
 	for _, x := range ad {
-		if x.AvailableVersion == version && x.Name == name {
+		if x.AvailableVersion == version && x.ArtifactName == name {
 			return true
 		}
 	}
 	return false
 }
 
-func (ad ArtifactDefinitions) Match(artifactID int, requestedVersion string) *ArtifactDefinition {
+func (ad ArtifactDefinitions) Match(artifactID int, optName string, requestedVersion string) *ArtifactDefinition {
 	for _, x := range ad {
-		if x.ID == artifactID && strings.HasPrefix(x.AvailableVersion, requestedVersion) {
+		if x.Name != "" {
+			if x.Name == optName && strings.HasPrefix(x.RequestedVersion, requestedVersion) {
+				return x
+			}
+		} else if x.ID == artifactID && strings.HasPrefix(x.AvailableVersion, requestedVersion) {
 			return x
 		}
 	}
@@ -175,6 +181,11 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 		return errors.Wrap(err)
 	}
 
+	err = d.setArtifactoryVersions(ctx, options)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
 	// nothing to do, should exit
 	if len(options.Artifacts) == 0 {
 		return errors.NewRestError(400, "no artifacts would be deployed: %v", options.Messages)
@@ -228,16 +239,24 @@ func (d *DeploymentPlanGenerator) QueueDeploymentPlan(ctx context.Context, optio
 func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Context, env *data.Environment, options *DeploymentPlanOptions, ns eve.NamespaceRequests) error {
 	// If services were supplied, we check those against the database to make sure they are valid and pull
 	// required info needed to lookup in Artifactory
+	// It's important to note here that we're matching on the service/database name that's configured in the database which can be different than the artifact name.
 	if len(options.Artifacts) > 0 {
 		for _, x := range options.Artifacts {
-			ra, err := d.repo.RequestArtifactByEnvironment(ctx, x.Name, env.ID)
+			var ra *data.RequestArtifact
+			var err error
+			if options.Type == DeploymentPlanTypeApplication {
+				ra, err = d.repo.RequestServiceArtifactByEnvironment(ctx, x.Name, env.ID)
+			} else {
+				ra, err = d.repo.RequestDatabaseArtifactByEnvironment(ctx, x.Name, env.ID)
+			}
 			if err != nil {
 				if _, ok := err.(data.NotFoundError); ok {
-					return errors.NotFoundf("artifact not found in db: %s", x.Name)
+					return errors.NotFoundf("service/database not found in db: %s", x.Name)
 				}
 				return errors.Wrap(err)
 			}
 			x.ID = ra.ArtifactID
+			x.ArtifactName = ra.ArtifactName
 			x.ArtifactoryFeed = ra.FeedName
 			x.ArtifactoryPath = ra.Path()
 			x.FunctionPointer = ra.FunctionPointer.String
@@ -258,7 +277,7 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 		for _, x := range dataArtifacts {
 			options.Artifacts = append(options.Artifacts, &ArtifactDefinition{
 				ID:               x.ArtifactID,
-				Name:             x.ArtifactName,
+				ArtifactName:     x.ArtifactName,
 				RequestedVersion: x.RequestedVersion,
 				ArtifactoryFeed:  x.FeedName,
 				ArtifactoryPath:  x.Path(),
@@ -267,52 +286,6 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 			})
 		}
 	}
-
-	// now we query artifactory for the actual version
-	var artifacts ArtifactDefinitions
-	for _, a := range options.Artifacts {
-		// if you didn't pass a full version, we need to add a wildcard so it work correctly to query artifactory
-		version, err := d.vq.GetLatestVersion(ctx, a.ArtifactoryFeed, a.ArtifactoryPath, a.ArtifactoryRequestedVersion())
-		if err != nil {
-			if _, ok := err.(artifactory.NotFoundError); ok {
-				options.Message("artifact not found in artifactory: %s/%s/%s:%s", a.ArtifactoryFeed, a.ArtifactoryPath, a.Name, a.ArtifactoryRequestedVersion())
-				continue
-			}
-			return errors.Wrap(err)
-		}
-
-		// if this version is already in the list, don't include it again
-		//noinspection GoNilness
-		if artifacts.ContainsVersion(a.Name, version) {
-			continue
-		}
-		a.RequestedVersion = ""
-		a.AvailableVersion = version
-		artifacts = append(artifacts, a)
-	}
-
-	// we need to sort the higher versions first so that when we match, it tries to match the highest version possible first
-	sort.Slice(artifacts, func(i, j int) bool {
-		jSplit := strings.Split(artifacts[j].AvailableVersion, ".")
-		iSplit := strings.Split(artifacts[i].AvailableVersion, ".")
-		minLength := min(len(jSplit), len(iSplit))
-		for x := 0; x < minLength; x++ {
-			jv, err := strconv.Atoi(jSplit[x])
-			if err != nil {
-				return false
-			}
-			iv, err := strconv.Atoi(iSplit[x])
-			if err != nil {
-				return false
-			}
-			if iv == jv {
-				continue
-			}
-			return jv < iv
-		}
-		return true
-	})
-	options.Artifacts = artifacts
 	return nil
 }
 
@@ -359,6 +332,55 @@ func (d *DeploymentPlanGenerator) validateNamespaces(ctx context.Context, env *d
 	}
 
 	return namespaceRequests, nil
+}
+
+func (d *DeploymentPlanGenerator) setArtifactoryVersions(ctx context.Context, options *DeploymentPlanOptions) error {
+	// now we query artifactory for the actual version
+	var artifacts ArtifactDefinitions
+	for _, a := range options.Artifacts {
+		// if you didn't pass a full version, we need to add a wildcard so it work correctly to query artifactory
+		version, err := d.vq.GetLatestVersion(ctx, a.ArtifactoryFeed, a.ArtifactoryPath, a.ArtifactoryRequestedVersion())
+		if err != nil {
+			if _, ok := err.(artifactory.NotFoundError); ok {
+				options.Message("artifact not found in artifactory: %s/%s/%s:%s", a.ArtifactoryFeed, a.ArtifactoryPath, a.Name, a.ArtifactoryRequestedVersion())
+				continue
+			}
+			return errors.Wrap(err)
+		}
+
+		// if this version is already in the list, don't include it again
+		//noinspection GoNilness
+		if artifacts.ContainsVersion(a.ArtifactName, version) {
+			continue
+		}
+		a.RequestedVersion = ""
+		a.AvailableVersion = version
+		artifacts = append(artifacts, a)
+	}
+
+	// we need to sort the higher versions first so that when we match, it tries to match the highest version possible first
+	sort.Slice(artifacts, func(i, j int) bool {
+		jSplit := strings.Split(artifacts[j].AvailableVersion, ".")
+		iSplit := strings.Split(artifacts[i].AvailableVersion, ".")
+		minLength := min(len(jSplit), len(iSplit))
+		for x := 0; x < minLength; x++ {
+			jv, err := strconv.Atoi(jSplit[x])
+			if err != nil {
+				return false
+			}
+			iv, err := strconv.Atoi(iSplit[x])
+			if err != nil {
+				return false
+			}
+			if iv == jv {
+				continue
+			}
+			return jv < iv
+		}
+		return true
+	})
+	options.Artifacts = artifacts
+	return nil
 }
 
 func min(x, y int) int {
