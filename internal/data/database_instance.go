@@ -20,6 +20,8 @@ type DatabaseInstance struct {
 	ArtifactName     string         `db:"artifact_name"`
 	RequestedVersion string         `db:"requested_version"`
 	DeployedVersion  sql.NullString `db:"deployed_version"`
+	ServiceAccount   string         `db:"service_account"`
+	ImageTag         string         `db:"image_tag"`
 	Metadata         json.Text      `db:"metadata"`
 	DatabaseName     string         `db:"database_name"`
 }
@@ -52,6 +54,8 @@ func (r *Repo) DeployedDatabaseInstancesByNamespaceID(ctx context.Context, names
 		    a.id as artifact_id, 
 			a.name as artifact_name,
 		    di.migration_deployed_version as deployed_version,
+		    di.migration_image_tag as image_tag,
+		    di.migration_service_account as service_account,
 		    di.name as database_name,
 			jsonb_merge(e.metadata, jsonb_merge(ns.metadata, jsonb_merge(a.metadata, jsonb_merge(ds.metadata, di.metadata)))) as metadata,
 			COALESCE(di.migration_override_version, ns.requested_version) as requested_version

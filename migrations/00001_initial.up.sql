@@ -139,7 +139,8 @@ CREATE TABLE service (
     deployed_version character varying(50),
     service_port integer default 80 NOT NULL,
     metrics_port integer default 0 NOT NULL,
-    service_account character varying (50) DEFAULT 'unanet',
+    service_account character varying (50) DEFAULT 'unanet' NOT NULL,
+    image_tag character varying (50) DEFAULT '$version' NOT NULL,
     metadata jsonb DEFAULT '{}'::json NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL
@@ -183,6 +184,8 @@ CREATE TABLE database_instance (
     namespace_id integer NOT NULL,
     migration_override_version character varying(50),
     migration_deployed_version character varying(50),
+    migration_service_account character varying (50) DEFAULT 'unanet' NOT NULL,
+    migration_image_tag character varying (50) DEFAULT '$version' NOT NULL,
     metadata jsonb DEFAULT '{}'::json NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL

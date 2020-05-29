@@ -20,6 +20,7 @@ type Service struct {
 	ServicePort      int            `db:"service_port"`
 	MetricsPort      int            `db:"metrics_port"`
 	ServiceAccount   string         `db:"service_account"`
+	ImageTag         string         `db:"image_tag"`
 	Metadata         json.Text      `db:"metadata"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
@@ -48,6 +49,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 	rows, err := r.db.QueryxContext(ctx, `
 		select s.id as service_id,
 		   s.service_port,
+		   s.image_tag,
 		   s.metrics_port,
 		   s.service_account,
 		   s.artifact_id,
