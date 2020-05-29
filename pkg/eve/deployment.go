@@ -66,6 +66,18 @@ type DeployArtifact struct {
 	Deploy              bool                   `json:"-"`
 }
 
+func (da DeployArtifact) EvalImageTag() {
+	versionSplit := strings.Split(da.RequestedVersion, ".")
+	replacementMap := make(map[string]string)
+	replacementMap["$version"] = da.RequestedVersion
+	for i, x := range versionSplit {
+		replacementMap[fmt.Sprintf("$%d", i)] = x
+	}
+	for k, v := range replacementMap {
+		da.ImageTag = strings.Replace(da.ImageTag, k, v, -1)
+	}
+}
+
 type DeployService struct {
 	*DeployArtifact
 	ServiceID   int `json:"service_id"`
