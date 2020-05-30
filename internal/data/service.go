@@ -22,7 +22,7 @@ type Service struct {
 	MetricsPort      int            `db:"metrics_port"`
 	ServiceAccount   string         `db:"service_account"`
 	ImageTag         string         `db:"image_tag"`
-	RunAs            string         `db:"run_as"`
+	RunAs            int            `db:"run_as"`
 	Metadata         json.Text      `db:"metadata"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`

@@ -22,7 +22,7 @@ type DatabaseInstance struct {
 	DeployedVersion  sql.NullString `db:"deployed_version"`
 	ServiceAccount   string         `db:"service_account"`
 	ImageTag         string         `db:"image_tag"`
-	RunAs            string         `db:"run_as"`
+	RunAs            int            `db:"run_as"`
 	Metadata         json.Text      `db:"metadata"`
 	DatabaseName     string         `db:"database_name"`
 }
