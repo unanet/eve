@@ -55,6 +55,7 @@ func fromDataService(s data.Service) *eve.DeployService {
 			ImageTag:         s.ImageTag,
 			Metadata:         s.Metadata.AsMap(),
 			Result:           eve.DeployArtifactResultNoop,
+			RunAs:            s.RunAs,
 		},
 	}
 }
@@ -80,6 +81,7 @@ func fromDataDatabaseInstance(s data.DatabaseInstance) *eve.DeployMigration {
 			ImageTag:         s.ImageTag,
 			Metadata:         s.Metadata.AsMap(),
 			Result:           eve.DeployArtifactResultNoop,
+			RunAs:            s.RunAs,
 		},
 	}
 }

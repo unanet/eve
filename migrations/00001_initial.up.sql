@@ -142,6 +142,7 @@ CREATE TABLE service (
     metrics_port integer default 0 NOT NULL,
     service_account character varying (50) DEFAULT 'unanet' NOT NULL,
     image_tag character varying (50) DEFAULT '$version' NOT NULL,
+    run_as character varying (20) DEFAULT '1101' NOT NULL,
     metadata jsonb DEFAULT '{}'::json NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL
@@ -172,7 +173,10 @@ CREATE UNIQUE INDEX database_server_name_uindex ON database_server USING btree (
 CREATE TABLE database_type (
     id integer NOT NULL,
     name character varying(50),
-    migration_artifact_id integer
+    migration_artifact_id integer,
+    migration_service_account character varying (50) DEFAULT 'unanet' NOT NULL,
+    migration_image_tag character varying (50) DEFAULT '$version' NOT NULL,
+    migration_run_as character varying (20) DEFAULT '1101' NOT NULL
 );
 ALTER TABLE ONLY database_type ADD CONSTRAINT database_type_pk PRIMARY KEY (id);
 CREATE UNIQUE INDEX database_type_name_uindex ON database_type USING btree (name);
@@ -186,8 +190,6 @@ CREATE TABLE database_instance (
     namespace_id integer NOT NULL,
     migration_override_version character varying(50),
     migration_deployed_version character varying(50),
-    migration_service_account character varying (50) DEFAULT 'unanet' NOT NULL,
-    migration_image_tag character varying (50) DEFAULT '$version' NOT NULL,
     metadata jsonb DEFAULT '{}'::json NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL

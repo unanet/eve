@@ -22,6 +22,7 @@ type Service struct {
 	MetricsPort      int            `db:"metrics_port"`
 	ServiceAccount   string         `db:"service_account"`
 	ImageTag         string         `db:"image_tag"`
+	RunAs            string         `db:"run_as"`
 	Metadata         json.Text      `db:"metadata"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
@@ -54,6 +55,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		   s.metrics_port,
 		   s.service_account,
            s.name as service_name,
+		   s.run_as as run_as,
 		   s.artifact_id,
 		   a.name as artifact_name, 
 		   s.deployed_version,

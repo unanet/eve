@@ -63,6 +63,7 @@ type DeployArtifact struct {
 	ArtifactFnPtr       string                 `json:"artifact_fn"`
 	ArtifactoryFeedType string                 `json:"artifactory_feed_type"`
 	Result              DeployArtifactResult   `json:"result"`
+	RunAs               string                 `json:"run_as"`
 	Deploy              bool                   `json:"-"`
 }
 
