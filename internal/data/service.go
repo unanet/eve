@@ -56,6 +56,8 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		   s.image_tag,
 		   s.metrics_port,
 		   s.service_account,
+		   s.sticky_sessions,
+		   s.count,
            s.name as service_name,
 		   s.run_as as run_as,
 		   s.artifact_id,
