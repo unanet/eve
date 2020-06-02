@@ -144,6 +144,8 @@ CREATE TABLE service (
     image_tag character varying (50) DEFAULT '$version' NOT NULL,
     run_as character varying (20) DEFAULT '1101' NOT NULL,
     metadata jsonb DEFAULT '{}'::json NOT NULL,
+    sticky_sessions bool DEFAULT false NOT NULL,
+    count int DEFAULT 2 NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL
 );
