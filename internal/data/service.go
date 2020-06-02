@@ -23,6 +23,8 @@ type Service struct {
 	ServiceAccount   string         `db:"service_account"`
 	ImageTag         string         `db:"image_tag"`
 	RunAs            int            `db:"run_as"`
+	StickySessions   bool           `db:"sticky_sessions"`
+	Count            int            `db:"count"`
 	Metadata         json.Text      `db:"metadata"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
