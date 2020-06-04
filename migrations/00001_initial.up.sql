@@ -440,6 +440,6 @@ ALTER TABLE ONLY deployment
     ADD CONSTRAINT deployment_namespace_id FOREIGN KEY (namespace_id) REFERENCES namespace(id);
 
 ALTER TABLE ONLY deployment_cron_job
-    ADD CONSTRAINT deployment_cron_job_deployment_id FOREIGN KEY (deployment_id) REFERENCES deployment(id);
+    ADD CONSTRAINT deployment_cron_job_deployment_id FOREIGN KEY (deployment_id) REFERENCES deployment(id) ON DELETE CASCADE;;
 ALTER TABLE ONLY deployment_cron_job
-    ADD CONSTRAINT deployment_cron_job_deployment_cron_id FOREIGN KEY (deployment_cron_id) REFERENCES deployment_cron(id);
+    ADD CONSTRAINT deployment_cron_job_deployment_cron_id FOREIGN KEY (deployment_cron_id) REFERENCES deployment_cron(id) ON DELETE CASCADE;

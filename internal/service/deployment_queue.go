@@ -11,6 +11,7 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	json2 "gitlab.unanet.io/devops/eve/pkg/json"
+	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
 )
 
@@ -195,6 +196,10 @@ func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, deploym
 		return nil, errors.Wrap(err)
 	}
 	services := fromDataServices(dataServices)
+	mdata, _ := json.Marshal(options.Artifacts)
+	log.Logger.Info("######## artifacts ########", zap.String("artifacts", string(mdata)))
+	mdata, _ = json.Marshal(services)
+	log.Logger.Info("######## services ########", zap.String("services", string(mdata)))
 	for _, x := range services {
 		dq.matchArtifact(x.DeployArtifact, x.ServiceName, options, nSDeploymentPlan.Message)
 	}
@@ -205,6 +210,8 @@ func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, deploym
 		}
 	}
 	nSDeploymentPlan.Services = services.ToDeploy()
+	mdata, _ = json.Marshal(services)
+	log.Logger.Info("######## deployed services ########", zap.String("deployed_services", string(mdata)))
 	return nSDeploymentPlan, nil
 }
 
