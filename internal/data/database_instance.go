@@ -50,8 +50,6 @@ func (r *Repo) DeployedDatabaseInstancesByNamespaceID(ctx context.Context, names
 	rows, err := r.db.QueryxContext(ctx, `
 		select 
 			di.id as database_id,
-			ns.id as namespace_id,
-		    ns.name as namespace_name,
 		    a.id as artifact_id, 
 			a.name as artifact_name,
 		    di.migration_deployed_version as deployed_version,
