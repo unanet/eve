@@ -23,6 +23,7 @@ const (
 
 type DeploymentCronJob struct {
 	ID          uuid.UUID           `db:"id"`
+	Description string              `db:"description"`
 	PlanOptions json.Text           `db:"plan_options"`
 	Schedule    string              `db:"schedule"`
 	LastRun     sql.NullTime        `db:"last_run"`
