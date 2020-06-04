@@ -9,12 +9,16 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	uuid "github.com/satori/go.uuid"
+	"go.uber.org/zap"
+
+	gojson "encoding/json"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/eve/pkg/json"
+	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/middleware"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
 )
@@ -240,6 +244,8 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 	// If services were supplied, we check those against the database to make sure they are valid and pull
 	// required info needed to lookup in Artifactory
 	// It's important to note here that we're matching on the service/database name that's configured in the database which can be different than the artifact name.
+	mdata, _ := gojson.Marshal(options)
+	log.Logger.Info("######## options ########", zap.String("options", string(mdata)))
 	if len(options.Artifacts) > 0 {
 		for _, x := range options.Artifacts {
 			var ra *data.RequestArtifact
@@ -286,6 +292,9 @@ func (d *DeploymentPlanGenerator) validateArtifactDefinitions(ctx context.Contex
 			})
 		}
 	}
+
+	mdata, _ = gojson.Marshal(options)
+	log.Logger.Info("######## options ########", zap.String("options", string(mdata)))
 	return nil
 }
 

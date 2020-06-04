@@ -158,7 +158,6 @@ CREATE SEQUENCE service_id_seq
     CACHE 1;
 ALTER SEQUENCE service_id_seq OWNED BY service.id;
 ALTER TABLE ONLY service ALTER COLUMN id SET DEFAULT nextval('service_id_seq'::regclass);
-CREATE UNIQUE INDEX service_namespace_id_artifact_id_uindex ON service (namespace_id, artifact_id);
 CREATE UNIQUE INDEX service_namespace_id_name_uindex ON service (name, namespace_id);
 ALTER TABLE ONLY service ADD CONSTRAINT service_pk PRIMARY KEY (id);
 
