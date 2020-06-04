@@ -59,7 +59,7 @@ func (r *Repo) DeployedDatabaseInstancesByNamespaceID(ctx context.Context, names
 		    dt.migration_service_account as service_account,
 		    dt.migration_run_as as run_as,
 		    di.name as database_name,
-			jsonb_merge(e.metadata, jsonb_merge(ns.metadata, jsonb_merge(a.metadata, jsonb_merge(ds.metadata, di.metadata)))) as metadata,
+			jsonb_merge(ns.metadata, jsonb_merge(a.metadata, jsonb_merge(ds.metadata, di.metadata))) as metadata,
 			COALESCE(di.migration_override_version, ns.requested_version) as requested_version
 		from database_instance as di 
 		    left join database_server ds on di.database_server_id = ds.id
