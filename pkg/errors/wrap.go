@@ -17,19 +17,6 @@ type eveError interface {
 	IsEveError() bool
 }
 
-type txError struct {
-	TxError       error
-	OriginalError error
-}
-
-func (tx txError) Error() string {
-	return tx.OriginalError.Error()
-}
-
-func (tx txError) Unwrap() error {
-	return tx.OriginalError
-}
-
 func Wrap(err error) error {
 	if err == nil {
 		return nil
@@ -51,13 +38,6 @@ func WrapTx(tx driver.Tx, err error) error {
 	if tx == nil {
 		return Wrap(err)
 	}
-	txErr := tx.Rollback()
-	if txErr != nil {
-		err = txError{
-			TxError:       txErr,
-			OriginalError: err,
-		}
-		return Wrap(txErr)
-	}
+	_ = tx.Rollback()
 	return Wrap(err)
 }
