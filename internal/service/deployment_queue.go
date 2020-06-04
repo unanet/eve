@@ -145,7 +145,11 @@ func (dq *DeploymentQueue) matchArtifact(a *eve.DeployArtifact, optName string, 
 	match.Matched = true
 	if a.DeployedVersion == match.AvailableVersion && !options.ForceDeploy {
 		if options.ArtifactsSupplied {
-			logger("artifact: %s, version: %s, is already up to date", a.ArtifactName, a.DeployedVersion)
+			if len(optName) > 0 {
+				logger("service: %s, version: %s, is already up to date", optName, a.DeployedVersion)
+			} else {
+				logger("artifact: %s, version: %s, is already up to date", a.ArtifactName, a.DeployedVersion)
+			}
 		}
 		return
 	}

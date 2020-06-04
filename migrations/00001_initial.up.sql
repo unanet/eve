@@ -243,6 +243,7 @@ CREATE TABLE deployment (
 
 CREATE TABLE deployment_cron (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    description character varying(100),
     plan_options jsonb NOT NULL,
     schedule character varying(25) NOT NULL,
     state deployment_cron_state DEFAULT 'idle' NOT NULL,
