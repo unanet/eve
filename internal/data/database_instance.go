@@ -49,7 +49,7 @@ func (r *Repo) UpdateDeployedMigrationVersion(ctx context.Context, id int, versi
 func (r *Repo) DeployedDatabaseInstancesByNamespaceID(ctx context.Context, namespaceID int) (DatabaseInstances, error) {
 	rows, err := r.db.QueryxContext(ctx, `
 		select 
-			di.id,
+			di.id as database_id,
 			ns.id as namespace_id,
 		    ns.name as namespace_name,
 		    a.id as artifact_id, 
