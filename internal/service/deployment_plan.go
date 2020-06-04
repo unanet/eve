@@ -349,11 +349,6 @@ func (d *DeploymentPlanGenerator) setArtifactoryVersions(ctx context.Context, op
 			return errors.Wrap(err)
 		}
 
-		// if this version is already in the list, don't include it again
-		//noinspection GoNilness
-		if artifacts.ContainsVersion(a.ArtifactName, version) {
-			continue
-		}
 		a.RequestedVersion = ""
 		a.AvailableVersion = version
 		artifacts = append(artifacts, a)
