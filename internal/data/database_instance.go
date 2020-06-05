@@ -53,7 +53,7 @@ func (r *Repo) DeployedDatabaseInstancesByNamespaceID(ctx context.Context, names
 		    a.id as artifact_id, 
 			a.name as artifact_name,
 		    di.migration_deployed_version as deployed_version,
-		    dt.migration_image_tag as image_tag,
+		    a.image_tag as image_tag,
 		    dt.migration_service_account as service_account,
 		    dt.migration_run_as as run_as,
 		    di.name as database_name,

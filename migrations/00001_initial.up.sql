@@ -62,6 +62,7 @@ CREATE TABLE artifact (
     feed_type feed_type NOT NULL,
     provider_group provider_group NOT NULL,
     function_pointer character varying(250),
+    image_tag character varying (25) DEFAULT '$version' NOT NULL,
     metadata jsonb DEFAULT '{}'::json NOT NULL
 );
 CREATE UNIQUE INDEX artifact_name_uindex ON artifact USING btree (name);
@@ -141,7 +142,6 @@ CREATE TABLE service (
     service_port integer default 80 NOT NULL,
     metrics_port integer default 0 NOT NULL,
     service_account character varying (50) DEFAULT 'unanet' NOT NULL,
-    image_tag character varying (50) DEFAULT '$version' NOT NULL,
     run_as character varying (20) DEFAULT '1101' NOT NULL,
     metadata jsonb DEFAULT '{}'::json NOT NULL,
     sticky_sessions bool DEFAULT false NOT NULL,
@@ -205,7 +205,7 @@ CREATE SEQUENCE database_instance_id_seq
 ALTER SEQUENCE database_instance_id_seq OWNED BY database_instance.id;
 ALTER TABLE ONLY database_instance ALTER COLUMN id SET DEFAULT nextval('database_instance_id_seq'::regclass);
 ALTER TABLE ONLY database_instance ADD CONSTRAINT database_instance_pk PRIMARY KEY (id);
-CREATE UNIQUE INDEX database_instance_name_uindex ON database_instance USING btree (name);
+CREATE UNIQUE INDEX database_instance_namespace_id_name_uindex ON database_instance (name, namespace_id);
 
 
 CREATE TABLE automation_job_service_map (

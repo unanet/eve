@@ -53,7 +53,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 	rows, err := r.db.QueryxContext(ctx, `
 		select s.id as service_id,
 		   s.service_port,
-		   s.image_tag,
+		   a.image_tag,
 		   s.metrics_port,
 		   s.service_account,
 		   s.sticky_sessions,
