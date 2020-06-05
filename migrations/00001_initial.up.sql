@@ -176,7 +176,6 @@ CREATE TABLE database_type (
     name character varying(50),
     migration_artifact_id integer,
     migration_service_account character varying (50) DEFAULT 'unanet' NOT NULL,
-    migration_image_tag character varying (50) DEFAULT '$version' NOT NULL,
     migration_run_as character varying (20) DEFAULT '1101' NOT NULL
 );
 ALTER TABLE ONLY database_type ADD CONSTRAINT database_type_pk PRIMARY KEY (id);
