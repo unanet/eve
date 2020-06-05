@@ -34,7 +34,7 @@ type DeploymentCronJob struct {
 type DeploymentCronJobs []*DeploymentCronJob
 
 func (r *Repo) getDeploymentCronJobs(ctx context.Context, tx *sqlx.Tx) (DeploymentCronJobs, error) {
-	rows, err := tx.QueryxContext(ctx, "select * from deployment_cron where state = 'idle' and disabled = false for update")
+	rows, err := tx.QueryxContext(ctx, "select * from deployment_cron where state = 'idle' and disabled = false order by exec_order for update")
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}

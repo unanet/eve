@@ -247,7 +247,8 @@ CREATE TABLE deployment_cron (
     schedule character varying(25) NOT NULL,
     state deployment_cron_state DEFAULT 'idle' NOT NULL,
     last_run timestamp without time zone DEFAULT now() NOT NULL,
-    disabled bool DEFAULT false NOT NULL
+    disabled bool DEFAULT false NOT NULL,
+    exec_order int DEFAULT 0 NOT NULL
 );
 
 
