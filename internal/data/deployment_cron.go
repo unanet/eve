@@ -29,6 +29,7 @@ type DeploymentCronJob struct {
 	LastRun     sql.NullTime        `db:"last_run"`
 	State       DeploymentCronState `db:"state"`
 	Disabled    bool                `db:"disabled"`
+	Order       int                 `db:"exec_order"`
 }
 
 type DeploymentCronJobs []*DeploymentCronJob
