@@ -103,11 +103,11 @@ func (ds DeployServices) ToDeploy() DeployServices {
 	return list
 }
 
-// ArtifactDeployResultMap is used to convert the array of artifacts results into a map
+// ArtifactDeployResultMap is used to convert the array of deploy artifact results into a map
 type ArtifactDeployResultMap map[DeployArtifactResult]DeployServices
 
-// TopResultMap converts the array of results into a map by result
-func (ds DeployServices) TopResultMap() ArtifactDeployResultMap {
+// ToResultMap converts the array of results into a map by result
+func (ds DeployServices) ToResultMap() ArtifactDeployResultMap {
 	result := make(ArtifactDeployResultMap)
 
 	for _, svc := range ds {
@@ -124,6 +124,31 @@ func (ds DeployServices) TopResultMap() ArtifactDeployResultMap {
 	return result
 }
 
+// ArtifactMigrationResultMap is used to convert the array of migration artifact results into a map
+type ArtifactMigrationResultMap map[DeployArtifactResult]DeployMigrations
+
+// ToResultMap converts the array of results into a map by result
+func (dm DeployMigrations) ToResultMap() ArtifactMigrationResultMap {
+	result := make(ArtifactMigrationResultMap)
+
+	for _, mig := range dm {
+		switch mig.Result {
+		case DeployArtifactResultFailed:
+			result[DeployArtifactResultFailed] = append(result[DeployArtifactResultFailed], mig)
+		case DeployArtifactResultSuccess:
+			result[DeployArtifactResultSuccess] = append(result[DeployArtifactResultSuccess], mig)
+		case DeployArtifactResultNoop:
+			result[DeployArtifactResultNoop] = append(result[DeployArtifactResultNoop], mig)
+		}
+	}
+
+	return result
+}
+
+
+
+
+// DeployMigration contains the deployment migration data
 type DeployMigration struct {
 	*DeployArtifact
 	DatabaseID   int    `json:"database_id"`
