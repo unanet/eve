@@ -179,6 +179,10 @@ func (ns *NamespaceRequest) GetQueueGroupID() string {
 	return fmt.Sprintf("deploy-ns-%d", ns.ID)
 }
 
+func (ns *NamespaceRequest) SnakeAlias() string {
+	return strings.Replace(ns.Alias, "-", "_", -1)
+}
+
 type NamespaceRequests []*NamespaceRequest
 
 func (n NamespaceRequests) ToIDs() []int {

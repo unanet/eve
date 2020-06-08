@@ -1,4 +1,4 @@
-package service
+package deployments
 
 import (
 	"context"
@@ -28,6 +28,17 @@ type DeploymentPlanRepo interface {
 	RequestDatabaseArtifactByEnvironment(ctx context.Context, databaseName string, environmentID int) (*data.RequestArtifact, error)
 	CreateDeployment(ctx context.Context, d *data.Deployment) error
 	UpdateDeploymentMessageID(ctx context.Context, id uuid.UUID, messageID string) error
+}
+
+type StringList []string
+
+func (s StringList) Contains(value string) bool {
+	for _, a := range s {
+		if a == value {
+			return true
+		}
+	}
+	return false
 }
 
 type VersionQuery interface {

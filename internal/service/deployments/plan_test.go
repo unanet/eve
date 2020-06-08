@@ -1,6 +1,6 @@
 // +build local
 
-package service_test
+package deployments_test
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 
 	"gitlab.unanet.io/devops/eve/internal/api"
 	"gitlab.unanet.io/devops/eve/internal/data"
-	"gitlab.unanet.io/devops/eve/internal/service"
+	"gitlab.unanet.io/devops/eve/internal/service/deployments"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 )
 
@@ -22,10 +22,10 @@ func TestPlanGenerator_GenerateMigrationPlan(t *testing.T) {
 	require.NoError(t, err)
 	repo := data.NewRepo(db)
 	jfrog := artifactory.NewClient(api.GetConfig().ArtifactoryConfig)
-	pg := service.NewDeploymentPlanGenerator(repo, jfrog)
-	plan, err := pg.GenerateApplicationPlan(context.TODO(), service.DeploymentPlanOptions{
+	pg := deployments.NewDeploymentPlanGenerator(repo, jfrog)
+	plan, err := pg.GenerateApplicationPlan(context.TODO(), DeploymentPlanOptions{
 		Environment:      "int",
-		NamespaceAliases: service.StringList{"cvs"},
+		NamespaceAliases: StringList{"cvs"},
 		Artifacts:        nil,
 		ForceDeploy:      false,
 		DryRun:           false,

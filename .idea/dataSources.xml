@@ -13,5 +13,11 @@
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://devops-prod-db.unanet.io:5432/eve</jdbc-url>
     </data-source>
+    <data-source source="LOCAL" name="unanet-aurora-db.app-nonprod.unanet.io" uuid="4e1a08ee-7a91-436f-a885-3eb9ac6310bd">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://unanet-aurora-db.app-nonprod.unanet.io:5432/postgres</jdbc-url>
+    </data-source>
   </component>
 </project>

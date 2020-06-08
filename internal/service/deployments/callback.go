@@ -1,4 +1,4 @@
-package service
+package deployments
 
 import (
 	"context"
