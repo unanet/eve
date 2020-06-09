@@ -63,6 +63,10 @@ CREATE TABLE artifact (
     provider_group provider_group NOT NULL,
     function_pointer character varying(250),
     image_tag character varying (25) DEFAULT '$version' NOT NULL,
+    service_port integer default 8080 NOT NULL,
+    metrics_port integer default 0 NOT NULL,
+    service_account character varying (50) DEFAULT 'unanet' NOT NULL,
+    run_as character varying (20) DEFAULT '1101' NOT NULL,
     metadata jsonb DEFAULT '{}'::json NOT NULL
 );
 CREATE UNIQUE INDEX artifact_name_uindex ON artifact USING btree (name);
@@ -139,10 +143,6 @@ CREATE TABLE service (
     artifact_id integer NOT NULL,
     override_version character varying(50),
     deployed_version character varying(50),
-    service_port integer default 80 NOT NULL,
-    metrics_port integer default 0 NOT NULL,
-    service_account character varying (50) DEFAULT 'unanet' NOT NULL,
-    run_as character varying (20) DEFAULT '1101' NOT NULL,
     metadata jsonb DEFAULT '{}'::json NOT NULL,
     sticky_sessions bool DEFAULT false NOT NULL,
     count int DEFAULT 2 NOT NULL,

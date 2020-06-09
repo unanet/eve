@@ -52,14 +52,14 @@ func (r *Repo) UpdateDeployedServiceVersion(ctx context.Context, id int, version
 func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID int) (Services, error) {
 	rows, err := r.db.QueryxContext(ctx, `
 		select s.id as service_id,
-		   s.service_port,
+		   a.service_port,
 		   a.image_tag,
-		   s.metrics_port,
-		   s.service_account,
+		   a.metrics_port,
+		   a.service_account,
 		   s.sticky_sessions,
 		   s.count,
            s.name as service_name,
-		   s.run_as as run_as,
+		   a.run_as as run_as,
 		   s.artifact_id,
 		   a.name as artifact_name, 
 		   s.deployed_version,
