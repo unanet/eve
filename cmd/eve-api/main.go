@@ -78,9 +78,7 @@ func main() {
 	})
 
 	s3Downloader := s3.NewDownloader(awsSession)
-
 	httpCallBack := deployments.NewCallback(config.HttpCallbackTimeout)
-
 	deploymentQueue := deployments.NewDeploymentQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, s3Uploader, s3Downloader, httpCallBack)
 
 	cron := deployments.NewDeploymentCron(repo, deploymentPlanGenerator, config.CronTimeout)
