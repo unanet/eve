@@ -206,6 +206,19 @@ type NSDeploymentPlan struct {
 	Status           DeploymentPlanStatus `json:"status"`
 }
 
+// DeploymentPlanType is a helper method to know if we are deploying migrations or services
+// it would be nice if the plan.go structs were in pkg instead of internal, then they could be
+// shared across Eve services...
+func (ns *NSDeploymentPlan) DeploymentPlanType() string {
+	if len(ns.Migrations) > 0 {
+		return "migration"
+	}
+	if len(ns.Services) > 0 {
+		return "application"
+	}
+	return "unknown"
+}
+
 func (ns *NSDeploymentPlan) NothingToDeploy() bool {
 	if len(ns.Services) == 0 && len(ns.Migrations) == 0 {
 		return true
