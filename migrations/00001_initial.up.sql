@@ -174,9 +174,7 @@ CREATE UNIQUE INDEX database_server_name_uindex ON database_server USING btree (
 CREATE TABLE database_type (
     id integer NOT NULL,
     name character varying(50),
-    migration_artifact_id integer,
-    migration_service_account character varying (50) DEFAULT 'unanet' NOT NULL,
-    migration_run_as character varying (20) DEFAULT '1101' NOT NULL
+    migration_artifact_id integer
 );
 ALTER TABLE ONLY database_type ADD CONSTRAINT database_type_pk PRIMARY KEY (id);
 CREATE UNIQUE INDEX database_type_name_uindex ON database_type USING btree (name);
