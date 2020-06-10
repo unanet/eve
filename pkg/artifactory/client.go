@@ -50,13 +50,13 @@ func (c *Client) GetLatestVersion(ctx context.Context, repository string, path s
 	var failure ErrorResponse
 	r, err := c.sling.New().Get(fmt.Sprintf("versions/%s/%s", repository, path)).Request()
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err)
 	}
 	// set this here since version could have an asterisk and sling will encode the asterisk which Artifactory doesn't like
 	r.URL.RawQuery = fmt.Sprintf("version=%s", version)
 	resp, err := c.sling.Do(r.WithContext(ctx), &success, &failure)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err)
 	}
 
 	switch resp.StatusCode {
@@ -65,6 +65,7 @@ func (c *Client) GetLatestVersion(ctx context.Context, repository string, path s
 	case http.StatusNotFound:
 		return "", NotFoundErrorf("the following Version: %s, was not found", version)
 	default:
+
 		return "", failure
 	}
 }

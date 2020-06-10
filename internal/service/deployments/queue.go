@@ -217,7 +217,7 @@ func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, deploym
 	if options.ArtifactsSupplied {
 		unmatched := options.Artifacts.UnMatched()
 		for _, x := range unmatched {
-			nSDeploymentPlan.Message("unmatched service: %s", x.Name)
+			nSDeploymentPlan.Message("unmatched service: %s:%s", x.Name, x.AvailableVersion)
 		}
 	}
 	nSDeploymentPlan.Services = services.ToDeploy()
@@ -240,7 +240,7 @@ func (dq *DeploymentQueue) createMigrationsDeployment(ctx context.Context, deplo
 	if options.ArtifactsSupplied {
 		unmatched := options.Artifacts.UnMatched()
 		for _, x := range unmatched {
-			nSDeploymentPlan.Message("unmatched service: %s", x.Name)
+			nSDeploymentPlan.Message("unmatched database: %s:%s", x.Name, x.AvailableVersion)
 		}
 	}
 	nSDeploymentPlan.Migrations = migrations.ToDeploy()
