@@ -18,7 +18,7 @@ var (
 		prometheus.GaugeOpts{
 			Name: "http_request_saturation",
 			Help: "The total number of requests inside the server (transactions serving)",
-		}, []string{"uri", "method", "protocol", "path"})
+		}, []string{"method", "protocol", "path"})
 
 	StatBuildInfo = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -30,26 +30,26 @@ var (
 		prometheus.GaugeOpts{
 			Name: "http_request_duration_ms",
 			Help: "The time the server spends processing a request in milliseconds",
-		}, []string{"uri", "method", "protocol", "path"})
+		}, []string{"method", "protocol", "path"})
 
 	StatHTTPRequestCount = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "http_request_total",
 			Help: "The total number of incoming requests to the service",
-		}, []string{"uri", "method", "protocol", "path"})
+		}, []string{"method", "protocol", "path"})
 
 	StatHTTPResponseCount = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "http_response_total",
 			Help: "The total number of outgoing responses to the client",
-		}, []string{"code", "uri", "method", "protocol", "path"})
+		}, []string{"code", "method", "protocol", "path"})
 
 	StatRequestDurationHistogram = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    "http_request_duration_histogram_ms",
 			Help:    "time spent processing an http request in milliseconds",
 			Buckets: prometheus.ExponentialBuckets(0.1, 2, 18),
-		}, []string{"uri", "method", "protocol", "path"})
+		}, []string{"method", "protocol", "path"})
 )
 
 func StartMetricsServer(port int) *http.Server {

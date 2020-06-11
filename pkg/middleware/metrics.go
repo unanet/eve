@@ -15,8 +15,8 @@ func Metrics(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		// Tally the incoming request metrics
 		now := time.Now()
-		metrics.StatHTTPRequestCount.WithLabelValues(r.RequestURI, r.Method, r.Proto, r.URL.Path).Inc()
-		metrics.StatRequestSaturationGauge.WithLabelValues(r.RequestURI, r.Method, r.Proto, r.URL.Path).Inc()
+		metrics.StatHTTPRequestCount.WithLabelValues(r.Method, r.Proto, r.URL.Path).Inc()
+		metrics.StatRequestSaturationGauge.WithLabelValues(r.Method, r.Proto, r.URL.Path).Inc()
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
 		// Run this on the way out (i.e. outgoing response)
@@ -25,10 +25,10 @@ func Metrics(next http.Handler) http.Handler {
 			ms := float64(time.Since(now).Nanoseconds()) / 1000000.0
 
 			// Tally the outgoing response metrics
-			metrics.StatRequestDurationHistogram.WithLabelValues(r.RequestURI, r.Method, r.Proto, r.URL.Path).Observe(ms)
-			metrics.StatRequestDurationGauge.WithLabelValues(r.RequestURI, r.Method, r.Proto, r.URL.Path).Set(ms)
-			metrics.StatRequestSaturationGauge.WithLabelValues(r.RequestURI, r.Method, r.Proto, r.URL.Path).Dec()
-			metrics.StatHTTPResponseCount.WithLabelValues(strconv.Itoa(ww.Status()), r.RequestURI, r.Method, r.Proto, r.URL.Path).Inc()
+			metrics.StatRequestDurationHistogram.WithLabelValues(r.Method, r.Proto, r.URL.Path).Observe(ms)
+			metrics.StatRequestDurationGauge.WithLabelValues(r.Method, r.Proto, r.URL.Path).Set(ms)
+			metrics.StatRequestSaturationGauge.WithLabelValues(r.Method, r.Proto, r.URL.Path).Dec()
+			metrics.StatHTTPResponseCount.WithLabelValues(strconv.Itoa(ww.Status()), r.Method, r.Proto, r.URL.Path).Inc()
 		}()
 		next.ServeHTTP(ww, r)
 	}
