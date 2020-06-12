@@ -54,12 +54,13 @@ type HttpCallback interface {
 
 func fromDataService(s data.Service) *eve.DeployService {
 	return &eve.DeployService{
-		ServiceID:      s.ServiceID,
-		ServicePort:    s.ServicePort,
-		MetricsPort:    s.MetricsPort,
-		ServiceName:    s.ServiceName,
-		StickySessions: s.StickySessions,
-		Count:          s.Count,
+		ServiceID:       s.ServiceID,
+		ServicePort:     s.ServicePort,
+		MetricsPort:     s.MetricsPort,
+		ServiceName:     s.ServiceName,
+		StickySessions:  s.StickySessions,
+		Count:           s.Count,
+		LivelinessProbe: s.LivelinessProbe,
 		DeployArtifact: &eve.DeployArtifact{
 			ArtifactID:       s.ArtifactID,
 			ArtifactName:     s.ArtifactName,

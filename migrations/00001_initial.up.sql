@@ -67,7 +67,8 @@ CREATE TABLE artifact (
     metrics_port integer default 0 NOT NULL,
     service_account character varying (50) DEFAULT 'unanet' NOT NULL,
     run_as character varying (20) DEFAULT '1101' NOT NULL,
-    metadata jsonb DEFAULT '{}'::json NOT NULL
+    metadata jsonb DEFAULT '{}'::json NOT NULL,
+    liveliness_probe jsonb DEFAULT '{}'::json NOT NULL
 );
 CREATE UNIQUE INDEX artifact_name_uindex ON artifact USING btree (name);
 ALTER TABLE ONLY artifact ADD CONSTRAINT artifact_pk PRIMARY KEY (id);

@@ -26,6 +26,7 @@ type Service struct {
 	StickySessions   bool           `db:"sticky_sessions"`
 	Count            int            `db:"count"`
 	Metadata         json.Text      `db:"metadata"`
+	LivelinessProbe  json.Text      `db:"liveliness_probe"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
 }
@@ -53,6 +54,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 	rows, err := r.db.QueryxContext(ctx, `
 		select s.id as service_id,
 		   a.service_port,
+		   a.liveliness_probe,
 		   a.image_tag,
 		   a.metrics_port,
 		   a.service_account,
