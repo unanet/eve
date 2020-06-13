@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/s3"
 )
 
@@ -40,6 +43,7 @@ func UnMarshalNSDeploymentFromS3LocationBody(ctx context.Context, cd CloudDownlo
 
 func MarshalNSDeploymentPlanToS3LocationBody(ctx context.Context, cu CloudUploader, plan *NSDeploymentPlan) ([]byte, error) {
 	nsDeploymentJson, err := json.Marshal(plan)
+	log.Logger.Info(fmt.Sprintf("#################### nsdeploymentJson"), zap.String("plan", string(nsDeploymentJson)))
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}

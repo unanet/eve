@@ -3,7 +3,6 @@ package deployments
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
@@ -223,10 +222,7 @@ func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, deploym
 		}
 	}
 	nSDeploymentPlan.Services = services.ToDeploy()
-	// ######
-	for _, x := range nSDeploymentPlan.Services {
-		dq.Logger(ctx).Info(fmt.Sprintf("####### LivelinessProbe Len: %d ########", len(x.LivelinessProbe)))
-	}
+
 	return nSDeploymentPlan, nil
 }
 
