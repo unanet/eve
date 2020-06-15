@@ -21,7 +21,7 @@ type DeploymentCronRepo interface {
 }
 
 type DeploymentQueuer interface {
-	QueueDeploymentPlan(ctx context.Context, options *DeploymentPlanOptions) error
+	QueuePlan(ctx context.Context, options *PlanOptions) error
 }
 
 type DeploymentCron struct {
@@ -63,13 +63,13 @@ func (dc *DeploymentCron) scheduler(ctx context.Context, job *data.DeploymentCro
 		return nil, nil
 	}
 
-	var options DeploymentPlanOptions
+	var options PlanOptions
 	err = json.Unmarshal(job.PlanOptions, &options)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
 
-	err = dc.dq.QueueDeploymentPlan(ctx, &options)
+	err = dc.dq.QueuePlan(ctx, &options)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}

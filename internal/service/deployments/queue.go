@@ -26,7 +26,7 @@ type QueueWorker interface {
 	Message(ctx context.Context, qUrl string, m *queue.M) error
 }
 
-type DeploymentQueueRepo interface {
+type QueueRepo interface {
 	UpdateDeploymentReceiptHandle(ctx context.Context, id uuid.UUID, receiptHandle string) (*data.Deployment, error)
 	DeployedServicesByNamespaceID(ctx context.Context, namespaceID int) (data.Services, error)
 	DeployedDatabaseInstancesByNamespaceID(ctx context.Context, namespaceID int) (data.DatabaseInstances, error)
@@ -111,21 +111,21 @@ func fromDataDatabaseInstances(d data.DatabaseInstances) eve.DeployMigrations {
 
 type messageLogger func(format string, a ...interface{})
 
-type DeploymentQueue struct {
+type Queue struct {
 	worker     QueueWorker
-	repo       DeploymentQueueRepo
+	repo       QueueRepo
 	uploader   eve.CloudUploader
 	callback   HttpCallback
 	downloader eve.CloudDownloader
 }
 
-func NewDeploymentQueue(
+func NewQueue(
 	worker QueueWorker,
-	repo DeploymentQueueRepo,
+	repo QueueRepo,
 	uploader eve.CloudUploader,
 	downloader eve.CloudDownloader,
-	httpCallBack HttpCallback) *DeploymentQueue {
-	return &DeploymentQueue{
+	httpCallBack HttpCallback) *Queue {
+	return &Queue{
 		worker:     worker,
 		repo:       repo,
 		uploader:   uploader,
@@ -134,21 +134,21 @@ func NewDeploymentQueue(
 	}
 }
 
-func (dq *DeploymentQueue) Logger(ctx context.Context) *zap.Logger {
+func (dq *Queue) Logger(ctx context.Context) *zap.Logger {
 	return queue.GetLogger(ctx)
 }
 
-func (dq *DeploymentQueue) Start() {
+func (dq *Queue) Start() {
 	go func() {
 		dq.worker.Start(queue.HandlerFunc(dq.handleMessage))
 	}()
 }
 
-func (dq *DeploymentQueue) Stop() {
+func (dq *Queue) Stop() {
 	dq.worker.Stop()
 }
 
-func (dq *DeploymentQueue) matchArtifact(a *eve.DeployArtifact, optName string, options NamespacePlanOptions, logger messageLogger) {
+func (dq *Queue) matchArtifact(a *eve.DeployArtifact, optName string, options NamespacePlanOptions, logger messageLogger) {
 	// match services to be deployed
 	// we need to pass in the service/database name here to match if it was supplied as we should only match services/databases that were specified
 	match := options.Artifacts.Match(a.ArtifactID, optName, a.RequestedVersion)
@@ -177,7 +177,7 @@ func (dq *DeploymentQueue) matchArtifact(a *eve.DeployArtifact, optName string, 
 	a.Deploy = true
 }
 
-func (dq *DeploymentQueue) setupNSDeploymentPlan(ctx context.Context, deploymentID uuid.UUID, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
+func (dq *Queue) setupNSDeploymentPlan(ctx context.Context, deploymentID uuid.UUID, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
 	cluster, err := dq.repo.ClusterByID(ctx, options.NamespaceRequest.ClusterID)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -202,7 +202,7 @@ func (dq *DeploymentQueue) setupNSDeploymentPlan(ctx context.Context, deployment
 	return &plan, nil
 }
 
-func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, deploymentID uuid.UUID, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
+func (dq *Queue) createServicesDeployment(ctx context.Context, deploymentID uuid.UUID, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
 	nSDeploymentPlan, err := dq.setupNSDeploymentPlan(ctx, deploymentID, options)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -226,7 +226,7 @@ func (dq *DeploymentQueue) createServicesDeployment(ctx context.Context, deploym
 	return nSDeploymentPlan, nil
 }
 
-func (dq *DeploymentQueue) createMigrationsDeployment(ctx context.Context, deploymentID uuid.UUID, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
+func (dq *Queue) createMigrationsDeployment(ctx context.Context, deploymentID uuid.UUID, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
 	nSDeploymentPlan, err := dq.setupNSDeploymentPlan(ctx, deploymentID, options)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -249,7 +249,7 @@ func (dq *DeploymentQueue) createMigrationsDeployment(ctx context.Context, deplo
 	return nSDeploymentPlan, nil
 }
 
-func (dq *DeploymentQueue) rollbackError(ctx context.Context, m *queue.M, err error) error {
+func (dq *Queue) rollbackError(ctx context.Context, m *queue.M, err error) error {
 	qerr := dq.worker.DeleteMessage(ctx, m)
 	if qerr != nil {
 		dq.Logger(ctx).Error("an error occurred while trying to remove the message due to an error", zap.Any("queue_message", m), zap.Error(qerr))
@@ -257,7 +257,7 @@ func (dq *DeploymentQueue) rollbackError(ctx context.Context, m *queue.M, err er
 	return errors.Wrap(err)
 }
 
-func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) error {
+func (dq *Queue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 	deployment, err := dq.repo.UpdateDeploymentReceiptHandle(ctx, m.ID, m.ReceiptHandle)
 	if err != nil {
 		return dq.rollbackError(ctx, m, err)
@@ -319,7 +319,7 @@ func (dq *DeploymentQueue) scheduleDeployment(ctx context.Context, m *queue.M) e
 	return nil
 }
 
-func (dq *DeploymentQueue) handleMessage(ctx context.Context, m *queue.M) error {
+func (dq *Queue) handleMessage(ctx context.Context, m *queue.M) error {
 	switch m.Command {
 	// This means it hasn't been sent to the scheduler yet
 	case CommandScheduleDeployment:
@@ -334,7 +334,7 @@ func (dq *DeploymentQueue) handleMessage(ctx context.Context, m *queue.M) error 
 	}
 }
 
-func (dq *DeploymentQueue) updateDeployment(ctx context.Context, m *queue.M) error {
+func (dq *Queue) updateDeployment(ctx context.Context, m *queue.M) error {
 	deployment, err := dq.repo.UpdateDeploymentResult(ctx, m.ID)
 	if err != nil {
 		return errors.Wrap(err)

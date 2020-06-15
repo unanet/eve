@@ -62,7 +62,7 @@ func main() {
 	repo := data.NewRepo(db)
 
 	artifactoryClient := artifactory.NewClient(config.ArtifactoryConfig)
-	deploymentPlanGenerator := deployments.NewDeploymentPlanGenerator(repo, artifactoryClient, apiQueue)
+	deploymentPlanGenerator := deployments.NewPlanGenerator(repo, artifactoryClient, apiQueue)
 
 	controllers, err := api.InitializeControllers(deploymentPlanGenerator)
 	if err != nil {
@@ -79,7 +79,7 @@ func main() {
 
 	s3Downloader := s3.NewDownloader(awsSession)
 	httpCallBack := deployments.NewCallback(config.HttpCallbackTimeout)
-	deploymentQueue := deployments.NewDeploymentQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, s3Uploader, s3Downloader, httpCallBack)
+	deploymentQueue := deployments.NewQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, s3Uploader, s3Downloader, httpCallBack)
 
 	cron := deployments.NewDeploymentCron(repo, deploymentPlanGenerator, config.CronTimeout)
 	cron.Start()

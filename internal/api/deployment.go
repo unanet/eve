@@ -11,10 +11,10 @@ import (
 )
 
 type DeploymentsController struct {
-	planGenerator *deployments.DeploymentPlanGenerator
+	planGenerator *deployments.PlanGenerator
 }
 
-func NewDeploymentPlanController(planGenerator *deployments.DeploymentPlanGenerator) *DeploymentsController {
+func NewDeploymentPlanController(planGenerator *deployments.PlanGenerator) *DeploymentsController {
 	return &DeploymentsController{
 		planGenerator: planGenerator,
 	}
@@ -25,13 +25,13 @@ func (c DeploymentsController) Setup(r chi.Router) {
 }
 
 func (c DeploymentsController) createDeployment(w http.ResponseWriter, r *http.Request) {
-	var options deployments.DeploymentPlanOptions
+	var options deployments.PlanOptions
 	if err := json.ParseBody(r, &options); err != nil {
 		render.Respond(w, r, err)
 		return
 	}
 
-	err := c.planGenerator.QueueDeploymentPlan(r.Context(), &options)
+	err := c.planGenerator.QueuePlan(r.Context(), &options)
 	if err != nil {
 		render.Respond(w, r, err)
 		return

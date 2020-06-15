@@ -8,10 +8,11 @@ import (
 )
 
 type Environment struct {
-	ID       int       `db:"id"`
-	Name     string    `db:"name"`
-	Alias    string    `db:"alias"`
-	Metadata json.Text `db:"metadata"`
+	ID          int       `db:"id"`
+	Name        string    `db:"name"`
+	Alias       string    `db:"alias"`
+	Description string    `db:"description"`
+	Metadata    json.Text `db:"metadata"`
 }
 
 type Environments []Environment
@@ -47,12 +48,7 @@ func (r *Repo) EnvironmentByID(ctx context.Context, id int) (*Environment, error
 }
 
 func (r *Repo) Environments(ctx context.Context) (Environments, error) {
-	return r.environments(ctx)
-}
-
-func (r *Repo) environments(ctx context.Context, whereArgs ...WhereArg) (Environments, error) {
-	sql, args := CheckWhereArgs("select n.* as environment_name from namespace as n join environment as e on n.environment_id = e.id", whereArgs)
-	rows, err := r.db.QueryxContext(ctx, sql, args...)
+	rows, err := r.db.QueryxContext(ctx, "select * from environment")
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}

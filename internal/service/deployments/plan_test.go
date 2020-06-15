@@ -22,7 +22,7 @@ func TestPlanGenerator_GenerateMigrationPlan(t *testing.T) {
 	require.NoError(t, err)
 	repo := data.NewRepo(db)
 	jfrog := artifactory.NewClient(api.GetConfig().ArtifactoryConfig)
-	pg := deployments.NewDeploymentPlanGenerator(repo, jfrog)
+	pg := deployments.NewPlanGenerator(repo, jfrog)
 	plan, err := pg.GenerateApplicationPlan(context.TODO(), DeploymentPlanOptions{
 		Environment:      "int",
 		NamespaceAliases: StringList{"cvs"},
