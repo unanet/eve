@@ -35,6 +35,11 @@ func (s CrudController) environments(w http.ResponseWriter, r *http.Request) {
 	render.Respond(w, r, environments)
 }
 
+func (s CrudController) namespaces(w http.ResponseWriter, r *http.Request) {
+
+	//namespaces, err
+}
+
 func (s CrudController) services(w http.ResponseWriter, r *http.Request) {
 
 }
