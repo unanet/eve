@@ -5,15 +5,15 @@ import (
 )
 
 type Namespace struct {
-	ID                 int                    `db:"id"`
-	Name               string                 `db:"name"`
-	Alias              string                 `db:"alias"`
-	EnvironmentID      int                    `db:"environment_id"`
-	EnvironmentName    string                 `db:"environment_name"`
-	RequestedVersion   string                 `db:"requested_version"`
-	ExplicitDeployOnly bool                   `db:"explicit_deploy_only"`
-	ClusterID          int                    `db:"cluster_id"`
-	Metadata           map[string]interface{} `db:"metadata,omitempty"`
-	CreatedAt          time.Time              `db:"created_at"`
-	UpdatedAt          time.Time              `db:"updated_at"`
+	ID                 int                    `json:"id"`
+	Name               string                 `json:"name"`
+	Alias              string                 `json:"alias"`
+	EnvironmentID      int                    `json:"environment_id"`
+	EnvironmentName    string                 `json:"environment_name"`
+	RequestedVersion   string                 `json:"requested_version"`
+	ExplicitDeployOnly bool                   `json:"explicit_deploy_only"`
+	ClusterID          int                    `json:"cluster_id"`
+	Metadata           map[string]interface{} `json:"metadata,omitempty"`
+	CreatedAt          time.Time              `json:"created_at"`
+	UpdatedAt          time.Time              `json:"updated_at"`
 }
