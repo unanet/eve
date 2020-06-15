@@ -93,7 +93,8 @@ CREATE TABLE environment (
     id integer NOT NULL,
     name character varying(25) NOT NULL,
     alias character varying(25) NOT NULL,
-    metadata jsonb DEFAULT '{}'::json NOT NULL
+    metadata jsonb DEFAULT '{}'::json NOT NULL,
+    description character varying(1024) NOT NULL
 );
 CREATE UNIQUE INDEX environment_name_uindex ON environment USING btree (name);
 ALTER TABLE ONLY environment ADD CONSTRAINT environment_pk PRIMARY KEY (id);

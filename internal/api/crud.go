@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 
 	"gitlab.unanet.io/devops/eve/internal/service/crud"
 )
@@ -25,22 +26,13 @@ func (s CrudController) Setup(r chi.Router) {
 }
 
 func (s CrudController) environments(w http.ResponseWriter, r *http.Request) {
-	r.URL.Query().Get("version")
+	environments, err := s.manager.Environments(r.Context())
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
 
-	s.manager.Environments()
-
-	//err := c.planGenerator.QueuePlan(r.Context(), &options)
-	//if err != nil {
-	//	render.Respond(w, r, err)
-	//	return
-	//}
-	//
-	//if len(options.Messages) > 0 {
-	//	render.Status(r, http.StatusPartialContent)
-	//} else {
-	//	render.Status(r, http.StatusAccepted)
-	//}
-	//render.Respond(w, r, options)
+	render.Respond(w, r, environments)
 }
 
 func (s CrudController) services(w http.ResponseWriter, r *http.Request) {

@@ -1,16 +1,34 @@
 package crud
 
 import (
-	"gitlab.unanet.io/devops/eve/pkg/json"
+	"context"
+
+	"gitlab.unanet.io/devops/eve/internal/data"
+	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/eve/pkg/eve"
 )
 
-type Environment struct {
-	ID       int       `json:"id"`
-	Name     string    `json:"name"`
-	Alias    string    `json:"alias"`
-	Metadata json.Text `json:"metadata,omitempty"`
+func fromDataEnvironment(environment data.Environment) eve.Environment {
+	return eve.Environment{
+		ID:       environment.ID,
+		Name:     environment.Name,
+		Alias:    environment.Alias,
+		Metadata: environment.Metadata.AsMap(),
+	}
 }
 
-func (m *Manager) Environments() []Environment {
-	return nil
+func fromDataEnvironments(environments data.Environments) []eve.Environment {
+	var list []eve.Environment
+	for _, x := range environments {
+		list = append(list, fromDataEnvironment(x))
+	}
+	return list
+}
+
+func (m *Manager) Environments(ctx context.Context) ([]eve.Environment, error) {
+	dataEnvironments, err := m.repo.Environments(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	return fromDataEnvironments(dataEnvironments), nil
 }
