@@ -7,6 +7,8 @@ import (
 	"github.com/go-chi/render"
 
 	"gitlab.unanet.io/devops/eve/internal/service/crud"
+	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/eve/pkg/eve"
 )
 
 type CrudController struct {
@@ -21,6 +23,10 @@ func NewCrudController(manager *crud.Manager) *CrudController {
 
 func (s CrudController) Setup(r chi.Router) {
 	r.Get("/environments", s.environments)
+	r.Get("/environments/{environmentID}", s.environment)
+
+	r.Get("/namespaces", s.namespaces)
+	r.Get("/namespaces/{namespaceID}", s.namespace)
 
 	r.Get("/services", s.services)
 }
@@ -35,9 +41,49 @@ func (s CrudController) environments(w http.ResponseWriter, r *http.Request) {
 	render.Respond(w, r, environments)
 }
 
-func (s CrudController) namespaces(w http.ResponseWriter, r *http.Request) {
+func (s CrudController) environment(w http.ResponseWriter, r *http.Request) {
+	if environmentID := chi.URLParam(r, "environmentID"); environmentID != "" {
+		environment, err := s.manager.Environment(r.Context(), environmentID)
+		if err != nil {
+			render.Respond(w, r, err)
+			return
+		}
+		render.Respond(w, r, environment)
+	} else {
+		render.Respond(w, r, errors.NotFoundf("environment not found"))
+		return
+	}
+}
 
-	//namespaces, err
+func (s CrudController) namespaces(w http.ResponseWriter, r *http.Request) {
+	var namespaces []eve.Namespace
+	var err error
+	if environmentID := r.URL.Query().Get("environmentID"); environmentID != "" {
+		namespaces, err = s.manager.NamespacesByEnvironment(r.Context(), environmentID)
+	} else {
+		namespaces, err = s.manager.Namespaces(r.Context())
+	}
+
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, namespaces)
+}
+
+func (s CrudController) namespace(w http.ResponseWriter, r *http.Request) {
+	if namespaceID := chi.URLParam(r, "namespaceID"); namespaceID != "" {
+		namespace, err := s.manager.Namespace(r.Context(), namespaceID)
+		if err != nil {
+			render.Respond(w, r, err)
+			return
+		}
+		render.Respond(w, r, namespace)
+	} else {
+		render.Respond(w, r, errors.NotFoundf("namespace not found"))
+		return
+	}
 }
 
 func (s CrudController) services(w http.ResponseWriter, r *http.Request) {

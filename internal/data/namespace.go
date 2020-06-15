@@ -13,7 +13,7 @@ type Namespace struct {
 	Name               string       `db:"name"`
 	Alias              string       `db:"alias"`
 	EnvironmentID      int          `db:"environment_id"`
-	Domain             string       `db:"domain"`
+	EnvironmentName    string       `db:"environment_name"`
 	RequestedVersion   string       `db:"requested_version"`
 	ExplicitDeployOnly bool         `db:"explicit_deploy_only"`
 	ClusterID          int          `db:"cluster_id"`
@@ -95,11 +95,19 @@ func (r *Repo) NamespaceByID(ctx context.Context, id int) (*Namespace, error) {
 }
 
 func (r *Repo) NamespacesByEnvironmentID(ctx context.Context, environmentID int) (Namespaces, error) {
-	return r.namespaces(ctx, Where("environment_id", environmentID))
+	return r.namespaces(ctx, Where("ns.environment_id", environmentID))
+}
+
+func (r *Repo) NamespacesByEnvironmentName(ctx context.Context, environmentName string) (Namespaces, error) {
+	return r.namespaces(ctx, Where("e.name", environmentName))
+}
+
+func (r *Repo) Namespaces(ctx context.Context) (Namespaces, error) {
+	return r.namespaces(ctx)
 }
 
 func (r *Repo) namespaces(ctx context.Context, whereArgs ...WhereArg) (Namespaces, error) {
-	esql, args := CheckWhereArgs("SELECT * FROM namespace", whereArgs)
+	esql, args := CheckWhereArgs("select ns.*, e.name as environment_name from namespace ns left join environment e on ns.environment_id = e.id", whereArgs)
 	rows, err := r.db.QueryxContext(ctx, esql, args...)
 	if err != nil {
 		return nil, errors.Wrap(err)

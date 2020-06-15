@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="local-dev" uuid="a94e0096-5f2b-4aa0-a19c-27ec6ceb692d">
-      <driver-ref>postgresql</driver-ref>
-      <synchronize>true</synchronize>
-      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://localhost:5432/eve-api</jdbc-url>
-    </data-source>
     <data-source source="LOCAL" name="production-eve" uuid="95c03abb-5c95-44dc-8ef8-24f73d9342ce">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
