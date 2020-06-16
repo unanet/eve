@@ -16,6 +16,11 @@ type Repo interface {
 	NamespaceByName(ctx context.Context, name string) (*data.Namespace, error)
 	NamespacesByEnvironmentID(ctx context.Context, environmentID int) (data.Namespaces, error)
 	NamespacesByEnvironmentName(ctx context.Context, environmentName string) (data.Namespaces, error)
+
+	ServiceByID(ctx context.Context, id int) (*data.Service, error)
+	ServiceByName(ctx context.Context, name string, namespace string) (*data.Service, error)
+	ServicesByNamespaceID(ctx context.Context, namespaceID int) ([]data.Service, error)
+	ServicesByNamespaceName(ctx context.Context, namespaceName string) ([]data.Service, error)
 }
 
 func NewManager(r Repo) *Manager {

@@ -107,7 +107,19 @@ func (r *Repo) Namespaces(ctx context.Context) (Namespaces, error) {
 }
 
 func (r *Repo) namespaces(ctx context.Context, whereArgs ...WhereArg) (Namespaces, error) {
-	esql, args := CheckWhereArgs("select ns.*, e.name as environment_name from namespace ns left join environment e on ns.environment_id = e.id", whereArgs)
+	esql, args := CheckWhereArgs(`
+		select ns.id, 
+		       ns.alias, 
+		       ns.name, 
+		       ns.environment_id, 
+		       ns.requested_version, 
+		       ns.explicit_deploy_only, 
+		       ns.cluster_id,
+		       ns.created_at,
+		       ns.updated_at,
+		       e.name as environment_name 
+		from namespace ns left join environment e on ns.environment_id = e.id
+		`, whereArgs)
 	rows, err := r.db.QueryxContext(ctx, esql, args...)
 	if err != nil {
 		return nil, errors.Wrap(err)

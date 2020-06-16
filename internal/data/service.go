@@ -11,7 +11,7 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
-type Service struct {
+type DeployService struct {
 	ServiceID        int            `db:"service_id"`
 	ServiceName      string         `db:"service_name"`
 	ArtifactID       int            `db:"artifact_id"`
@@ -31,7 +31,22 @@ type Service struct {
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
 }
 
-type Services []Service
+type DeployServices []DeployService
+
+type Service struct {
+	ID              int            `db:"id"`
+	NamespaceID     int            `db:"namespace_id"`
+	NamespaceName   string         `db:"namespace_name"`
+	ArtifactID      int            `db:"artifact_id"`
+	OverrideVersion sql.NullString `db:"override_version"`
+	DeployedVersion sql.NullString `db:"deployed_version"`
+	Metadata        json.Text      `db:"metadata"`
+	CreatedAt       sql.NullTime   `db:"created_at"`
+	UpdatedAt       sql.NullTime   `db:"updated_at"`
+	Name            string         `db:"name"`
+	StickySessions  bool           `db:"sticky_sessions"`
+	Count           int            `db:"count"`
+}
 
 func (r *Repo) UpdateDeployedServiceVersion(ctx context.Context, id int, version string) error {
 	result, err := r.db.ExecContext(ctx, "update service set deployed_version = $1, updated_at = $2 where id = $3", version, time.Now().UTC(), id)
@@ -50,7 +65,7 @@ func (r *Repo) UpdateDeployedServiceVersion(ctx context.Context, id int, version
 	return nil
 }
 
-func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID int) (Services, error) {
+func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID int) (DeployServices, error) {
 	rows, err := r.db.QueryxContext(ctx, `
 		select s.id as service_id,
 		   a.service_port,
@@ -78,9 +93,9 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-	var services []Service
+	var services []DeployService
 	for rows.Next() {
-		var service Service
+		var service DeployService
 		err = rows.StructScan(&service)
 		if err != nil {
 			return nil, errors.Wrap(err)
@@ -123,5 +138,83 @@ func (r *Repo) ServiceArtifacts(ctx context.Context, namespaceIDs []int) (Reques
 		}
 		services = append(services, service)
 	}
+	return services, nil
+}
+
+func (r *Repo) ServiceByName(ctx context.Context, name string, namespace string) (*Service, error) {
+	var service Service
+
+	row := r.db.QueryRowxContext(ctx, `
+		select s.*, n.name as namespace_name 
+		from service s left join namespace n on s.namespace_id = n.id 
+		where name = $1 and n.name = $2
+		`, name, namespace)
+	err := row.StructScan(&service)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return nil, NotFoundErrorf("service with name: %s, namespace: %s, not found", name, namespace)
+		}
+		return nil, errors.Wrap(err)
+	}
+
+	return &service, nil
+}
+
+func (r *Repo) ServiceByID(ctx context.Context, id int) (*Service, error) {
+	var service Service
+
+	row := r.db.QueryRowxContext(ctx, `
+		select s.*, n.name as namespace_name 
+		from service s left join namespace n on s.namespace_id = n.id 
+		where id
+		`, id)
+	err := row.StructScan(&service)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return nil, NotFoundErrorf("service with id: %d, not found", id)
+		}
+		return nil, errors.Wrap(err)
+	}
+
+	return &service, nil
+}
+
+func (r *Repo) ServicesByNamespaceID(ctx context.Context, namespaceID int) ([]Service, error) {
+	return r.services(ctx, Where("s.namespace_id", namespaceID))
+}
+
+func (r *Repo) ServicesByNamespaceName(ctx context.Context, namespaceName string) ([]Service, error) {
+	return r.services(ctx, Where("n.name", namespaceName))
+}
+
+func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) ([]Service, error) {
+	esql, args := CheckWhereArgs(`
+		select s.id, 
+		       s.namespace_id, 
+		       s.artifact_id, 
+		       s.override_version, 
+		       s.deployed_version, 
+		       s.created_at, 
+		       s.updated_at, 
+		       s.name, 
+		       s.sticky_sessions, 
+		       s.count, 
+		       n.name as namespace_name 
+		from service s left join namespace n on s.namespace_id = n.id
+		`, whereArgs)
+	rows, err := r.db.QueryxContext(ctx, esql, args...)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	var services []Service
+	for rows.Next() {
+		var service Service
+		err = rows.StructScan(&service)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+		services = append(services, service)
+	}
+
 	return services, nil
 }

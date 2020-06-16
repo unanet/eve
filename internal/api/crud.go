@@ -27,8 +27,10 @@ func (s CrudController) Setup(r chi.Router) {
 
 	r.Get("/namespaces", s.namespaces)
 	r.Get("/namespaces/{namespaceID}", s.namespace)
+	r.Get("/namespaces/{namespaceID}/services", s.namespaceServices)
+	r.Get("/namespaces/{namespaceID}/services/{serviceID}", s.namespaceServices)
 
-	r.Get("/services", s.services)
+	r.Get("/services/{serviceID}", s.service)
 }
 
 func (s CrudController) environments(w http.ResponseWriter, r *http.Request) {
@@ -81,11 +83,40 @@ func (s CrudController) namespace(w http.ResponseWriter, r *http.Request) {
 		}
 		render.Respond(w, r, namespace)
 	} else {
-		render.Respond(w, r, errors.NotFoundf("namespace not found"))
+		render.Respond(w, r, errors.NotFoundf("namespaceID not specified"))
 		return
 	}
 }
 
-func (s CrudController) services(w http.ResponseWriter, r *http.Request) {
+func (s CrudController) namespaceServices(w http.ResponseWriter, r *http.Request) {
+	if namespaceID := chi.URLParam(r, "namespaceID"); namespaceID != "" {
+		services, err := s.manager.ServicesByNamespace(r.Context(), namespaceID)
+		if err != nil {
+			render.Respond(w, r, err)
+			return
+		}
+		render.Respond(w, r, services)
+	} else {
+		render.Respond(w, r, errors.NotFoundf("namespaceID not specified"))
+		return
+	}
+}
 
+func (s CrudController) service(w http.ResponseWriter, r *http.Request) {
+	namespaceID := r.URL.Query().Get("namespaceID")
+	if namespaceID == "" {
+		namespaceID = chi.URLParam(r, "namespaceID")
+	}
+
+	if serviceID := chi.URLParam(r, "serviceID"); serviceID != "" {
+		service, err := s.manager.Service(r.Context(), serviceID, namespaceID)
+		if err != nil {
+			render.Respond(w, r, err)
+			return
+		}
+		render.Respond(w, r, service)
+	} else {
+		render.Respond(w, r, errors.NotFoundf("serviceID not specified"))
+		return
+	}
 }

@@ -28,7 +28,7 @@ type QueueWorker interface {
 
 type QueueRepo interface {
 	UpdateDeploymentReceiptHandle(ctx context.Context, id uuid.UUID, receiptHandle string) (*data.Deployment, error)
-	DeployedServicesByNamespaceID(ctx context.Context, namespaceID int) (data.Services, error)
+	DeployedServicesByNamespaceID(ctx context.Context, namespaceID int) (data.DeployServices, error)
 	DeployedDatabaseInstancesByNamespaceID(ctx context.Context, namespaceID int) (data.DatabaseInstances, error)
 	UpdateDeploymentPlanLocation(ctx context.Context, id uuid.UUID, location json2.Text) error
 	UpdateDeploymentResult(ctx context.Context, id uuid.UUID) (*data.Deployment, error)
@@ -52,7 +52,7 @@ type HttpCallback interface {
 	Post(ctx context.Context, url string, body interface{}) error
 }
 
-func fromDataService(s data.Service) *eve.DeployService {
+func fromDataService(s data.DeployService) *eve.DeployService {
 	return &eve.DeployService{
 		ServiceID:       s.ServiceID,
 		ServicePort:     s.ServicePort,
@@ -75,7 +75,7 @@ func fromDataService(s data.Service) *eve.DeployService {
 	}
 }
 
-func fromDataServices(services data.Services) eve.DeployServices {
+func fromDataServices(services data.DeployServices) eve.DeployServices {
 	var list eve.DeployServices
 	for _, x := range services {
 		list = append(list, fromDataService(x))
