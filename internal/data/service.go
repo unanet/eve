@@ -147,7 +147,7 @@ func (r *Repo) ServiceByName(ctx context.Context, name string, namespace string)
 	row := r.db.QueryRowxContext(ctx, `
 		select s.*, n.name as namespace_name 
 		from service s left join namespace n on s.namespace_id = n.id 
-		where name = $1 and n.name = $2
+		where s.name = $1 and n.name = $2
 		`, name, namespace)
 	err := row.StructScan(&service)
 	if err != nil {
@@ -166,7 +166,7 @@ func (r *Repo) ServiceByID(ctx context.Context, id int) (*Service, error) {
 	row := r.db.QueryRowxContext(ctx, `
 		select s.*, n.name as namespace_name 
 		from service s left join namespace n on s.namespace_id = n.id 
-		where id
+		where s.id = $1
 		`, id)
 	err := row.StructScan(&service)
 	if err != nil {
