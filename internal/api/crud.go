@@ -28,7 +28,7 @@ func (s CrudController) Setup(r chi.Router) {
 	r.Get("/namespaces", s.namespaces)
 	r.Get("/namespaces/{namespaceID}", s.namespace)
 	r.Get("/namespaces/{namespaceID}/services", s.namespaceServices)
-	r.Get("/namespaces/{namespaceID}/services/{serviceID}", s.namespaceServices)
+	r.Get("/namespaces/{namespaceID}/services/{serviceID}", s.service)
 
 	r.Get("/services/{serviceID}", s.service)
 }
