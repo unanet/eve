@@ -38,6 +38,7 @@ type Service struct {
 	NamespaceID     int            `db:"namespace_id"`
 	NamespaceName   string         `db:"namespace_name"`
 	ArtifactID      int            `db:"artifact_id"`
+	ArtifactName    string         `db:"artifact_name"`
 	OverrideVersion sql.NullString `db:"override_version"`
 	DeployedVersion sql.NullString `db:"deployed_version"`
 	Metadata        json.Text      `db:"metadata"`
@@ -145,8 +146,10 @@ func (r *Repo) ServiceByName(ctx context.Context, name string, namespace string)
 	var service Service
 
 	row := r.db.QueryRowxContext(ctx, `
-		select s.*, n.name as namespace_name 
-		from service s left join namespace n on s.namespace_id = n.id 
+		select s.*, n.name as namespace_name, a.name as artifact_name
+		from service s 
+		    left join namespace n on s.namespace_id = n.id
+			left join artifact a on s.artifact_id = a.id
 		where s.name = $1 and n.name = $2
 		`, name, namespace)
 	err := row.StructScan(&service)
@@ -164,8 +167,10 @@ func (r *Repo) ServiceByID(ctx context.Context, id int) (*Service, error) {
 	var service Service
 
 	row := r.db.QueryRowxContext(ctx, `
-		select s.*, n.name as namespace_name 
-		from service s left join namespace n on s.namespace_id = n.id 
+		select s.*, n.name as namespace_name, a.name as artifact_name
+		from service s 
+		    left join namespace n on s.namespace_id = n.id
+			left join artifact a on s.artifact_id = a.id
 		where s.id = $1
 		`, id)
 	err := row.StructScan(&service)
@@ -199,8 +204,11 @@ func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) ([]Service, 
 		       s.name, 
 		       s.sticky_sessions, 
 		       s.count, 
-		       n.name as namespace_name 
-		from service s left join namespace n on s.namespace_id = n.id
+		       n.name as namespace_name,
+		       a.name as artifact_name
+		from service s 
+		    left join namespace n on s.namespace_id = n.id
+			left join artifact a on s.artifact_id = a.id
 		`, whereArgs)
 	rows, err := r.db.QueryxContext(ctx, esql+"order by s.name", args...)
 	if err != nil {
