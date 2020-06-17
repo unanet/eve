@@ -218,3 +218,82 @@ func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) ([]Service, 
 
 	return services, nil
 }
+
+func (r *Repo) UpdateServiceOverrideVersion(ctx context.Context, serviceID int, version string) error {
+	result, err := r.db.ExecContext(ctx, `
+		update service set override_version = $1 where id = $2
+	`, version, serviceID)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if affected == 0 {
+		return errors.NotFoundf("service id: %d not found", serviceID)
+	}
+	return nil
+}
+
+func (r *Repo) UpdateServiceCount(ctx context.Context, serviceID int, count int) error {
+	if count > 2 || count < 0 {
+		return errors.BadRequest("service count must be between > -1 and less than 3")
+	}
+	result, err := r.db.ExecContext(ctx, `
+		update service set count = $1 where id = $2
+	`, count, serviceID)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if affected == 0 {
+		return errors.NotFoundf("service id: %d not found", serviceID)
+	}
+	return nil
+}
+
+func (r *Repo) UpdateServiceMetadataKey(ctx context.Context, serviceID int, key string, value string) error {
+	result, err := r.db.ExecContext(ctx, `
+		update service set metadata = metadata || '{"$1": "$2"}' where id = $3
+	`, key, value, serviceID)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if affected == 0 {
+		return errors.NotFoundf("service id: %d not found", serviceID)
+	}
+	return nil
+}
+
+func (r *Repo) DeleteServiceMetadataKey(ctx context.Context, serviceID int, key string) error {
+	result, err := r.db.ExecContext(ctx, `
+		update service set metadata = metadata - '$1' where id = $2
+	`, key, serviceID)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if affected == 0 {
+		return errors.NotFoundf("service id: %d not found", serviceID)
+	}
+	return nil
+}

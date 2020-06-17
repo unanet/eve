@@ -52,6 +52,17 @@ func NotFound(message string) *RestError {
 	}
 }
 
+func BadRequestf(format string, a ...interface{}) *RestError {
+	return BadRequest(fmt.Sprintf(format, a...))
+}
+
+func BadRequest(message string) *RestError {
+	return &RestError{
+		Code:    http.StatusBadRequest,
+		Message: message,
+	}
+}
+
 func UnexpectedStatusCode(status int, err error) *UnexpectStatusCodeError {
 	return &UnexpectStatusCodeError{
 		UnexpectedCode: status,

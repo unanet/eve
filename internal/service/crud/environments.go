@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
+	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 )
@@ -40,12 +41,12 @@ func (m *Manager) Environment(ctx context.Context, id string) (*eve.Environment,
 	if intID, err := strconv.Atoi(id); err == nil {
 		dEnvironment, err = m.repo.EnvironmentByID(ctx, intID)
 		if err != nil {
-			return nil, errors.Wrap(err)
+			return nil, service.CheckForNotFoundError(err)
 		}
 	} else {
 		dEnvironment, err = m.repo.EnvironmentByName(ctx, id)
 		if err != nil {
-			return nil, errors.Wrap(err)
+			return nil, service.CheckForNotFoundError(err)
 		}
 	}
 

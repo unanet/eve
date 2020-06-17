@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
+	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 )
@@ -46,12 +47,12 @@ func (m *Manager) NamespacesByEnvironment(ctx context.Context, environmentID str
 	if intID, err := strconv.Atoi(environmentID); err == nil {
 		dNamespaces, err = m.repo.NamespacesByEnvironmentID(ctx, intID)
 		if err != nil {
-			return nil, errors.Wrap(err)
+			return nil, service.CheckForNotFoundError(err)
 		}
 	} else {
 		dNamespaces, err = m.repo.NamespacesByEnvironmentName(ctx, environmentID)
 		if err != nil {
-			return nil, errors.Wrap(err)
+			return nil, service.CheckForNotFoundError(err)
 		}
 	}
 
@@ -63,12 +64,12 @@ func (m *Manager) Namespace(ctx context.Context, id string) (*eve.Namespace, err
 	if intID, err := strconv.Atoi(id); err == nil {
 		dNamespace, err = m.repo.NamespaceByID(ctx, intID)
 		if err != nil {
-			return nil, errors.Wrap(err)
+			return nil, service.CheckForNotFoundError(err)
 		}
 	} else {
 		dNamespace, err = m.repo.NamespaceByName(ctx, id)
 		if err != nil {
-			return nil, errors.Wrap(err)
+			return nil, service.CheckForNotFoundError(err)
 		}
 	}
 

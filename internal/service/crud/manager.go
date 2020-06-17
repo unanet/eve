@@ -21,6 +21,10 @@ type Repo interface {
 	ServiceByName(ctx context.Context, name string, namespace string) (*data.Service, error)
 	ServicesByNamespaceID(ctx context.Context, namespaceID int) ([]data.Service, error)
 	ServicesByNamespaceName(ctx context.Context, namespaceName string) ([]data.Service, error)
+	UpdateServiceOverrideVersion(ctx context.Context, serviceID int, version string) error
+	UpdateServiceCount(ctx context.Context, serviceID int, count int) error
+	UpdateServiceMetadataKey(ctx context.Context, serviceID int, key string, value string) error
+	DeleteServiceMetadataKey(ctx context.Context, serviceID int, key string) error
 }
 
 func NewManager(r Repo) *Manager {

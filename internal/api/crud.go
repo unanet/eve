@@ -120,3 +120,7 @@ func (s CrudController) service(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (s CrudController) updateMetadata(w http.ResponseWriter, r *http.Request) {
+
+}

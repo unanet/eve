@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
-	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 )
 
@@ -39,12 +39,12 @@ func (m *Manager) ServicesByNamespace(ctx context.Context, namespaceID string) (
 	if intID, err := strconv.Atoi(namespaceID); err == nil {
 		dServices, err = m.repo.ServicesByNamespaceID(ctx, intID)
 		if err != nil {
-			return nil, errors.Wrap(err)
+			return nil, service.CheckForNotFoundError(err)
 		}
 	} else {
 		dServices, err = m.repo.ServicesByNamespaceName(ctx, namespaceID)
 		if err != nil {
-			return nil, errors.Wrap(err)
+			return nil, service.CheckForNotFoundError(err)
 		}
 	}
 
@@ -56,15 +56,19 @@ func (m *Manager) Service(ctx context.Context, id string, namespace string) (*ev
 	if intID, err := strconv.Atoi(id); err == nil {
 		dService, err = m.repo.ServiceByID(ctx, intID)
 		if err != nil {
-			return nil, errors.Wrap(err)
+			return nil, service.CheckForNotFoundError(err)
 		}
 	} else {
 		dService, err = m.repo.ServiceByName(ctx, id, namespace)
 		if err != nil {
-			return nil, errors.Wrap(err)
+			return nil, service.CheckForNotFoundError(err)
 		}
 	}
 
 	service := fromDataService(*dService)
 	return &service, nil
+}
+
+func (m *Manager) UpdateService(ctx context.Context, serviceID int, version string) error {
+	return nil
 }
