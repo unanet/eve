@@ -15,6 +15,7 @@ func fromDataService(service data.Service) eve.Service {
 		NamespaceID:     service.NamespaceID,
 		NamespaceName:   service.NamespaceName,
 		ArtifactID:      service.ArtifactID,
+		ArtifactName:    service.ArtifactName,
 		OverrideVersion: service.OverrideVersion.String,
 		DeployedVersion: service.DeployedVersion.String,
 		Metadata:        service.Metadata.AsMap(),

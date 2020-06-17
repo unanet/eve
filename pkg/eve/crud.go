@@ -31,6 +31,7 @@ type Service struct {
 	NamespaceID     int                    `json:"namespace_id"`
 	NamespaceName   string                 `json:"namespace_name"`
 	ArtifactID      int                    `json:"artifact_id"`
+	ArtifactName    string                 `json:"artifact_name"`
 	OverrideVersion string                 `json:"override_version"`
 	DeployedVersion string                 `json:"deployed_version"`
 	Metadata        map[string]interface{} `json:"metadata,omitempty"`
