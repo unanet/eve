@@ -202,7 +202,7 @@ func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) ([]Service, 
 		       n.name as namespace_name 
 		from service s left join namespace n on s.namespace_id = n.id
 		`, whereArgs)
-	rows, err := r.db.QueryxContext(ctx, esql, args...)
+	rows, err := r.db.QueryxContext(ctx, esql+"order by s.name", args...)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}

@@ -48,7 +48,7 @@ func (r *Repo) EnvironmentByID(ctx context.Context, id int) (*Environment, error
 }
 
 func (r *Repo) Environments(ctx context.Context) (Environments, error) {
-	rows, err := r.db.QueryxContext(ctx, "select id, name, description from environment")
+	rows, err := r.db.QueryxContext(ctx, "select id, name, description from environment order by name")
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}

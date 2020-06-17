@@ -120,7 +120,7 @@ func (r *Repo) namespaces(ctx context.Context, whereArgs ...WhereArg) (Namespace
 		       e.name as environment_name 
 		from namespace ns left join environment e on ns.environment_id = e.id
 		`, whereArgs)
-	rows, err := r.db.QueryxContext(ctx, esql, args...)
+	rows, err := r.db.QueryxContext(ctx, esql+"order by ns.requested_version desc", args...)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
