@@ -34,9 +34,8 @@ func (s CrudController) Setup(r chi.Router) {
 
 	r.Get("/services/{service}", s.service)
 	r.Post("/services/{service}", s.updateService)
-	r.Post("/services/{service}/metadata", s.updateMetadata)
+	r.Patch("/services/{service}/metadata", s.updateMetadata)
 	r.Delete("/services/{service}/metadata/{key}", s.deleteMetadata)
-
 }
 
 func (s CrudController) environments(w http.ResponseWriter, r *http.Request) {
