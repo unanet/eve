@@ -181,7 +181,7 @@ func (s CrudController) updateMetadata(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s CrudController) deleteMetadata(w http.ResponseWriter, r *http.Request) {
-	serviceID := chi.URLParam(r, "serviceID")
+	serviceID := chi.URLParam(r, "service")
 	intID, err := strconv.Atoi(serviceID)
 	if err != nil {
 		render.Respond(w, r, errors.BadRequest("invalid service route parameter"))
