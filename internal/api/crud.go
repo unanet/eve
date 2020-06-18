@@ -159,19 +159,13 @@ func (s CrudController) updateMetadata(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	key := r.URL.Query().Get("key")
-	if key == "" {
-		render.Respond(w, r, errors.BadRequest("you must specify a 'key' query parameter"))
+	var metadata map[string]interface{}
+	if err := json.ParseBody(r, &metadata); err != nil {
+		render.Respond(w, r, err)
 		return
 	}
 
-	value := r.URL.Query().Get("value")
-	if value == "" {
-		render.Respond(w, r, errors.BadRequest("you must specify a 'value' query parameter"))
-		return
-	}
-
-	service, err := s.manager.UpdateServiceMetadata(r.Context(), intID, key, value)
+	service, err := s.manager.UpdateServiceMetadata(r.Context(), intID, metadata)
 	if err != nil {
 		render.Respond(w, r, err)
 		return

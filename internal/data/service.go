@@ -290,10 +290,11 @@ func (r *Repo) UpdateServiceCount(ctx context.Context, serviceID int, count int)
 	return nil
 }
 
-func (r *Repo) UpdateServiceMetadataKey(ctx context.Context, serviceID int, key string, value string) error {
+func (r *Repo) UpdateServiceMetadata(ctx context.Context, serviceID int, metadata map[string]interface{}) error {
+	m := json.FromMap(metadata)
 	result, err := r.db.ExecContext(ctx, `
-		update service set metadata = metadata || '{"' || $1 || '": "' || $2 || '"}' where id = $3
-	`, key, value, serviceID)
+		update service set metadata = metadata || $1 where id = $2
+	`, m, serviceID)
 	if err != nil {
 		return errors.Wrap(err)
 	}

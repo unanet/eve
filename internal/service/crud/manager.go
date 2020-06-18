@@ -22,7 +22,7 @@ type Repo interface {
 	ServicesByNamespaceID(ctx context.Context, namespaceID int) ([]data.Service, error)
 	ServicesByNamespaceName(ctx context.Context, namespaceName string) ([]data.Service, error)
 	UpdateService(ctx context.Context, service *data.Service) error
-	UpdateServiceMetadataKey(ctx context.Context, serviceID int, key string, value string) error
+	UpdateServiceMetadata(ctx context.Context, serviceID int, metadata map[string]interface{}) error
 	DeleteServiceMetadataKey(ctx context.Context, serviceID int, key string) error
 }
 

@@ -93,8 +93,8 @@ func (m *Manager) Service(ctx context.Context, id string, namespace string) (*ev
 		}
 	}
 
-	service := fromDataService(*dService)
-	return &service, nil
+	s := fromDataService(*dService)
+	return &s, nil
 }
 
 func (m *Manager) UpdateService(ctx context.Context, s *eve.Service) (*eve.Service, error) {
@@ -108,8 +108,8 @@ func (m *Manager) UpdateService(ctx context.Context, s *eve.Service) (*eve.Servi
 	return &s2, nil
 }
 
-func (m *Manager) UpdateServiceMetadata(ctx context.Context, serviceID int, key, value string) (*eve.Service, error) {
-	err := m.repo.UpdateServiceMetadataKey(ctx, serviceID, key, value)
+func (m *Manager) UpdateServiceMetadata(ctx context.Context, serviceID int, metadata map[string]interface{}) (*eve.Service, error) {
+	err := m.repo.UpdateServiceMetadata(ctx, serviceID, metadata)
 	if err != nil {
 		return nil, service.CheckForNotFoundError(err)
 	}
@@ -119,8 +119,8 @@ func (m *Manager) UpdateServiceMetadata(ctx context.Context, serviceID int, key,
 		return nil, service.CheckForNotFoundError(err)
 	}
 
-	service := fromDataService(*dService)
-	return &service, nil
+	s := fromDataService(*dService)
+	return &s, nil
 }
 
 func (m *Manager) DeleteServiceMetadata(ctx context.Context, serviceID int, key string) (*eve.Service, error) {
@@ -133,6 +133,6 @@ func (m *Manager) DeleteServiceMetadata(ctx context.Context, serviceID int, key 
 	if err != nil {
 		return nil, service.CheckForNotFoundError(err)
 	}
-	service := fromDataService(*dService)
-	return &service, nil
+	s := fromDataService(*dService)
+	return &s, nil
 }
