@@ -292,7 +292,7 @@ func (r *Repo) UpdateServiceCount(ctx context.Context, serviceID int, count int)
 
 func (r *Repo) UpdateServiceMetadataKey(ctx context.Context, serviceID int, key string, value string) error {
 	result, err := r.db.ExecContext(ctx, `
-		update service set metadata = metadata || '{"$1": "$2"}' where id = $3
+		update service set metadata = metadata || '{"' || $1 || '": "' || $2 || '"}' where id = $3
 	`, key, value, serviceID)
 	if err != nil {
 		return errors.Wrap(err)
@@ -311,7 +311,7 @@ func (r *Repo) UpdateServiceMetadataKey(ctx context.Context, serviceID int, key 
 
 func (r *Repo) DeleteServiceMetadataKey(ctx context.Context, serviceID int, key string) error {
 	result, err := r.db.ExecContext(ctx, `
-		update service set metadata = metadata - '$1' where id = $2
+		update service set metadata = metadata - $1 where id = $2
 	`, key, serviceID)
 	if err != nil {
 		return errors.Wrap(err)
