@@ -7,6 +7,7 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 func fromDataService(service data.Service) eve.Service {
@@ -33,6 +34,30 @@ func fromDataServices(services []data.Service) []eve.Service {
 		list = append(list, fromDataService(x))
 	}
 	return list
+}
+
+func toDataService(service eve.Service) data.Service {
+	s := data.Service{
+		ID:             service.ID,
+		NamespaceID:    service.NamespaceID,
+		ArtifactID:     service.ArtifactID,
+		Metadata:       json.FromMap(service.Metadata),
+		Name:           service.Name,
+		StickySessions: service.StickySessions,
+		Count:          service.Count,
+	}
+
+	if service.OverrideVersion != "" {
+		s.OverrideVersion.String = service.OverrideVersion
+		s.OverrideVersion.Valid = true
+	}
+
+	if service.DeployedVersion != "" {
+		s.DeployedVersion.String = service.DeployedVersion
+		s.DeployedVersion.Valid = true
+	}
+
+	return s
 }
 
 func (m *Manager) ServicesByNamespace(ctx context.Context, namespaceID string) ([]eve.Service, error) {
@@ -70,6 +95,42 @@ func (m *Manager) Service(ctx context.Context, id string, namespace string) (*ev
 	return &service, nil
 }
 
-func (m *Manager) UpdateService(ctx context.Context, serviceID int, version string) error {
-	return nil
+func (m *Manager) UpdateService(ctx context.Context, s *eve.Service) (*eve.Service, error) {
+	dService := toDataService(*s)
+	err := m.repo.UpdateService(ctx, &dService)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	s2 := fromDataService(dService)
+	return &s2, nil
+}
+
+func (m *Manager) UpdateServiceMetadata(ctx context.Context, serviceID int, key, value string) (*eve.Service, error) {
+	err := m.repo.UpdateServiceMetadataKey(ctx, serviceID, key, value)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	dService, err := m.repo.ServiceByID(ctx, serviceID)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	service := fromDataService(*dService)
+	return &service, nil
+}
+
+func (m *Manager) DeleteServiceMetadata(ctx context.Context, serviceID int, key string) (*eve.Service, error) {
+	err := m.repo.DeleteServiceMetadataKey(ctx, serviceID, key)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	dService, err := m.repo.ServiceByID(ctx, serviceID)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+	service := fromDataService(*dService)
+	return &service, nil
 }

@@ -98,3 +98,11 @@ func (j *Text) AsMap() map[string]interface{} {
 func (j Text) String() string {
 	return string(j)
 }
+
+func FromMap(m map[string]interface{}) Text {
+	b, err := json.Marshal(m)
+	if err != nil {
+		log.Logger.Error("failed to marshal the map as metadata", zap.Error(errors.Wrap(err)))
+	}
+	return b
+}

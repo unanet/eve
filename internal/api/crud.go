@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -9,6 +10,7 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/service/crud"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 type CrudController struct {
@@ -31,6 +33,10 @@ func (s CrudController) Setup(r chi.Router) {
 	r.Get("/namespaces/{namespaceID}/services/{serviceID}", s.service)
 
 	r.Get("/services/{serviceID}", s.service)
+	r.Post("/services/{serviceID}", s.updateService)
+	r.Post("/services/{serviceID}/metadata", s.updateMetadata)
+	r.Delete("/services/{serviceID}/metadata/{key}", s.deleteMetadata)
+
 }
 
 func (s CrudController) environments(w http.ResponseWriter, r *http.Request) {
@@ -121,6 +127,78 @@ func (s CrudController) service(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s CrudController) updateMetadata(w http.ResponseWriter, r *http.Request) {
+func (s CrudController) updateService(w http.ResponseWriter, r *http.Request) {
+	serviceID := chi.URLParam(r, "serviceID")
+	intID, err := strconv.Atoi(serviceID)
+	if err != nil {
+		render.Respond(w, r, errors.BadRequest("invalid service id in route"))
+		return
+	}
 
+	var service eve.Service
+	if err := json.ParseBody(r, &service); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	service.ID = intID
+	rs, err := s.manager.UpdateService(r.Context(), &service)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, rs)
+}
+
+func (s CrudController) updateMetadata(w http.ResponseWriter, r *http.Request) {
+	serviceID := chi.URLParam(r, "serviceID")
+	intID, err := strconv.Atoi(serviceID)
+	if err != nil {
+		render.Respond(w, r, errors.BadRequest("invalid service id in route"))
+		return
+	}
+
+	key := r.URL.Query().Get("key")
+	if key == "" {
+		render.Respond(w, r, errors.BadRequest("you must specify a 'key' query parameter"))
+		return
+	}
+
+	value := r.URL.Query().Get("value")
+	if value == "" {
+		render.Respond(w, r, errors.BadRequest("you must specify a 'value' query parameter"))
+		return
+	}
+
+	service, err := s.manager.UpdateServiceMetadata(r.Context(), intID, key, value)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, service.Metadata)
+}
+
+func (s CrudController) deleteMetadata(w http.ResponseWriter, r *http.Request) {
+	serviceID := chi.URLParam(r, "serviceID")
+	intID, err := strconv.Atoi(serviceID)
+	if err != nil {
+		render.Respond(w, r, errors.BadRequest("invalid serviceID route parameter"))
+		return
+	}
+
+	key := chi.URLParam(r, "key")
+	if key == "" {
+		render.Respond(w, r, errors.BadRequest("invalid key route parameter"))
+		return
+	}
+
+	service, err := s.manager.DeleteServiceMetadata(r.Context(), intID, key)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, service.Metadata)
 }

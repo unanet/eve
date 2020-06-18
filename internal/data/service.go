@@ -227,10 +227,32 @@ func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) ([]Service, 
 	return services, nil
 }
 
-func (r *Repo) UpdateServiceOverrideVersion(ctx context.Context, serviceID int, version string) error {
+func (r *Repo) UpdateService(ctx context.Context, service *Service) error {
+	service.UpdatedAt.Time = time.Now().UTC()
+	service.UpdatedAt.Valid = true
 	result, err := r.db.ExecContext(ctx, `
-		update service set override_version = $1 where id = $2
-	`, version, serviceID)
+		update service set 
+		   	name = $1, 
+			namespace_id = $2,
+			artifact_id = $3,
+		   	override_version = $4,
+		    deployed_version = $5,
+		   	metadata = $6,
+			sticky_sessions = $7,
+		    count = $8,
+		    updated_at = $9
+		where id = $10
+	`,
+		service.Name,
+		service.NamespaceID,
+		service.ArtifactID,
+		service.OverrideVersion,
+		service.DeployedVersion,
+		service.Metadata,
+		service.StickySessions,
+		service.Count,
+		service.UpdatedAt,
+		service.ID)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -241,7 +263,7 @@ func (r *Repo) UpdateServiceOverrideVersion(ctx context.Context, serviceID int, 
 	}
 
 	if affected == 0 {
-		return errors.NotFoundf("service id: %d not found", serviceID)
+		return errors.NotFoundf("service id: %d not found", service.ID)
 	}
 	return nil
 }
