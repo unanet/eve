@@ -40,7 +40,9 @@ func toDataService(service eve.Service) data.Service {
 	s := data.Service{
 		ID:             service.ID,
 		NamespaceID:    service.NamespaceID,
+		NamespaceName:  service.NamespaceName,
 		ArtifactID:     service.ArtifactID,
+		ArtifactName:   service.ArtifactName,
 		Metadata:       json.FromMap(service.Metadata),
 		Name:           service.Name,
 		StickySessions: service.StickySessions,

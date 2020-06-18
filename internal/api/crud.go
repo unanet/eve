@@ -25,17 +25,17 @@ func NewCrudController(manager *crud.Manager) *CrudController {
 
 func (s CrudController) Setup(r chi.Router) {
 	r.Get("/environments", s.environments)
-	r.Get("/environments/{environmentID}", s.environment)
+	r.Get("/environments/{environment}", s.environment)
 
 	r.Get("/namespaces", s.namespaces)
-	r.Get("/namespaces/{namespaceID}", s.namespace)
-	r.Get("/namespaces/{namespaceID}/services", s.namespaceServices)
-	r.Get("/namespaces/{namespaceID}/services/{serviceID}", s.service)
+	r.Get("/namespaces/{namespace}", s.namespace)
+	r.Get("/namespaces/{namespace}/services", s.namespaceServices)
+	r.Get("/namespaces/{namespace}/services/{service}", s.service)
 
-	r.Get("/services/{serviceID}", s.service)
-	r.Post("/services/{serviceID}", s.updateService)
-	r.Post("/services/{serviceID}/metadata", s.updateMetadata)
-	r.Delete("/services/{serviceID}/metadata/{key}", s.deleteMetadata)
+	r.Get("/services/{service}", s.service)
+	r.Post("/services/{service}", s.updateService)
+	r.Post("/services/{service}/metadata", s.updateMetadata)
+	r.Delete("/services/{service}/metadata/{key}", s.deleteMetadata)
 
 }
 
@@ -50,7 +50,7 @@ func (s CrudController) environments(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s CrudController) environment(w http.ResponseWriter, r *http.Request) {
-	if environmentID := chi.URLParam(r, "environmentID"); environmentID != "" {
+	if environmentID := chi.URLParam(r, "environment"); environmentID != "" {
 		environment, err := s.manager.Environment(r.Context(), environmentID)
 		if err != nil {
 			render.Respond(w, r, err)
@@ -66,7 +66,7 @@ func (s CrudController) environment(w http.ResponseWriter, r *http.Request) {
 func (s CrudController) namespaces(w http.ResponseWriter, r *http.Request) {
 	var namespaces []eve.Namespace
 	var err error
-	if environmentID := r.URL.Query().Get("environmentID"); environmentID != "" {
+	if environmentID := r.URL.Query().Get("environment"); environmentID != "" {
 		namespaces, err = s.manager.NamespacesByEnvironment(r.Context(), environmentID)
 	} else {
 		namespaces, err = s.manager.Namespaces(r.Context())
@@ -81,7 +81,7 @@ func (s CrudController) namespaces(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s CrudController) namespace(w http.ResponseWriter, r *http.Request) {
-	if namespaceID := chi.URLParam(r, "namespaceID"); namespaceID != "" {
+	if namespaceID := chi.URLParam(r, "namespace"); namespaceID != "" {
 		namespace, err := s.manager.Namespace(r.Context(), namespaceID)
 		if err != nil {
 			render.Respond(w, r, err)
@@ -89,13 +89,13 @@ func (s CrudController) namespace(w http.ResponseWriter, r *http.Request) {
 		}
 		render.Respond(w, r, namespace)
 	} else {
-		render.Respond(w, r, errors.NotFoundf("namespaceID not specified"))
+		render.Respond(w, r, errors.NotFoundf("namespace not specified"))
 		return
 	}
 }
 
 func (s CrudController) namespaceServices(w http.ResponseWriter, r *http.Request) {
-	if namespaceID := chi.URLParam(r, "namespaceID"); namespaceID != "" {
+	if namespaceID := chi.URLParam(r, "namespace"); namespaceID != "" {
 		services, err := s.manager.ServicesByNamespace(r.Context(), namespaceID)
 		if err != nil {
 			render.Respond(w, r, err)
@@ -103,18 +103,18 @@ func (s CrudController) namespaceServices(w http.ResponseWriter, r *http.Request
 		}
 		render.Respond(w, r, services)
 	} else {
-		render.Respond(w, r, errors.NotFoundf("namespaceID not specified"))
+		render.Respond(w, r, errors.NotFoundf("namespace not specified"))
 		return
 	}
 }
 
 func (s CrudController) service(w http.ResponseWriter, r *http.Request) {
-	namespaceID := r.URL.Query().Get("namespaceID")
+	namespaceID := r.URL.Query().Get("namespace")
 	if namespaceID == "" {
-		namespaceID = chi.URLParam(r, "namespaceID")
+		namespaceID = chi.URLParam(r, "namespace")
 	}
 
-	if serviceID := chi.URLParam(r, "serviceID"); serviceID != "" {
+	if serviceID := chi.URLParam(r, "service"); serviceID != "" {
 		service, err := s.manager.Service(r.Context(), serviceID, namespaceID)
 		if err != nil {
 			render.Respond(w, r, err)
@@ -122,7 +122,7 @@ func (s CrudController) service(w http.ResponseWriter, r *http.Request) {
 		}
 		render.Respond(w, r, service)
 	} else {
-		render.Respond(w, r, errors.NotFoundf("serviceID not specified"))
+		render.Respond(w, r, errors.NotFoundf("service not specified"))
 		return
 	}
 }
@@ -131,7 +131,7 @@ func (s CrudController) updateService(w http.ResponseWriter, r *http.Request) {
 	serviceID := chi.URLParam(r, "serviceID")
 	intID, err := strconv.Atoi(serviceID)
 	if err != nil {
-		render.Respond(w, r, errors.BadRequest("invalid service id in route"))
+		render.Respond(w, r, errors.BadRequest("invalid service in route"))
 		return
 	}
 
@@ -155,7 +155,7 @@ func (s CrudController) updateMetadata(w http.ResponseWriter, r *http.Request) {
 	serviceID := chi.URLParam(r, "serviceID")
 	intID, err := strconv.Atoi(serviceID)
 	if err != nil {
-		render.Respond(w, r, errors.BadRequest("invalid service id in route"))
+		render.Respond(w, r, errors.BadRequest("invalid service in route"))
 		return
 	}
 
@@ -184,7 +184,7 @@ func (s CrudController) deleteMetadata(w http.ResponseWriter, r *http.Request) {
 	serviceID := chi.URLParam(r, "serviceID")
 	intID, err := strconv.Atoi(serviceID)
 	if err != nil {
-		render.Respond(w, r, errors.BadRequest("invalid serviceID route parameter"))
+		render.Respond(w, r, errors.BadRequest("invalid service route parameter"))
 		return
 	}
 
