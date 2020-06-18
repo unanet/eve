@@ -128,7 +128,7 @@ func (s CrudController) service(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s CrudController) updateService(w http.ResponseWriter, r *http.Request) {
-	serviceID := chi.URLParam(r, "serviceID")
+	serviceID := chi.URLParam(r, "service")
 	intID, err := strconv.Atoi(serviceID)
 	if err != nil {
 		render.Respond(w, r, errors.BadRequest("invalid service in route"))
@@ -152,7 +152,7 @@ func (s CrudController) updateService(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s CrudController) updateMetadata(w http.ResponseWriter, r *http.Request) {
-	serviceID := chi.URLParam(r, "serviceID")
+	serviceID := chi.URLParam(r, "service")
 	intID, err := strconv.Atoi(serviceID)
 	if err != nil {
 		render.Respond(w, r, errors.BadRequest("invalid service in route"))
