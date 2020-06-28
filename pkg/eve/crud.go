@@ -10,6 +10,7 @@ type Environment struct {
 	Alias       string                 `json:"alias,omitempty"`
 	Description string                 `json:"description"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	UpdatedAt   time.Time              `json:"updated_at"`
 }
 
 type Namespace struct {

@@ -8,6 +8,7 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 func fromDataEnvironment(environment data.Environment) eve.Environment {
@@ -17,6 +18,7 @@ func fromDataEnvironment(environment data.Environment) eve.Environment {
 		Alias:       environment.Alias,
 		Description: environment.Description,
 		Metadata:    environment.Metadata.AsMap(),
+		UpdatedAt:   environment.UpdatedAt.Time,
 	}
 }
 
@@ -52,4 +54,25 @@ func (m *Manager) Environment(ctx context.Context, id string) (*eve.Environment,
 
 	environment := fromDataEnvironment(*dEnvironment)
 	return &environment, nil
+}
+
+func (m *Manager) UpdateEnvironment(ctx context.Context, e *eve.Environment) (*eve.Environment, error) {
+	dEnvironment := toDataEnvironment(*e)
+	err := m.repo.UpdateEnvironment(ctx, &dEnvironment)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	e2 := fromDataEnvironment(dEnvironment)
+	return &e2, nil
+}
+
+func toDataEnvironment(environment eve.Environment) data.Environment {
+	return data.Environment{
+		ID:          environment.ID,
+		Name:        environment.Name,
+		Alias:       environment.Alias,
+		Description: environment.Description,
+		Metadata:    json.FromMap(environment.Metadata),
+	}
 }
