@@ -8,6 +8,7 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 func fromDataNamespace(namespace data.Namespace) eve.Namespace {
@@ -75,4 +76,29 @@ func (m *Manager) Namespace(ctx context.Context, id string) (*eve.Namespace, err
 
 	namespace := fromDataNamespace(*dNamespace)
 	return &namespace, nil
+}
+
+func (m *Manager) UpdateNamespace(ctx context.Context, n *eve.Namespace) (*eve.Namespace, error) {
+	dNamespace := toDataNamespace(*n)
+	err := m.repo.UpdateNamespace(ctx, &dNamespace)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	n2 := fromDataNamespace(dNamespace)
+	return &n2, nil
+}
+
+func toDataNamespace(namespace eve.Namespace) data.Namespace {
+	return data.Namespace{
+		ID:                 namespace.ID,
+		Name:               namespace.Name,
+		Alias:              namespace.Alias,
+		EnvironmentID:      namespace.EnvironmentID,
+		EnvironmentName:    namespace.EnvironmentName,
+		RequestedVersion:   namespace.RequestedVersion,
+		ExplicitDeployOnly: namespace.ExplicitDeployOnly,
+		ClusterID:          namespace.ClusterID,
+		Metadata:           json.FromMap(namespace.Metadata),
+	}
 }

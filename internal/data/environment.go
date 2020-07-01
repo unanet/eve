@@ -2,17 +2,20 @@ package data
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 type Environment struct {
-	ID          int       `db:"id"`
-	Name        string    `db:"name"`
-	Alias       string    `db:"alias"`
-	Description string    `db:"description"`
-	Metadata    json.Text `db:"metadata"`
+	ID          int          `db:"id"`
+	Name        string       `db:"name"`
+	Alias       string       `db:"alias"`
+	Description string       `db:"description"`
+	Metadata    json.Text    `db:"metadata"`
+	UpdatedAt   sql.NullTime `db:"updated_at"`
 }
 
 type Environments []Environment
@@ -63,4 +66,33 @@ func (r *Repo) Environments(ctx context.Context) (Environments, error) {
 	}
 
 	return environments, nil
+}
+
+func (r *Repo) UpdateEnvironment(ctx context.Context, environment *Environment) error {
+	environment.UpdatedAt.Time = time.Now().UTC()
+	environment.UpdatedAt.Valid = true
+	result, err := r.db.ExecContext(ctx, `
+		update namespace set 
+			metadata = $1,
+			description = $2,
+			updated_at = $3
+		where id = $4
+	`,
+		environment.Metadata,
+		environment.Description,
+		environment.UpdatedAt,
+		environment.ID)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if affected == 0 {
+		return errors.NotFoundf("environment id: %d not found", environment.ID)
+	}
+	return nil
 }

@@ -26,9 +26,11 @@ func NewCrudController(manager *crud.Manager) *CrudController {
 func (s CrudController) Setup(r chi.Router) {
 	r.Get("/environments", s.environments)
 	r.Get("/environments/{environment}", s.environment)
+	r.Post("/environments/{environment}", s.updateEnvironment)
 
 	r.Get("/namespaces", s.namespaces)
 	r.Get("/namespaces/{namespace}", s.namespace)
+	r.Post("/namespaces/{namespace}", s.updateNamespace)
 	r.Get("/namespaces/{namespace}/services", s.namespaceServices)
 	r.Get("/namespaces/{namespace}/services/{service}", s.service)
 
@@ -142,6 +144,54 @@ func (s CrudController) updateService(w http.ResponseWriter, r *http.Request) {
 
 	service.ID = intID
 	rs, err := s.manager.UpdateService(r.Context(), &service)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, rs)
+}
+
+func (s CrudController) updateNamespace(w http.ResponseWriter, r *http.Request) {
+	namespaceID := chi.URLParam(r, "namespace")
+	intID, err := strconv.Atoi(namespaceID)
+	if err != nil {
+		render.Respond(w, r, errors.BadRequest("invalid namespace in route"))
+		return
+	}
+
+	var namespace eve.Namespace
+	if err := json.ParseBody(r, &namespace); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	namespace.ID = intID
+	rs, err := s.manager.UpdateNamespace(r.Context(), &namespace)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, rs)
+}
+
+func (s CrudController) updateEnvironment(w http.ResponseWriter, r *http.Request) {
+	environmentID := chi.URLParam(r, "environment")
+	intID, err := strconv.Atoi(environmentID)
+	if err != nil {
+		render.Respond(w, r, errors.BadRequest("invalid environment in route"))
+		return
+	}
+
+	var environment eve.Environment
+	if err = json.ParseBody(r, &environment); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	environment.ID = intID
+	rs, err := s.manager.UpdateEnvironment(r.Context(), &environment)
 	if err != nil {
 		render.Respond(w, r, err)
 		return

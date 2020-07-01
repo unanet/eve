@@ -10,12 +10,14 @@ type Repo interface {
 	Environments(ctx context.Context) (data.Environments, error)
 	EnvironmentByID(ctx context.Context, id int) (*data.Environment, error)
 	EnvironmentByName(ctx context.Context, name string) (*data.Environment, error)
+	UpdateEnvironment(ctx context.Context, environment *data.Environment) error
 
 	Namespaces(ctx context.Context) (data.Namespaces, error)
 	NamespaceByID(ctx context.Context, id int) (*data.Namespace, error)
 	NamespaceByName(ctx context.Context, name string) (*data.Namespace, error)
 	NamespacesByEnvironmentID(ctx context.Context, environmentID int) (data.Namespaces, error)
 	NamespacesByEnvironmentName(ctx context.Context, environmentName string) (data.Namespaces, error)
+	UpdateNamespace(ctx context.Context, namespace *data.Namespace) error
 
 	ServiceByID(ctx context.Context, id int) (*data.Service, error)
 	ServiceByName(ctx context.Context, name string, namespace string) (*data.Service, error)

@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/json"
@@ -135,4 +136,35 @@ func (r *Repo) namespaces(ctx context.Context, whereArgs ...WhereArg) (Namespace
 	}
 
 	return namespaces, nil
+}
+
+func (r *Repo) UpdateNamespace(ctx context.Context, namespace *Namespace) error {
+	namespace.UpdatedAt.Time = time.Now().UTC()
+	namespace.UpdatedAt.Valid = true
+	result, err := r.db.ExecContext(ctx, `
+		update namespace set 
+			requested_version = $1,
+			explicit_deploy_only = $2,
+			metadata = $3,
+			updated_at = $4
+		where id = $5
+	`,
+		namespace.RequestedVersion,
+		namespace.ExplicitDeployOnly,
+		namespace.Metadata,
+		namespace.UpdatedAt,
+		namespace.ID)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if affected == 0 {
+		return errors.NotFoundf("namespace id: %d not found", namespace.ID)
+	}
+	return nil
 }
