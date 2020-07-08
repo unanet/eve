@@ -19,5 +19,11 @@
       <jdbc-driver>com.microsoft.sqlserver.jdbc.SQLServerDriver</jdbc-driver>
       <jdbc-url>jdbc:sqlserver://exago-db.app-nonprod.unanet.io:1433;database=analytics_int_current</jdbc-url>
     </data-source>
+    <data-source source="LOCAL" name="awsunadbcldtnt-rds.cluster-csltrkgf6gmh.us-east-2.rds.amazonaws.com" uuid="a273f31f-5ee8-4824-a9e7-64fc87b840b8">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://awsunadbcldtnt-rds.cluster-csltrkgf6gmh.us-east-2.rds.amazonaws.com:5432/</jdbc-url>
+    </data-source>
   </component>
 </project>

@@ -64,8 +64,9 @@ func (c *Client) GetLatestVersion(ctx context.Context, repository string, path s
 		return success.Version, nil
 	case http.StatusNotFound:
 		return "", NotFoundErrorf("the following Version: %s, was not found", version)
+	case http.StatusServiceUnavailable:
+		return "", ServiceUnavailableErrorf("Artifactory returned a 503 and appears to be unavailable")
 	default:
-
 		return "", failure
 	}
 }

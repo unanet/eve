@@ -23,6 +23,24 @@ func (r ErrorResponse) Error() string {
 	return fmt.Sprintf("Artifactory Errors: %+v", r.Errors)
 }
 
+type ServiceUnavailableError struct {
+	message string
+}
+
+func (e ServiceUnavailableError) Error() string {
+	return e.message
+}
+
+func (e ServiceUnavailableError) IsEveError() bool {
+	return true
+}
+
+func ServiceUnavailableErrorf(format string, a ...interface{}) ServiceUnavailableError {
+	return ServiceUnavailableError{
+		message: fmt.Sprintf(format, a...),
+	}
+}
+
 type NotFoundError struct {
 	message string
 }
