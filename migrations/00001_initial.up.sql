@@ -50,7 +50,8 @@ CREATE TABLE feed (
     id integer NOT NULL,
     name character varying(25) NOT NULL,
     promotion_order integer DEFAULT 0 NOT NULL,
-    feed_type feed_type
+    feed_type feed_type,
+    alias character varying(25) DEFAULT '' NOT NULL
 );
 CREATE UNIQUE INDEX feed_name_uindex ON feed USING btree (name);
 ALTER TABLE ONLY feed ADD CONSTRAINT feed_pk PRIMARY KEY (id);
@@ -263,14 +264,14 @@ INSERT INTO deployment_cron(plan_options, schedule) VALUES (
     '{"type": "application", "user": "cron", "environment": "cvs-int", "callback_url": "https://eve-bot.unanet.io/eve-cron-callback?channel=G013FGP8R3Q"}',
     '*/15 * * * *');
 
-INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (1, 'docker-int', 0, 'docker');
-INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (2, 'generic-int', 0, 'generic');
-INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (3, 'docker-qa', 1, 'docker');
-INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (4, 'generic-qa', 1, 'generic');
-INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (5, 'docker-stage', 2, 'docker');
-INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (6, 'generic-stage', 2, 'generic');
-INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (7, 'docker-prod', 3, 'docker');
-INSERT INTO feed (id, name, promotion_order, feed_type) VALUES (8, 'generic-prod', 3, 'generic');
+INSERT INTO feed (id, name, promotion_order, feed_type, alias) VALUES (1, 'docker-int', 0, 'docker', 'int');
+INSERT INTO feed (id, name, promotion_order, feed_type, alias) VALUES (2, 'generic-int', 0, 'generic', 'int');
+INSERT INTO feed (id, name, promotion_order, feed_type, alias) VALUES (3, 'docker-qa', 1, 'docker', 'qa');
+INSERT INTO feed (id, name, promotion_order, feed_type, alias) VALUES (4, 'generic-qa', 1, 'generic', 'qa');
+INSERT INTO feed (id, name, promotion_order, feed_type, alias) VALUES (5, 'docker-stage', 2, 'docker', 'stage');
+INSERT INTO feed (id, name, promotion_order, feed_type, alias) VALUES (6, 'generic-stage', 2, 'generic', 'stage');
+INSERT INTO feed (id, name, promotion_order, feed_type, alias) VALUES (7, 'docker-prod', 3, 'docker', 'prod');
+INSERT INTO feed (id, name, promotion_order, feed_type, alias) VALUES (8, 'generic-prod', 3, 'generic', 'prod');
 
 INSERT INTO environment (id, name, alias) VALUES(101, 'cvs-int', 'int');
 INSERT INTO environment (id, name, alias) VALUES(102, 'cvs-qa', 'qa');
