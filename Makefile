@@ -19,6 +19,7 @@ CUR_DIR := $(shell pwd)
 
 BUILD_IMAGE := unanet-docker.jfrog.io/golang
 IMAGE_NAME := unanet-docker.jfrog.io/ops/eve-api-v1
+DEV_DB_IMAGE := unanet-docker.jfrog.io/ops/eve-dev-db
 IMAGE_DIGEST = $(shell docker inspect -f '{{index .RepoDigests 0}}' ${IMAGE_NAME}:${PATCH_VERSION})
 
 LABEL_PREFIX := com.unanet
@@ -74,3 +75,10 @@ deploy:
 
 scan:
 	$(docker-scanner-exec)
+
+start-dev-db:
+	docker run -d --name eve-db --rm -v ${HOME}/.vault-token:/var/lib/postgres/.vault-token ${DEV_DB_IMAGE}
+
+stop-dev-db:
+	docker stop eve-db
+
