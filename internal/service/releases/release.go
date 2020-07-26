@@ -45,8 +45,7 @@ func version(version string) string {
 	return version
 }
 
-func (svc *ReleaseSvc) PromoteRelease(ctx context.Context, release eve.Release) error {
-
+func (svc *ReleaseSvc) moveReleaseArtifact(ctx context.Context, release eve.Release, isPromotion bool) error {
 	if release.FromFeed == release.ToFeed {
 		return errors.BadRequest(fmt.Sprintf("source feed: %s and destination feed: %s cannot be equal", release.FromFeed, release.ToFeed))
 	}
@@ -74,10 +73,18 @@ func (svc *ReleaseSvc) PromoteRelease(ctx context.Context, release eve.Release) 
 		return err
 	}
 
-	toFeed, err := svc.toFeed(ctx, release, artifact, fromFeed)
+	toFeed, err := svc.toFeed(ctx, release, artifact, fromFeed, isPromotion)
 	if err != nil {
 		log.Logger.Debug("toFeed err", zap.Error(err))
 		return errors.Wrap(err)
+	}
+
+	if isPromotion && fromFeed.PromotionOrder > toFeed.PromotionOrder {
+		return errors.BadRequestf("cannot promote from: %s to: %s", fromFeed.Name, toFeed.Name)
+	}
+
+	if isPromotion == false && toFeed.PromotionOrder > fromFeed.PromotionOrder {
+		return errors.BadRequestf("cannot demote from: %s to: %s", fromFeed.Name, toFeed.Name)
 	}
 
 	fromPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, artifactVersion)
@@ -90,12 +97,18 @@ func (svc *ReleaseSvc) PromoteRelease(ctx context.Context, release eve.Release) 
 	}
 
 	log.Logger.Debug("move artifact message", zap.Any("resp", resp))
-
 	return nil
-
 }
 
-func (svc *ReleaseSvc) toFeed(ctx context.Context, release eve.Release, artifact *data.Artifact, fromFeed *data.Feed) (*data.Feed, error) {
+func (svc *ReleaseSvc) PromoteRelease(ctx context.Context, release eve.Release) error {
+	return svc.moveReleaseArtifact(ctx, release, true)
+}
+
+func (svc *ReleaseSvc) DemoteRelease(ctx context.Context, release eve.Release) error {
+	return svc.moveReleaseArtifact(ctx, release, false)
+}
+
+func (svc *ReleaseSvc) toFeed(ctx context.Context, release eve.Release, artifact *data.Artifact, fromFeed *data.Feed, isPromotion bool) (*data.Feed, error) {
 	if release.ToFeed != "" {
 		toFeed, errr := svc.repo.FeedByAliasAndType(ctx, release.ToFeed, artifact.FeedType)
 		if errr != nil {
@@ -103,9 +116,18 @@ func (svc *ReleaseSvc) toFeed(ctx context.Context, release eve.Release, artifact
 		}
 		return toFeed, nil
 	}
-	toFeed, errr := svc.repo.NextFeedByPromotionOrderType(ctx, fromFeed.PromotionOrder, artifact.FeedType)
-	if errr != nil {
-		return nil, service.CheckForNotFoundError(errr)
+
+	if isPromotion {
+		toFeed, errr := svc.repo.NextFeedByPromotionOrderType(ctx, fromFeed.PromotionOrder, artifact.FeedType)
+		if errr != nil {
+			return nil, service.CheckForNotFoundError(errr)
+		}
+		return toFeed, nil
+	} else {
+		toFeed, errr := svc.repo.PreviousFeedByPromotionOrderType(ctx, fromFeed.PromotionOrder, artifact.FeedType)
+		if errr != nil {
+			return nil, service.CheckForNotFoundError(errr)
+		}
+		return toFeed, nil
 	}
-	return toFeed, nil
 }
