@@ -85,8 +85,8 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 
 	success.Artifact = artifact.Name
 	success.Version = artifactVersion
-	success.ToFeed = toFeed.Name
-	success.FromFeed = fromFeed.Name
+	success.ToFeed = toFeed.Alias
+	success.FromFeed = fromFeed.Alias
 	success.Message = resp.ToString()
 
 	return success, nil
