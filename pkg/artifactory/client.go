@@ -8,10 +8,12 @@ import (
 	"time"
 
 	"github.com/dghubble/sling"
+	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	ehttp "gitlab.unanet.io/devops/eve/pkg/http"
 	"gitlab.unanet.io/devops/eve/pkg/json"
+	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
 const (
@@ -76,17 +78,22 @@ func (c *Client) MoveArtifact(ctx context.Context, srcRepo, srcPath, destRepo, d
 	var failure ErrorResponse
 	r, err := c.sling.New().Post(fmt.Sprintf("move/%s/%s", srcRepo, srcPath)).Request()
 	if err != nil {
+		log.Logger.Debug("move artifact client req", zap.Error(err))
 		return nil, err
 	}
 	r.URL.RawQuery = fmt.Sprintf("to=/%s/%s&dry=%d", destRepo, destPath, Bool2int(dryRun))
 	resp, err := c.sling.Do(r.WithContext(ctx), &success, &failure)
 	if err != nil {
+		log.Logger.Debug("move artifact client req do", zap.Error(err))
 		return nil, err
 	}
+
+	log.Logger.Debug("move artifact client req status", zap.Any("resp", resp))
 
 	if http.StatusOK == resp.StatusCode {
 		return &success, nil
 	} else {
+		log.Logger.Debug("move artifact client req failure", zap.Error(err), zap.Any("failure", failure))
 		return nil, failure
 	}
 }
