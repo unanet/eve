@@ -21,7 +21,7 @@ func client(t *testing.T) *artifactory.Client {
 	if c != nil {
 		return c
 	}
-	c = artifactory.NewClient(api.GetConfig().ArtifactoryConfig)
+	c = artifactory.NewClient(api.GetConfig().ArtifactoryConfig, false)
 	require.NotNil(t, c)
 	return c
 }

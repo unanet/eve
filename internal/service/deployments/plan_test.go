@@ -21,7 +21,7 @@ func TestPlanGenerator_GenerateMigrationPlan(t *testing.T) {
 	db, err := data.GetDBWithTimeout(time.Second * 10)
 	require.NoError(t, err)
 	repo := data.NewRepo(db)
-	jfrog := artifactory.NewClient(api.GetConfig().ArtifactoryConfig)
+	jfrog := artifactory.NewClient(api.GetConfig().ArtifactoryConfig, false)
 	pg := deployments.NewPlanGenerator(repo, jfrog)
 	plan, err := pg.GenerateApplicationPlan(context.TODO(), DeploymentPlanOptions{
 		Environment:      "int",

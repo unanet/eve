@@ -21,19 +21,28 @@ const (
 )
 
 type Config struct {
-	ArtifactoryApiKey  string        `split_words:"true" required:"true"`
-	ArtifactoryBaseUrl string        `split_words:"true" required:"true"`
-	ArtifactoryTimeout time.Duration `split_words:"true" default:"20s"`
+	ArtifactoryApiKey      string        `split_words:"true" required:"true"`
+	ArtifactoryApiKeyWrite string        `split_words:"true" required:"true"`
+	ArtifactoryBaseUrl     string        `split_words:"true" required:"true"`
+	ArtifactoryTimeout     time.Duration `split_words:"true" default:"20s"`
 }
 
 type Client struct {
 	sling *sling.Sling
 }
 
-func NewClient(config Config) *Client {
+func NewClient(config Config, write bool) *Client {
 	var httpClient = &http.Client{
 		Timeout:   config.ArtifactoryTimeout,
 		Transport: ehttp.LoggingTransport,
+	}
+
+	accessKey := ""
+
+	if write == true {
+		accessKey = config.ArtifactoryApiKeyWrite
+	} else {
+		accessKey = config.ArtifactoryApiKey
 	}
 
 	if !strings.HasSuffix(config.ArtifactoryBaseUrl, "/") {
@@ -41,7 +50,7 @@ func NewClient(config Config) *Client {
 	}
 
 	sling := sling.New().Base(config.ArtifactoryBaseUrl).Client(httpClient).
-		Add("X-JFrog-Art-Api", config.ArtifactoryApiKey).
+		Add("X-JFrog-Art-Api", accessKey).
 		Add("User-Agent", userAgent).
 		ResponseDecoder(json.NewJsonDecoder())
 	return &Client{sling: sling}
