@@ -29,6 +29,14 @@ func (mr MessagesResponse) Error() string {
 	return mr.ToString()
 }
 
+func (mr MessagesResponse) ToStrings() []string {
+	var msgs []string
+	for _, v := range mr.Messages {
+		msgs = append(msgs, v.Message)
+	}
+	return msgs
+}
+
 type MoveRequest struct {
 	RepoKey       string `json:"repoKey"`
 	Path          string `json:"path"`

@@ -45,38 +45,38 @@ func version(version string) string {
 	return version
 }
 
-func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (string, error) {
+func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) ([]string, error) {
 	if release.FromFeed == release.ToFeed {
-		return "", errors.BadRequest(fmt.Sprintf("source feed: %s and destination feed: %s cannot be equal", release.FromFeed, release.ToFeed))
+		return nil, errors.BadRequest(fmt.Sprintf("source feed: %s and destination feed: %s cannot be equal", release.FromFeed, release.ToFeed))
 	}
 
 	if strings.ToLower(release.FromFeed) == "int" && strings.ToLower(release.ToFeed) == "qa" {
-		return "", errors.BadRequest("int and qa share the same feed so nothing to promote")
+		return nil, errors.BadRequest("int and qa share the same feed so nothing to promote")
 	}
 
 	artifact, err := svc.repo.ArtifactByName(ctx, release.Artifact)
 	if err != nil {
-		return "", service.CheckForNotFoundError(err)
+		return nil, service.CheckForNotFoundError(err)
 	}
 
 	fromFeed, err := svc.repo.FeedByAliasAndType(ctx, release.FromFeed, artifact.FeedType)
 	if err != nil {
-		return "", service.CheckForNotFoundError(err)
+		return nil, service.CheckForNotFoundError(err)
 	}
 
 	artifactVersion, err := svc.artifactoryClient.GetLatestVersion(ctx, fromFeed.Name, path(artifact.ProviderGroup, artifact.Name), version(release.Version))
 	if err != nil {
 		log.Logger.Debug("get latest version err", zap.Error(err))
 		if _, ok := err.(artifactory.NotFoundError); ok {
-			return "", errors.NotFound(fmt.Sprintf("artifact not found in artifactory: %s/%s/%s:%s", fromFeed.Name, path(artifact.ProviderGroup, artifact.Name), artifact.Name, version(release.Version)))
+			return nil, errors.NotFound(fmt.Sprintf("artifact not found in artifactory: %s/%s/%s:%s", fromFeed.Name, path(artifact.ProviderGroup, artifact.Name), artifact.Name, version(release.Version)))
 		}
-		return "", err
+		return nil, err
 	}
 
 	toFeed, err := svc.toFeed(ctx, release, artifact, fromFeed)
 	if err != nil {
 		log.Logger.Debug("toFeed err", zap.Error(err))
-		return "", errors.Wrap(err)
+		return nil, errors.Wrap(err)
 	}
 
 	fromPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, artifactVersion)
@@ -85,11 +85,11 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (string
 	resp, err := svc.artifactoryClient.MoveArtifact(ctx, fmt.Sprintf("%s-local", fromFeed.Name), fromPath, fmt.Sprintf("%s-local", toFeed.Name), toPath, false)
 	if err != nil {
 		log.Logger.Debug("MoveArtifact err", zap.Error(err))
-		return "", errors.Wrap(err)
+		return nil, errors.Wrap(err)
 	}
 
 	log.Logger.Debug("move artifact message", zap.Any("resp", resp))
-	return resp.ToString(), nil
+	return resp.ToStrings(), nil
 }
 
 func (svc *ReleaseSvc) toFeed(ctx context.Context, release eve.Release, artifact *data.Artifact, fromFeed *data.Feed) (*data.Feed, error) {
