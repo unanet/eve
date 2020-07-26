@@ -72,7 +72,7 @@ func (r *Repo) UpdateEnvironment(ctx context.Context, environment *Environment) 
 	environment.UpdatedAt.Time = time.Now().UTC()
 	environment.UpdatedAt.Valid = true
 	result, err := r.db.ExecContext(ctx, `
-		update namespace set 
+		update environment set 
 			metadata = $1,
 			description = $2,
 			updated_at = $3

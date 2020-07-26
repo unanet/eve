@@ -11,6 +11,7 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service/crud"
 	"gitlab.unanet.io/devops/eve/internal/service/deployments"
+	"gitlab.unanet.io/devops/eve/internal/service/releases"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/mux"
@@ -65,8 +66,9 @@ func main() {
 	artifactoryClient := artifactory.NewClient(config.ArtifactoryConfig)
 	deploymentPlanGenerator := deployments.NewPlanGenerator(repo, artifactoryClient, apiQueue)
 	crudManager := crud.NewManager(repo)
+	releaseSvc := releases.NewReleaseSvc(repo, artifactoryClient)
 
-	controllers, err := api.InitializeControllers(deploymentPlanGenerator, crudManager)
+	controllers, err := api.InitializeControllers(deploymentPlanGenerator, crudManager, releaseSvc)
 	if err != nil {
 		log.Logger.Panic("Unable to Initialize the Controllers")
 	}

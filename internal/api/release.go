@@ -6,19 +6,23 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
+	"gitlab.unanet.io/devops/eve/internal/service/releases"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 type ReleaseController struct {
+	svc *releases.ReleaseSvc
 }
 
-func NewReleaseController() *ReleaseController {
-	return &ReleaseController{}
+func NewReleaseController(s *releases.ReleaseSvc) *ReleaseController {
+	return &ReleaseController{
+		svc: s,
+	}
 }
 
 func (c ReleaseController) Setup(r chi.Router) {
-	r.Post("/release", c.releaseArtifact)
+	r.Post("/promote", c.releaseArtifact)
 }
 
 func (c ReleaseController) releaseArtifact(w http.ResponseWriter, r *http.Request) {
@@ -27,4 +31,10 @@ func (c ReleaseController) releaseArtifact(w http.ResponseWriter, r *http.Reques
 		render.Respond(w, r, err)
 		return
 	}
+	err := c.svc.PromoteRelease(r.Context(), release)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+	render.Respond(w, r, "success")
 }

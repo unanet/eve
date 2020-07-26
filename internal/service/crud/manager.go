@@ -26,6 +26,12 @@ type Repo interface {
 	UpdateService(ctx context.Context, service *data.Service) error
 	UpdateServiceMetadata(ctx context.Context, serviceID int, metadata map[string]interface{}) error
 	DeleteServiceMetadataKey(ctx context.Context, serviceID int, key string) error
+
+	FeedByAliasAndType(ctx context.Context, alias, feedType string) (*data.Feed, error)
+	NextFeedByPromotionOrderType(ctx context.Context, promotionOrder int, feedType string) (*data.Feed, error)
+	PreviousFeedByPromotionOrderType(ctx context.Context, promotionOrder int, feedType string) (*data.Feed, error)
+
+	ArtifactByName(ctx context.Context, name string) (*data.Artifact, error)
 }
 
 func NewManager(r Repo) *Manager {
