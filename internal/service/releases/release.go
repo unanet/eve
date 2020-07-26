@@ -83,7 +83,7 @@ func (svc *ReleaseSvc) PromoteRelease(ctx context.Context, release eve.Release) 
 	fromPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, artifactVersion)
 	toPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, artifactVersion)
 
-	resp, err := svc.artifactoryClient.MoveArtifact(ctx, fromFeed.Name, fromPath, toFeed.Name, toPath, false)
+	resp, err := svc.artifactoryClient.MoveArtifact(ctx, fmt.Sprintf("%s-local", fromFeed.Name), fromPath, fmt.Sprintf("%s-local", toFeed.Name), toPath, false)
 	if err != nil {
 		log.Logger.Debug("MoveArtifact err", zap.Error(err))
 		return errors.Wrap(err)
