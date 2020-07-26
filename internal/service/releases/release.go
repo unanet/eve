@@ -67,14 +67,16 @@ func (svc *ReleaseSvc) PromoteRelease(ctx context.Context, release eve.Release) 
 
 	artifactVersion, err := svc.artifactoryClient.GetLatestVersion(ctx, fromFeed.Name, path(artifact.ProviderGroup, artifact.Name), version(release.Version))
 	if err != nil {
+		log.Logger.Debug("get latest version err", zap.Error(err))
 		if _, ok := err.(artifactory.NotFoundError); ok {
 			return errors.NotFound(fmt.Sprintf("artifact not found in artifactory: %s/%s/%s:%s", fromFeed.Name, path(artifact.ProviderGroup, artifact.Name), artifact.Name, version(release.Version)))
 		}
-		return errors.Wrap(err)
+		return err
 	}
 
 	toFeed, err := svc.toFeed(ctx, release, artifact, fromFeed)
 	if err != nil {
+		log.Logger.Debug("toFeed err", zap.Error(err))
 		return errors.Wrap(err)
 	}
 
@@ -83,6 +85,7 @@ func (svc *ReleaseSvc) PromoteRelease(ctx context.Context, release eve.Release) 
 
 	resp, err := svc.artifactoryClient.MoveArtifact(ctx, fromFeed.Name, fromPath, toFeed.Name, toPath, false)
 	if err != nil {
+		log.Logger.Debug("MoveArtifact err", zap.Error(err))
 		return errors.Wrap(err)
 	}
 
