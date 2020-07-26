@@ -1,9 +1,5 @@
 package artifactory
 
-import (
-	"fmt"
-)
-
 type VersionResponse struct {
 	Version string `json:"version"`
 }
@@ -20,7 +16,7 @@ type Message struct {
 func (mr MessagesResponse) ToString() string {
 	msg := ""
 	for _, v := range mr.Messages {
-		msg = msg + fmt.Sprintf("LEVEL: %s | MESSAGE: %s", v.Level, v.Message)
+		msg = msg + v.Message
 	}
 	return msg
 }

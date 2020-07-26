@@ -25,16 +25,24 @@ func (c ReleaseController) Setup(r chi.Router) {
 	r.Post("/release", c.release)
 }
 
+type success struct {
+	Code int `json:"code"`
+}
+
 func (c ReleaseController) release(w http.ResponseWriter, r *http.Request) {
 	var release eve.Release
 	if err := json.ParseBody(r, &release); err != nil {
 		render.Respond(w, r, err)
 		return
 	}
-	msgs, err := c.svc.Release(r.Context(), release)
+	msg, err := c.svc.Release(r.Context(), release)
 	if err != nil {
 		render.Respond(w, r, err)
 		return
 	}
-	render.Respond(w, r, msgs)
+
+	render.Respond(w, r, render.M{
+		"message": msg,
+		"code":    http.StatusOK,
+	})
 }
