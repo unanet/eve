@@ -82,18 +82,19 @@ func (c *Client) MoveArtifact(ctx context.Context, srcRepo, srcPath, destRepo, d
 		return nil, err
 	}
 	r.URL.RawQuery = fmt.Sprintf("to=/%s/%s&dry=%d", destRepo, destPath, Bool2int(dryRun))
+	log.Logger.Debug("move artifact request obj", zap.Any("req", r))
 	resp, err := c.sling.Do(r.WithContext(ctx), &success, &failure)
 	if err != nil {
 		log.Logger.Debug("move artifact client req do", zap.Error(err))
 		return nil, err
 	}
 
-	log.Logger.Debug("move artifact client req status", zap.Any("resp", resp))
+	log.Logger.Debug("move artifact client req status", zap.Any("Status", resp.Status), zap.Any("StatusCode", resp.StatusCode))
 
 	if http.StatusOK == resp.StatusCode {
 		return &success, nil
 	} else {
-		log.Logger.Debug("move artifact client req failure", zap.Error(err), zap.Any("failure", failure))
+		log.Logger.Debug("move artifact client req failure", zap.Any("failure", failure))
 		return nil, failure
 	}
 }
