@@ -22,34 +22,19 @@ func NewReleaseController(s *releases.ReleaseSvc) *ReleaseController {
 }
 
 func (c ReleaseController) Setup(r chi.Router) {
-	r.Post("/promote", c.promoteArtifact)
-	r.Post("/demote", c.demoteArtifact)
+	r.Post("/release", c.release)
 }
 
-func (c ReleaseController) promoteArtifact(w http.ResponseWriter, r *http.Request) {
+func (c ReleaseController) release(w http.ResponseWriter, r *http.Request) {
 	var release eve.Release
 	if err := json.ParseBody(r, &release); err != nil {
 		render.Respond(w, r, err)
 		return
 	}
-	err := c.svc.PromoteRelease(r.Context(), release)
+	msg, err := c.svc.Release(r.Context(), release)
 	if err != nil {
 		render.Respond(w, r, err)
 		return
 	}
-	render.Respond(w, r, "success")
-}
-
-func (c ReleaseController) demoteArtifact(w http.ResponseWriter, r *http.Request) {
-	var release eve.Release
-	if err := json.ParseBody(r, &release); err != nil {
-		render.Respond(w, r, err)
-		return
-	}
-	err := c.svc.DemoteRelease(r.Context(), release)
-	if err != nil {
-		render.Respond(w, r, err)
-		return
-	}
-	render.Respond(w, r, "success")
+	render.Respond(w, r, msg)
 }

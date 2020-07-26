@@ -82,27 +82,10 @@ func (c *Client) GetLatestVersion(ctx context.Context, repository string, path s
 	}
 }
 
-type failRespMsg struct {
-	Level   string `json:"level"`
-	Message string `json:"message"`
-}
-
-type failResp struct {
-	Messages []failRespMsg `json:"messages"`
-}
-
-func (f failResp) Error() string {
-	msg := ""
-	for _, s := range f.Messages {
-		msg = msg + s.Level + ":" + s.Message + "|"
-	}
-	return msg
-}
-
 func (c *Client) MoveArtifact(ctx context.Context, srcRepo, srcPath, destRepo, destPath string, dryRun bool) (*MessagesResponse, error) {
 	var success MessagesResponse
+	var failure MessagesResponse
 
-	var failure failResp
 	r, err := c.sling.New().Post(fmt.Sprintf("move/%s/%s", srcRepo, srcPath)).Request()
 	if err != nil {
 		log.Logger.Debug("move artifact client req", zap.Error(err))

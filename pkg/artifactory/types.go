@@ -1,5 +1,9 @@
 package artifactory
 
+import (
+	"fmt"
+)
+
 type VersionResponse struct {
 	Version string `json:"version"`
 }
@@ -11,6 +15,18 @@ type MessagesResponse struct {
 type Message struct {
 	Level   string `json:"level"`
 	Message string `json:"message"`
+}
+
+func (mr MessagesResponse) ToString() string {
+	msg := ""
+	for _, v := range mr.Messages {
+		msg = msg + fmt.Sprintf("LEVEL: %s | MESSAGE: %s", v.Level, v.Message)
+	}
+	return msg
+}
+
+func (mr MessagesResponse) Error() string {
+	return mr.ToString()
 }
 
 type MoveRequest struct {
