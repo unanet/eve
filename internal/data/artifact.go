@@ -2,24 +2,25 @@ package data
 
 import (
 	"context"
+	"database/sql"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 type Artifact struct {
-	ID              int       `db:"id"`
-	Name            string    `db:"name"`
-	FeedType        string    `db:"feed_type"`
-	ProviderGroup   string    `db:"provider_group"`
-	FunctionPointer string    `db:"function_pointer"`
-	Metadata        json.Text `db:"metadata"`
-	ImageTag        string    `db:"image_tag"`
-	ServicePort     int       `db:"service_port"`
-	MetricsPort     int       `db:"metrics_port"`
-	ServiceAccount  string    `db:"service_account"`
-	RunAs           int       `db:"run_as"`
-	LivelinessProbe json.Text `db:"liveliness_probe"`
+	ID              int            `db:"id"`
+	Name            string         `db:"name"`
+	FeedType        string         `db:"feed_type"`
+	ProviderGroup   string         `db:"provider_group"`
+	FunctionPointer sql.NullString `db:"function_pointer"`
+	Metadata        json.Text      `db:"metadata"`
+	ImageTag        string         `db:"image_tag"`
+	ServicePort     int            `db:"service_port"`
+	MetricsPort     int            `db:"metrics_port"`
+	ServiceAccount  string         `db:"service_account"`
+	RunAs           int            `db:"run_as"`
+	LivelinessProbe json.Text      `db:"liveliness_probe"`
 }
 
 type Artifacts []Artifact
