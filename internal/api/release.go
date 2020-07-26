@@ -25,10 +25,6 @@ func (c ReleaseController) Setup(r chi.Router) {
 	r.Post("/release", c.release)
 }
 
-type success struct {
-	Code int `json:"code"`
-}
-
 func (c ReleaseController) release(w http.ResponseWriter, r *http.Request) {
 	var release eve.Release
 	if err := json.ParseBody(r, &release); err != nil {
