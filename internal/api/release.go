@@ -31,14 +31,11 @@ func (c ReleaseController) release(w http.ResponseWriter, r *http.Request) {
 		render.Respond(w, r, err)
 		return
 	}
-	msg, err := c.svc.Release(r.Context(), release)
+	resp, err := c.svc.Release(r.Context(), release)
 	if err != nil {
 		render.Respond(w, r, err)
 		return
 	}
 
-	render.Respond(w, r, render.M{
-		"message": msg,
-		"code":    http.StatusOK,
-	})
+	render.Respond(w, r, resp)
 }

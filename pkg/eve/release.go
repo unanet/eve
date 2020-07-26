@@ -11,6 +11,7 @@ type Release struct {
 	Version  string `json:"version"`
 	FromFeed string `json:"from_feed"`
 	ToFeed   string `json:"to_feed"`
+	Message  string `json:"message,omitempty"`
 }
 
 func (r Release) ValidateWithContext(ctx context.Context) error {
