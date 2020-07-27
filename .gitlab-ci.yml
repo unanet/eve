@@ -12,6 +12,7 @@ Dist:
     - linux
   only:
     - master
+    - dev
 
 Test:
   stage: test
@@ -30,6 +31,7 @@ Deploy:
     - linux
   only:
     - master
+    - dev
 
 Sonar Scan:
   stage: scan
@@ -39,3 +41,4 @@ Sonar Scan:
     - linux
   only:
     - master
+    - dev
