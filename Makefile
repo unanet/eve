@@ -70,6 +70,8 @@ dist: build
 	curl --fail -H "X-JFrog-Art-Api:${JFROG_API_KEY}" \
 		-X PUT \
 		https://unanet.jfrog.io/unanet/api/storage/docker-int-local/ops/eve-api-v1/${PATCH_VERSION}\?properties=version=${VERSION}%7Cgitlab-build-properties.project-id=${CI_PROJECT_ID}%7Cgitlab-build-properties.git-sha=${CI_COMMIT_SHORT_SHA}%7Cgitlab-build-properties.git-branch=${CI_COMMIT_BRANCH}
+	curl --fail -H "X-JFrog-Art-Api:${JFROG_API_KEY}" \
+			-T eve-api-${PATCH_VERSION}.tgz "https://unanet.jfrog.io/artifactory/helm-local/eve-api/eve-api-${PATCH_VERSION}.tgz"
 
 scan:
 	$(docker-scanner-exec)
