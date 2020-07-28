@@ -43,6 +43,12 @@ docker-exec = docker run --rm \
 	-w /src \
 	${BUILD_IMAGE}
 
+
+docker-helm-exec = docker run --rm --user ${DOCKER_UID}:${DOCKER_UID} \
+	-v ${CUR_DIR}:/src \
+	-w /src \
+	alpine/helm	
+
 .PHONY: build dist test
 
 build:
@@ -52,6 +58,7 @@ build:
 	$(docker-exec) go build -ldflags="-X 'gitlab.unanet.io/devops/eve/pkg/mux.Version=${VERSION}'" \
 		-o ./bin/eve-api ./cmd/eve-api/main.go
 	docker build . -t ${IMAGE_NAME}:${PATCH_VERSION} -t ${IMAGE_NAME}:${VERSION}
+	$(docker-helm-exec) package --version ${PATCH_VERSION} --app-version ${VERSION} ./.helm
 
 test:
 	docker pull ${BUILD_IMAGE}
