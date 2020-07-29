@@ -63,12 +63,11 @@ func main() {
 
 	repo := data.NewRepo(db)
 
-	artifactoryClient := artifactory.NewClient(config.ArtifactoryConfig, false)
+	artifactoryClient := artifactory.NewClient(config.ArtifactoryConfig)
 	deploymentPlanGenerator := deployments.NewPlanGenerator(repo, artifactoryClient, apiQueue)
 	crudManager := crud.NewManager(repo)
 
-	artifactoryClientWrite := artifactory.NewClient(config.ArtifactoryConfig, true)
-	releaseSvc := releases.NewReleaseSvc(repo, artifactoryClientWrite)
+	releaseSvc := releases.NewReleaseSvc(repo, artifactoryClient)
 
 	controllers, err := api.InitializeControllers(deploymentPlanGenerator, crudManager, releaseSvc)
 	if err != nil {
