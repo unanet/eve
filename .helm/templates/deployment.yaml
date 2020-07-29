@@ -34,9 +34,9 @@ spec:
             - name: EVE_API_Q_URL
               value: {{ .Values.eveApiQUrl }}
             - name: EVE_S3_BUCKET
-              value: {{ Values.eveS3Bucket }}
+              value: {{ .Values.eveS3Bucket }}
             - name: EVE_AWS_REGION
-              value: {{ Values.eveAWSRegion }}
+              value: {{ .Values.eveAWSRegion }}
             - name: EVE_DB_HOST
               value: {{ .Values.eveDBHost }}
             - name: EVE_DB_NAME
