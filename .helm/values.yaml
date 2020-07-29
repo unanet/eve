@@ -12,5 +12,6 @@ eveDBUsername: ""
 eveGitlabAPIKey: ""
 eveArtifactoryBaseURL: "https://unanet.jfrog.io/unanet/api"
 eveGitlabBaseURL: "https://gitlab.unanet.io/api"
-eveVaultAddr: "https://vault.unanet.io"
-
+vaultAddr: "https://vault.unanet.io"
+vaultK8sMount: "kubernetes"
+vaultRole: "k8s-devops"

@@ -31,8 +31,6 @@ spec:
               value: {{ .Values.eveArtifactoryBaseURL }}
             - name: EVE_GITLAB_BASE_URL
               value: {{ .Values.eveGitlabBaseURL }}
-            - name: EVE_VAULT_ADDR
-              value: {{ .Values.eveVaultAddr }}
             - name: EVE_API_Q_URL
               value: {{ .Values.eveApiQUrl }}
             - name: EVE_S3_BUCKET
@@ -53,6 +51,12 @@ spec:
               value: {{ .Values.eveDBUsername }}
             - name: EVE_GITLAB_API_KEY
               value: {{ .Values.eveGitlabAPIKey }}
+            - name: VAULT_ROLE
+              value: {{ .Values.vaultRole }}
+            - name: VAULT_ADDR
+              value: {{ .Values.vaultAddr }}
+            - name: VAULT_K8S_MOUNT
+              value: {{ .Values.vaultK8sMount }}              
           ports:
             - containerPort: 3000
               name: api
