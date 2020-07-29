@@ -66,7 +66,7 @@ func (a *Api) sigHandler() {
 
 func (a *Api) gracefulShutdown() {
 	// Pause the Context for `ShutdownTimeoutSecs` config value
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(120)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300)*time.Second)
 	defer cancel()
 
 	// Turn off keepalive

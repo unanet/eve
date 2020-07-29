@@ -7,8 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const eveErrorMessage = "eve error"
-
 type cause interface {
 	Cause() error
 }
@@ -26,7 +24,7 @@ func Wrap(err error) error {
 	} else if _, ok := err.(cause); ok {
 		return err
 	} else {
-		return errors.Wrap(err, eveErrorMessage)
+		return errors.Wrap(err, err.Error())
 	}
 }
 
