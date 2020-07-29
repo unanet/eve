@@ -42,6 +42,20 @@ func version(version string) string {
 	return version
 }
 
+func evalArtifactImageTag(a *data.Artifact, availableVersion string) string {
+	imageTag := a.ImageTag
+	versionSplit := strings.Split(availableVersion, ".")
+	replacementMap := make(map[string]string)
+	replacementMap["$version"] = availableVersion
+	for i, x := range versionSplit {
+		replacementMap[fmt.Sprintf("$%d", i+1)] = x
+	}
+	for k, v := range replacementMap {
+		imageTag = strings.Replace(imageTag, k, v, -1)
+	}
+	return imageTag
+}
+
 func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Release, error) {
 	success := eve.Release{}
 	if release.FromFeed == release.ToFeed {
@@ -75,8 +89,8 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 		return success, errors.Wrap(err)
 	}
 
-	fromPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, artifactVersion)
-	toPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, artifactVersion)
+	fromPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, evalArtifactImageTag(artifact, artifactVersion))
+	toPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, evalArtifactImageTag(artifact, artifactVersion))
 
 	// HACK: Delete the destination first
 	// Artifactory fails when copy/move an artifact to a location that already exists
