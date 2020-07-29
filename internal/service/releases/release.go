@@ -78,6 +78,10 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 	fromPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, artifactVersion)
 	toPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, artifactVersion)
 
+	// HACK: Delete the destination first
+	// Artifactory fails when copy/move an artifact to a location that already exists
+	_, _ = svc.artifactoryClient.DeleteArtifact(ctx, fmt.Sprintf("%s-local", toFeed.Name), toPath)
+
 	resp, err := svc.artifactoryClient.MoveArtifact(ctx, fmt.Sprintf("%s-local", fromFeed.Name), fromPath, fmt.Sprintf("%s-local", toFeed.Name), toPath, false)
 	if err != nil {
 		return success, errors.Wrap(err)
