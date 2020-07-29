@@ -81,7 +81,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		   s.artifact_id,
 		   a.name as artifact_name, 
 		   s.deployed_version,
-		   jsonb_merge(e.metadata, jsonb_merge(n.metadata, jsonb_merge(a.metadata, s.metadata))) as metadata,
+		   jsonb_merge(e.metadata, jsonb_merge(a.metadata, jsonb_merge(n.metadata, s.metadata))) as metadata,
 		   COALESCE(s.override_version, n.requested_version) as requested_version,
 		   s.created_at,
 		   s.updated_at
