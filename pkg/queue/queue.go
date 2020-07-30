@@ -113,7 +113,7 @@ func (q *Q) Message(ctx context.Context, m *M) error {
 	return nil
 }
 
-func (q *Q) Receive(ctx context.Context) ([]*M, error) {
+func (q *Q) Receive() ([]*M, error) {
 	awsM := sqs.ReceiveMessageInput{
 		AttributeNames: []*string{
 			aws.String(sqs.MessageSystemAttributeNameMessageGroupId),
@@ -126,7 +126,7 @@ func (q *Q) Receive(ctx context.Context) ([]*M, error) {
 		VisibilityTimeout:   aws.Int64(q.c.VisibilityTimeout),
 		WaitTimeSeconds:     aws.Int64(q.c.WaitTimeSecond),
 	}
-	result, err := q.aws.ReceiveMessageWithContext(ctx, &awsM)
+	result, err := q.aws.ReceiveMessage(&awsM)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "RequestCanceled") {
 			return nil, nil

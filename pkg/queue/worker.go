@@ -68,7 +68,7 @@ func (worker *Worker) Start(h Handler) {
 			close(worker.done)
 			return
 		default:
-			m, err := worker.q.Receive(worker.ctx)
+			m, err := worker.q.Receive()
 			if err != nil {
 				worker.log.Panic("Error receiving message from queue", zap.Error(err))
 			}
