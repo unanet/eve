@@ -20,10 +20,6 @@ const (
 	userAgent = "eve-artifactory"
 )
 
-var (
-	unanetBaseURL = ""
-)
-
 type Config struct {
 	ArtifactoryApiKey  string        `split_words:"true" required:"true"`
 	ArtifactoryBaseUrl string        `split_words:"true" required:"true"`
@@ -32,9 +28,11 @@ type Config struct {
 
 type Client struct {
 	sling *sling.Sling
+	cfg   Config
 }
 
 func NewClient(config Config) *Client {
+
 	var httpClient = &http.Client{
 		Timeout:   config.ArtifactoryTimeout,
 		Transport: ehttp.LoggingTransport,
@@ -44,15 +42,11 @@ func NewClient(config Config) *Client {
 		config.ArtifactoryBaseUrl += "/"
 	}
 
-	// HACK: The artifactory API for delete only works on /unanet not /unanet/api
-	// trimming off the api/ here for the DELETE command below
-	unanetBaseURL = strings.Replace(config.ArtifactoryBaseUrl, "api/", "", -1)
-
 	sling := sling.New().Base(config.ArtifactoryBaseUrl).Client(httpClient).
 		Add("X-JFrog-Art-Api", config.ArtifactoryApiKey).
 		Add("User-Agent", userAgent).
 		ResponseDecoder(json.NewJsonDecoder())
-	return &Client{sling: sling}
+	return &Client{sling: sling, cfg: config}
 }
 
 func (c *Client) GetLatestVersion(ctx context.Context, repository string, path string, version string) (string, error) {
@@ -102,17 +96,24 @@ func (c *Client) MoveArtifact(ctx context.Context, srcRepo, srcPath, destRepo, d
 
 	if http.StatusOK == resp.StatusCode {
 		return &success, nil
-	} else {
-		log.Logger.Debug("move artifact client req failure", zap.Any("failure", failure))
-		return nil, failure
 	}
+	log.Logger.Debug("move artifact client req failure", zap.Any("failure", failure))
+	return nil, failure
 }
 
 func (c *Client) DeleteArtifact(ctx context.Context, repo, path string) (*MessagesResponse, error) {
 	var success MessagesResponse
 	var failure MessagesResponse
 
-	r, err := c.sling.Base(unanetBaseURL).New().Delete(fmt.Sprintf("%s/%s", repo, path)).Request()
+	artifactoryBaseURL := c.cfg.ArtifactoryBaseUrl
+
+	// HACK: The artifactory API for delete only works on /unanet not /unanet/api
+	// trimming off the api/ here for the DELETE command below
+	artifactoryBaseURL = strings.Replace(artifactoryBaseURL, "api/", "", -1)
+
+	tmpClient := c.sling.New()
+
+	r, err := tmpClient.Base(artifactoryBaseURL).Delete(fmt.Sprintf("%s/%s", repo, path)).Request()
 	if err != nil {
 		log.Logger.Debug("delete artifact client req", zap.Error(err))
 		return nil, err
@@ -128,10 +129,10 @@ func (c *Client) DeleteArtifact(ctx context.Context, repo, path string) (*Messag
 
 	if http.StatusNoContent == resp.StatusCode {
 		return &success, nil
-	} else {
-		log.Logger.Debug("delete artifact client req failure", zap.Any("failure", failure))
-		return nil, failure
 	}
+	log.Logger.Debug("delete artifact client req failure", zap.Any("failure", failure))
+	return nil, failure
+
 }
 
 func (c *Client) CopyArtifact(ctx context.Context, srcRepo, srcPath, destRepo, destPath string, dryRun bool) (*MessagesResponse, error) {
@@ -149,9 +150,8 @@ func (c *Client) CopyArtifact(ctx context.Context, srcRepo, srcPath, destRepo, d
 
 	if http.StatusOK == resp.StatusCode {
 		return &success, nil
-	} else {
-		return nil, failure
 	}
+	return nil, failure
 }
 
 // GetArtifactProperties for an Artifact.
