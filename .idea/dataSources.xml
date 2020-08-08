@@ -32,5 +32,11 @@
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://devops-prod-db.unanet.io:5432/eve_dev</jdbc-url>
     </data-source>
+    <data-source source="LOCAL" name="dev-eve" uuid="19db88f7-77c1-423a-acf3-f6ba854c404b">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://devops-prod-db.unanet.io:5432/eve_dev</jdbc-url>
+    </data-source>
   </component>
 </project>
