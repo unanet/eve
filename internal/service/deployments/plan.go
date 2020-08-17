@@ -187,7 +187,12 @@ func (d *PlanGenerator) QueuePlan(ctx context.Context, options *PlanOptions) err
 		return errors.Wrap(err)
 	}
 
-	err = d.validateArtifactDefinitions(ctx, env, options, namespaceRequests)
+	// Business Rule: CANNOT explicitly deploy artifacts to more than 1 Namespace
+	if artifactsSupplied && len(namespaceRequests) > 1 {
+		return errors.BadRequestf("cannot explicitly deploy artifacts: %v to more than one namespace: %v", options.Artifacts, options.NamespaceAliases)
+	}
+
+	err = d.validateArtifactDefinitions(ctx, options, namespaceRequests)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -247,18 +252,25 @@ func (d *PlanGenerator) QueuePlan(ctx context.Context, options *PlanOptions) err
 	return nil
 }
 
-func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *data.Environment, options *PlanOptions, ns eve.NamespaceRequests) error {
+func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, options *PlanOptions, nsr eve.NamespaceRequests) error {
 	// If services were supplied, we check those against the database to make sure they are valid and pull
 	// required info needed to lookup in Artifactory
 	// It's important to note here that we're matching on the service/database name that's configured in the database which can be different than the artifact name.
-	if len(options.Artifacts) > 0 {
+
+	if len(options.Artifacts) > 0 && len(nsr) > 1 {
+		return errors.BadRequestf("cannot explicitly deploy artifacts: %v to more than one namespace: %v", options.Artifacts, nsr)
+	}
+
+	// Explicitly deploy these artifacts to this ONE namespace
+	if len(options.Artifacts) > 0 && len(nsr) == 1 {
+		ns := nsr[0]
 		for _, x := range options.Artifacts {
 			var ra *data.RequestArtifact
 			var err error
 			if options.Type == DeploymentPlanTypeApplication {
-				ra, err = d.repo.RequestServiceArtifactByEnvironment(ctx, x.Name, env.ID)
+				ra, err = d.repo.RequestServiceArtifactByEnvironment(ctx, x.Name, ns.ID)
 			} else {
-				ra, err = d.repo.RequestDatabaseArtifactByEnvironment(ctx, x.Name, env.ID)
+				ra, err = d.repo.RequestDatabaseArtifactByEnvironment(ctx, x.Name, ns.ID)
 			}
 			if err != nil {
 				if _, ok := err.(data.NotFoundError); ok {
@@ -272,15 +284,18 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 			x.ArtifactoryPath = ra.Path()
 			x.FunctionPointer = ra.FunctionPointer.String
 			x.FeedType = ra.FeedType
+			if len(x.RequestedVersion) == 0 {
+				x.RequestedVersion = ra.RequestedVersion
+			}
 		}
 	} else {
 		// If no services were supplied, we get all services for the supplied namespaces
 		var dataArtifacts data.RequestArtifacts
 		var err error
 		if options.Type == DeploymentPlanTypeApplication {
-			dataArtifacts, err = d.repo.ServiceArtifacts(ctx, ns.ToIDs())
+			dataArtifacts, err = d.repo.ServiceArtifacts(ctx, nsr.ToIDs())
 		} else {
-			dataArtifacts, err = d.repo.DatabaseInstanceArtifacts(ctx, ns.ToIDs())
+			dataArtifacts, err = d.repo.DatabaseInstanceArtifacts(ctx, nsr.ToIDs())
 		}
 		if err != nil {
 			return errors.Wrap(err)
