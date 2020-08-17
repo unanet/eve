@@ -11,7 +11,6 @@ Dist:
     - linux
   only:
     - master
-    - dev
 
 Test:
   stage: test

@@ -19,18 +19,11 @@
       <jdbc-driver>com.microsoft.sqlserver.jdbc.SQLServerDriver</jdbc-driver>
       <jdbc-url>jdbc:sqlserver://exago-db.app-nonprod.unanet.io:1433;database=analytics_int_current</jdbc-url>
     </data-source>
-    <data-source source="LOCAL" name="unanet-db.app-nonprod.unanet.io" uuid="490405b9-2976-483c-868a-ab18a4dd101b">
-      <driver-ref>oracle</driver-ref>
-      <synchronize>true</synchronize>
-      <auto-commit>false</auto-commit>
-      <jdbc-driver>oracle.jdbc.OracleDriver</jdbc-driver>
-      <jdbc-url>jdbc:oracle:thin:@unanet-db.app-nonprod.unanet.io:1521:UNANET</jdbc-url>
-    </data-source>
-    <data-source source="LOCAL" name="dev-eve" uuid="7b4b3b7a-d23d-4efd-86ed-d1369314adb0">
+    <data-source source="LOCAL" name="awsunadbcldtnt-rds.cluster-csltrkgf6gmh.us-east-2.rds.amazonaws.com" uuid="a273f31f-5ee8-4824-a9e7-64fc87b840b8">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://devops-prod-db.unanet.io:5432/eve_dev</jdbc-url>
+      <jdbc-url>jdbc:postgresql://awsunadbcldtnt-rds.cluster-csltrkgf6gmh.us-east-2.rds.amazonaws.com:5432/</jdbc-url>
     </data-source>
     <data-source source="LOCAL" name="dev-eve" uuid="19db88f7-77c1-423a-acf3-f6ba854c404b">
       <driver-ref>postgresql</driver-ref>
