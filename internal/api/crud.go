@@ -147,6 +147,7 @@ func (s CrudController) updateService(w http.ResponseWriter, r *http.Request) {
 	log.Logger.Warn("Update Service", zap.Any("service", service), zap.Any("service.metadata", service.Metadata))
 
 	if service.Metadata == nil {
+		service.Metadata = make(map[string]interface{})
 		log.Logger.Warn("Update Service Metedata nil", zap.Any("service", service), zap.Any("service.metadata", service.Metadata))
 	}
 
