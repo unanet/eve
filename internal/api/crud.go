@@ -146,6 +146,10 @@ func (s CrudController) updateService(w http.ResponseWriter, r *http.Request) {
 
 	log.Logger.Warn("Update Service", zap.Any("service", service), zap.Any("service.metadata", service.Metadata))
 
+	if service.Metadata == nil {
+		log.Logger.Warn("Update Service Metedata nil", zap.Any("service", service), zap.Any("service.metadata", service.Metadata))
+	}
+
 	service.ID = intID
 	rs, err := s.manager.UpdateService(r.Context(), &service)
 	if err != nil {
