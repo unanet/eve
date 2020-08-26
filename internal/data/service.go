@@ -6,11 +6,9 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/json"
-	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
 type DeployService struct {
@@ -232,7 +230,10 @@ func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) ([]Service, 
 func (r *Repo) UpdateService(ctx context.Context, service *Service) error {
 	service.UpdatedAt.Time = time.Now().UTC()
 	service.UpdatedAt.Valid = true
-	log.Logger.Warn("Update Service 3", zap.Any("service", service), zap.Any("service.metadata", service.Metadata))
+	if service.Metadata == nil {
+		service.Metadata = json.EmptyJSONText
+	}
+
 	result, err := r.db.ExecContext(ctx, `
 		update service set 
 		   	name = $1, 
