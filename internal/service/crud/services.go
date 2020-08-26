@@ -2,12 +2,16 @@ package crud
 
 import (
 	"context"
+
 	"strconv"
+
+	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/eve/pkg/json"
+	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
 func fromDataService(service data.Service) eve.Service {
@@ -99,6 +103,9 @@ func (m *Manager) Service(ctx context.Context, id string, namespace string) (*ev
 
 func (m *Manager) UpdateService(ctx context.Context, s *eve.Service) (*eve.Service, error) {
 	dService := toDataService(*s)
+
+	log.Logger.Warn("Update Service 2", zap.Any("service", s), zap.Any("service.metadata", s.Metadata))
+
 	err := m.repo.UpdateService(ctx, &dService)
 	if err != nil {
 		return nil, service.CheckForNotFoundError(err)

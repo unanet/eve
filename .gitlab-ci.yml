@@ -3,15 +3,6 @@ stages:
   - dist
   - scan
 
-Dist:
-  stage: dist
-  script:
-    - make dist
-  tags:
-    - linux
-  only:
-    - master
-
 Test:
   stage: test
   script:
@@ -21,6 +12,16 @@ Test:
   except:
     - tags
 
+Dist:
+  stage: dist
+  script:
+    - make dist
+  tags:
+    - linux
+  only:
+    - master
+    - dev
+
 Sonar Scan:
   stage: scan
   script:
@@ -29,3 +30,4 @@ Sonar Scan:
     - linux
   only:
     - master
+    - dev

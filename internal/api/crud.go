@@ -6,11 +6,13 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/internal/service/crud"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/eve/pkg/json"
+	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
 type CrudController struct {
@@ -141,6 +143,8 @@ func (s CrudController) updateService(w http.ResponseWriter, r *http.Request) {
 		render.Respond(w, r, err)
 		return
 	}
+
+	log.Logger.Warn("Update Service", zap.Any("service", service), zap.Any("service.metadata", service.Metadata))
 
 	service.ID = intID
 	rs, err := s.manager.UpdateService(r.Context(), &service)
