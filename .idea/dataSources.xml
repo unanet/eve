@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="production-eve" uuid="95c03abb-5c95-44dc-8ef8-24f73d9342ce">
-      <driver-ref>postgresql</driver-ref>
-      <synchronize>true</synchronize>
-      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://devops-prod-db.unanet.io:5432/eve</jdbc-url>
-    </data-source>
     <data-source source="LOCAL" name="unanet-aurora-db.app-nonprod.unanet.io" uuid="4e1a08ee-7a91-436f-a885-3eb9ac6310bd">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
@@ -25,11 +19,11 @@
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://awsunadbcldtnt-rds.cluster-csltrkgf6gmh.us-east-2.rds.amazonaws.com:5432/</jdbc-url>
     </data-source>
-    <data-source source="LOCAL" name="dev-eve" uuid="19db88f7-77c1-423a-acf3-f6ba854c404b">
+    <data-source source="LOCAL" name="eve" uuid="6f2e6c3b-c363-4574-bb2e-d5641d878743">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://devops-prod-db.unanet.io:5432/eve_dev</jdbc-url>
+      <jdbc-url>jdbc:postgresql://devops-prod-db.unanet.io:5432/eve</jdbc-url>
     </data-source>
   </component>
 </project>

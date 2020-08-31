@@ -27,6 +27,7 @@ type DeployService struct {
 	Count            int            `db:"count"`
 	Metadata         json.Text      `db:"metadata"`
 	LivelinessProbe  json.Text      `db:"liveliness_probe"`
+	ReadinessProbe   json.Text      `db:"readiness_probe"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
 }
@@ -71,6 +72,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		select s.id as service_id,
 		   a.service_port,
 		   a.liveliness_probe,
+		   a.readiness_probe,    
 		   a.image_tag,
 		   a.metrics_port,
 		   a.service_account,

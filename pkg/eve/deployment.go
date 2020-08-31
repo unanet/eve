@@ -90,6 +90,7 @@ type DeployService struct {
 	StickySessions  bool   `json:"sticky_sessions"`
 	Count           int    `json:"count"`
 	LivelinessProbe []byte `json:"liveliness_probe"`
+	ReadinessProbe  []byte `json:"readiness_probe"`
 }
 
 type DeployServices []*DeployService

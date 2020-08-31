@@ -61,6 +61,7 @@ func fromDataService(s data.DeployService) *eve.DeployService {
 		StickySessions:  s.StickySessions,
 		Count:           s.Count,
 		LivelinessProbe: s.LivelinessProbe,
+		ReadinessProbe:  s.ReadinessProbe,
 		DeployArtifact: &eve.DeployArtifact{
 			ArtifactID:       s.ArtifactID,
 			ArtifactName:     s.ArtifactName,

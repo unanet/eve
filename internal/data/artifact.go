@@ -21,6 +21,7 @@ type Artifact struct {
 	ServiceAccount  string         `db:"service_account"`
 	RunAs           int            `db:"run_as"`
 	LivelinessProbe json.Text      `db:"liveliness_probe"`
+	ReadinessProbe  json.Text      `db:"readiness_probe"`
 }
 
 type Artifacts []Artifact
