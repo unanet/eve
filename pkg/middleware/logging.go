@@ -9,7 +9,6 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/log"
 
 	"github.com/go-chi/chi/middleware"
-
 	"go.uber.org/zap"
 )
 
@@ -47,7 +46,7 @@ func (l *LogEntryConstructor) NewLogEntry(r *http.Request) middleware.LogEntry {
 	}
 
 	if reqID := GetReqID(r.Context()); reqID != "" {
-		logFields = append(logFields, zap.String("req_id", reqID), zap.String("user_agent", r.UserAgent()))
+		logFields = append(logFields, zap.String("req_id", reqID))
 		incomingRequestFields = append(incomingRequestFields, zap.String("req_id", reqID))
 	}
 
