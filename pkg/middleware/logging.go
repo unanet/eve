@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"gitlab.unanet.io/devops/eve/pkg/log"
@@ -23,10 +22,6 @@ type LogEntry struct {
 }
 
 func (l *LogEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{}) {
-	if strings.HasPrefix(strings.ToLower(header.Get("User-Agent")), KubeProbe) {
-		return
-	}
-
 	l.logger.Info("Outgoing HTTP Response",
 		zap.Int("status", status),
 		zap.Int("resp_bytes_length", bytes),
@@ -65,9 +60,7 @@ func (l *LogEntryConstructor) NewLogEntry(r *http.Request) middleware.LogEntry {
 		logger: l.logger.With(logFields...),
 	}
 
-	if !strings.HasPrefix(strings.ToLower(r.UserAgent()), KubeProbe) {
-		l.logger.With(incomingRequestFields...).Info("Incoming HTTP Request")
-	}
+	l.logger.With(incomingRequestFields...).Info("Incoming HTTP Request")
 
 	return entry
 }
