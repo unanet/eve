@@ -13,10 +13,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	KubeProbe = "kube-probe"
-)
-
 type LogEntry struct {
 	logger *zap.Logger
 }
@@ -46,13 +42,12 @@ func (l *LogEntryConstructor) NewLogEntry(r *http.Request) middleware.LogEntry {
 
 	incomingRequestFields := []zap.Field{
 		zap.String("remote_addr", r.RemoteAddr),
-		zap.String("user_agent", r.UserAgent()),
 		zap.String("uri", r.RequestURI),
 		zap.String("method", r.Method),
 	}
 
 	if reqID := GetReqID(r.Context()); reqID != "" {
-		logFields = append(logFields, zap.String("req_id", reqID))
+		logFields = append(logFields, zap.String("req_id", reqID), zap.String("user_agent", r.UserAgent()))
 		incomingRequestFields = append(incomingRequestFields, zap.String("req_id", reqID))
 	}
 
