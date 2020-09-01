@@ -12,8 +12,9 @@ import (
 
 func ParseBody(r *http.Request, model interface{}) error {
 	defer r.Body.Close()
-
-	if err := json.NewDecoder(r.Body).Decode(model); err != nil {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(model); err != nil {
 		if err.Error() == "EOF" {
 			return &errors.RestError{
 				Code:    400,
