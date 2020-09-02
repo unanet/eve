@@ -37,7 +37,9 @@ type LogEntryConstructor struct {
 }
 
 func (l *LogEntryConstructor) NewLogEntry(r *http.Request) middleware.LogEntry {
-	var logFields []zap.Field
+	logFields := []zap.Field{
+		zap.String("user_agent", r.UserAgent()),
+	}
 
 	incomingRequestFields := []zap.Field{
 		zap.String("remote_addr", r.RemoteAddr),
@@ -54,7 +56,7 @@ func (l *LogEntryConstructor) NewLogEntry(r *http.Request) middleware.LogEntry {
 		logger: l.logger.With(logFields...),
 	}
 
-	l.logger.With(incomingRequestFields...).Info("Incoming HTTP Request")
+	entry.logger.With(incomingRequestFields...).Info("Incoming HTTP Request")
 
 	return entry
 }
