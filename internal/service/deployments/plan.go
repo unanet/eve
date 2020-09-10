@@ -152,7 +152,7 @@ func (po PlanOptions) HasNamespaceAliases() bool {
 func (po PlanOptions) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, &po,
 		validation.Field(&po.Environment, validation.Required),
-		validation.Field(&po.Type, validation.Required, validation.In(DeploymentPlanTypeApplication, DeploymentPlanTypeMigration)),
+		validation.Field(&po.Type, validation.Required, validation.In(DeploymentPlanTypeApplication, DeploymentPlanTypeMigration, DeploymentPlanTypeJob)),
 		validation.Field(&po.User, validation.Required))
 }
 
