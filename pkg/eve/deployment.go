@@ -166,6 +166,24 @@ func (ds DeployMigrations) ToDeploy() DeployMigrations {
 	return list
 }
 
+type DeployJob struct {
+	*DeployArtifact
+	JobID   int    `json:"job_id"`
+	JobName string `json:"job_name"`
+}
+
+type DeployJobs []*DeployJob
+
+func (dj DeployJobs) ToDeploy() DeployJobs {
+	var list DeployJobs
+	for _, x := range dj {
+		if x.Deploy {
+			list = append(list, x)
+		}
+	}
+	return list
+}
+
 type NamespaceRequest struct {
 	ID          int    `json:"id"`
 	Alias       string `json:"alias"`
@@ -199,6 +217,7 @@ type NSDeploymentPlan struct {
 	EnvironmentAlias string               `json:"environment_alias"`
 	Services         DeployServices       `json:"services,omitempty"`
 	Migrations       DeployMigrations     `json:"migrations,omitempty"`
+	Jobs             DeployJobs           `json:"jobs,omitempty"`
 	Messages         []string             `json:"messages,omitempty"`
 	SchQueueUrl      string               `json:"-"`
 	CallbackURL      string               `json:"callback_url"`

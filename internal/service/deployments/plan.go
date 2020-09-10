@@ -26,8 +26,10 @@ type PlanRepo interface {
 	DatabaseInstanceArtifacts(ctx context.Context, namespaceIDs []int) (data.RequestArtifacts, error)
 	RequestServiceArtifactByEnvironment(ctx context.Context, artifactName string, environmentID int) (*data.RequestArtifact, error)
 	RequestDatabaseArtifactByEnvironment(ctx context.Context, databaseName string, environmentID int) (*data.RequestArtifact, error)
+	RequestJobArtifactByEnvironment(ctx context.Context, jobName string, environmentID int) (*data.RequestArtifact, error)
 	CreateDeployment(ctx context.Context, d *data.Deployment) error
 	UpdateDeploymentMessageID(ctx context.Context, id uuid.UUID, messageID string) error
+	JobArtifacts(ctx context.Context, namespaceIDs []int) (data.RequestArtifacts, error)
 }
 
 type StringList []string
@@ -50,6 +52,7 @@ type PlanType string
 const (
 	DeploymentPlanTypeApplication PlanType = "application"
 	DeploymentPlanTypeMigration   PlanType = "migration"
+	DeploymentPlanTypeJob         PlanType = "job"
 )
 
 type ArtifactDefinition struct {
@@ -257,8 +260,10 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 			var err error
 			if options.Type == DeploymentPlanTypeApplication {
 				ra, err = d.repo.RequestServiceArtifactByEnvironment(ctx, x.Name, env.ID)
-			} else {
+			} else if options.Type == DeploymentPlanTypeMigration {
 				ra, err = d.repo.RequestDatabaseArtifactByEnvironment(ctx, x.Name, env.ID)
+			} else {
+				ra, err = d.repo.RequestJobArtifactByEnvironment(ctx, x.Name, env.ID)
 			}
 			if err != nil {
 				if _, ok := err.(data.NotFoundError); ok {
@@ -279,8 +284,10 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 		var err error
 		if options.Type == DeploymentPlanTypeApplication {
 			dataArtifacts, err = d.repo.ServiceArtifacts(ctx, ns.ToIDs())
-		} else {
+		} else if options.Type == DeploymentPlanTypeMigration {
 			dataArtifacts, err = d.repo.DatabaseInstanceArtifacts(ctx, ns.ToIDs())
+		} else {
+			dataArtifacts, err = d.repo.JobArtifacts(ctx, ns.ToIDs())
 		}
 		if err != nil {
 			return errors.Wrap(err)

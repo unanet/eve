@@ -53,6 +53,35 @@ func (r *Repo) RequestServiceArtifactByEnvironment(ctx context.Context, serviceN
 	return &requestedArtifact, nil
 }
 
+func (r *Repo) RequestJobArtifactByEnvironment(ctx context.Context, jobName string, environmentID int) (*RequestArtifact, error) {
+	var requestedArtifact RequestArtifact
+
+	row := r.db.QueryRowxContext(ctx, `
+		select a.id as artifact_id,
+		       a.name as artifact_name,
+		       a.function_pointer as function_pointer,
+		       a.feed_type as feed_type,
+		       a.provider_group as provider_group,
+		       f.name as feed_name
+		from job as j
+		    left join artifact as a on j.artifact_id = a.id
+		    left join environment e on e.id = $1
+		    left join environment_feed_map efm on e.id = efm.environment_id
+			left join feed f on efm.feed_id = f.id and f.feed_type = a.feed_type
+		where f.name is not null and j.name = $2
+	`, environmentID, jobName)
+
+	err := row.StructScan(&requestedArtifact)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return nil, NotFoundErrorf("job with name: %s not found", jobName)
+		}
+		return nil, errors.Wrap(err)
+	}
+
+	return &requestedArtifact, nil
+}
+
 func (r *Repo) RequestDatabaseArtifactByEnvironment(ctx context.Context, databaseName string, environmentID int) (*RequestArtifact, error) {
 	var requestedArtifact RequestArtifact
 

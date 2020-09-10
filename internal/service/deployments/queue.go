@@ -35,6 +35,8 @@ type QueueRepo interface {
 	ClusterByID(ctx context.Context, id int) (*data.Cluster, error)
 	UpdateDeployedServiceVersion(ctx context.Context, id int, version string) error
 	UpdateDeployedMigrationVersion(ctx context.Context, id int, version string) error
+	UpdateDeployedJobVersion(ctx context.Context, id int, version string) error
+	DeployedJobsByNamespaceID(ctx context.Context, namespaceID int) (data.Jobs, error)
 }
 
 // API Queue Commands
@@ -106,6 +108,32 @@ func fromDataDatabaseInstances(d data.DatabaseInstances) eve.DeployMigrations {
 	var list eve.DeployMigrations
 	for _, x := range d {
 		list = append(list, fromDataDatabaseInstance(x))
+	}
+	return list
+}
+
+func fromDataJob(s data.Job) *eve.DeployJob {
+	return &eve.DeployJob{
+		JobID:   s.JobID,
+		JobName: s.JobName,
+		DeployArtifact: &eve.DeployArtifact{
+			ArtifactID:       s.ArtifactID,
+			ArtifactName:     s.ArtifactName,
+			RequestedVersion: s.RequestedVersion,
+			DeployedVersion:  s.DeployedVersion.String,
+			ServiceAccount:   s.ServiceAccount,
+			ImageTag:         s.ImageTag,
+			Metadata:         s.Metadata.AsMap(),
+			Result:           eve.DeployArtifactResultNoop,
+			RunAs:            s.RunAs,
+		},
+	}
+}
+
+func fromDataJobs(d data.Jobs) eve.DeployJobs {
+	var list eve.DeployJobs
+	for _, x := range d {
+		list = append(list, fromDataJob(x))
 	}
 	return list
 }
@@ -227,6 +255,29 @@ func (dq *Queue) createServicesDeployment(ctx context.Context, deploymentID uuid
 	return nSDeploymentPlan, nil
 }
 
+func (dq *Queue) createJobsDeployment(ctx context.Context, deploymentID uuid.UUID, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
+	nSDeploymentPlan, err := dq.setupNSDeploymentPlan(ctx, deploymentID, options)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	dataJobs, err := dq.repo.DeployedJobsByNamespaceID(ctx, options.NamespaceRequest.ID)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	jobs := fromDataJobs(dataJobs)
+	for _, x := range jobs {
+		dq.matchArtifact(x.DeployArtifact, x.JobName, options, nSDeploymentPlan.Message)
+	}
+	if options.ArtifactsSupplied {
+		unmatched := options.Artifacts.UnMatched()
+		for _, x := range unmatched {
+			nSDeploymentPlan.Message("unmatched job: %s:%s", x.Name, x.AvailableVersion)
+		}
+	}
+	nSDeploymentPlan.Jobs = jobs.ToDeploy()
+	return nSDeploymentPlan, nil
+}
+
 func (dq *Queue) createMigrationsDeployment(ctx context.Context, deploymentID uuid.UUID, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
 	nSDeploymentPlan, err := dq.setupNSDeploymentPlan(ctx, deploymentID, options)
 	if err != nil {
@@ -273,8 +324,10 @@ func (dq *Queue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 	var nsDeploymentPlan *eve.NSDeploymentPlan
 	if options.Type == DeploymentPlanTypeApplication {
 		nsDeploymentPlan, err = dq.createServicesDeployment(ctx, deployment.ID, options)
-	} else {
+	} else if options.Type == DeploymentPlanTypeMigration {
 		nsDeploymentPlan, err = dq.createMigrationsDeployment(ctx, deployment.ID, options)
+	} else {
+		nsDeploymentPlan, err = dq.createJobsDeployment(ctx, deployment.ID, options)
 	}
 	if err != nil {
 		return dq.rollbackError(ctx, m, err)
@@ -363,6 +416,17 @@ func (dq *Queue) updateDeployment(ctx context.Context, m *queue.M) error {
 		}
 
 		err = dq.repo.UpdateDeployedMigrationVersion(ctx, x.DatabaseID, x.AvailableVersion)
+		if err != nil {
+			return errors.Wrap(err)
+		}
+	}
+
+	for _, x := range plan.Jobs {
+		if x.Result != eve.DeployArtifactResultSuccess {
+			continue
+		}
+
+		err = dq.repo.UpdateDeployedJobVersion(ctx, x.JobID, x.AvailableVersion)
 		if err != nil {
 			return errors.Wrap(err)
 		}
