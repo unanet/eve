@@ -46,7 +46,7 @@ func GetDBWithTimeout(dsn string, timeout time.Duration) (*sqlx.DB, error) {
 	}
 }
 
-func MigrateDB(DSN, logLevel string, drop bool) error {
+func MigrateDB(DSN, logLevel string) error {
 	m, err := migrate.New(
 		"file://migrations",
 		DSN,
@@ -56,16 +56,10 @@ func MigrateDB(DSN, logLevel string, drop bool) error {
 	}
 
 	m.Log = NewMigrationLogger(strings.ToLower(logLevel) == "debug")
-	if drop {
-		err = m.Drop()
-		if err != nil {
-			return errors.Wrap(err)
-		}
-	} else {
-		err = m.Up()
-		if err != nil && err.Error() != "no change" {
-			return errors.Wrap(err)
-		}
+
+	err = m.Up()
+	if err != nil && err.Error() != "no change" {
+		return errors.Wrap(err)
 	}
 
 	return nil
