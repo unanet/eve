@@ -1,8 +1,6 @@
 package main
 
 import (
-	"flag"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"go.uber.org/zap"
@@ -20,10 +18,6 @@ import (
 )
 
 func main() {
-	serverFlag := flag.Bool("server", false, "start api server")
-	migrateFlag := flag.Bool("migrate-db", false, "run migration")
-	dropDBFlag := flag.Bool("drop-db", false, "drop db")
-	flag.Parse()
 	dbConfig := api.GetDBConfig()
 	// Try to get a DB Connection
 	db, err := data.GetDBWithTimeout(dbConfig.DbConnectionString(), dbConfig.DBConnectionTimeout)
@@ -31,18 +25,16 @@ func main() {
 		log.Logger.Panic("Failed to open Connection to DB.", zap.Error(err))
 	}
 
-	if *migrateFlag || *dropDBFlag {
-		err = data.MigrateDB(dbConfig.MigrationConnectionString(), dbConfig.LogLevel, *dropDBFlag)
+	flags := api.GetFlagsConfig()
+
+	if flags.MigrateFlag {
+		err = data.MigrateDB(dbConfig.MigrationConnectionString(), dbConfig.LogLevel)
 		if err != nil {
 			log.Logger.Panic("Failed to load the Database Migration Tool.", zap.Error(err))
 		}
 	}
 
-	if *dropDBFlag {
-		return
-	}
-
-	if !*serverFlag {
+	if !flags.ServerFlag {
 		return
 	}
 

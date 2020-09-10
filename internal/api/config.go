@@ -15,9 +15,10 @@ import (
 )
 
 var (
-	config   *Config
-	dbConfig *DBConfig
-	mutex    = sync.Mutex{}
+	flagConfig *FlagConfig
+	config     *Config
+	dbConfig   *DBConfig
+	mutex      = sync.Mutex{}
 )
 
 type LogConfig = log.Config
@@ -59,6 +60,11 @@ type Config struct {
 	AWSRegion              string        `split_words:"true" required:"true"`
 }
 
+type FlagConfig struct {
+	MigrateFlag bool `split_words:"true" default:"false"`
+	ServerFlag  bool `split_words:"true" default:"true"`
+}
+
 func GetDBConfig() DBConfig {
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -87,4 +93,19 @@ func GetConfig() Config {
 	}
 	config = &c
 	return *config
+}
+
+func GetFlagsConfig() FlagConfig {
+	mutex.Lock()
+	defer mutex.Unlock()
+	if flagConfig != nil {
+		return *flagConfig
+	}
+	c := FlagConfig{}
+	err := envconfig.Process("EVE", &c)
+	if err != nil {
+		log.Logger.Panic("Unable to Load Config", zap.Error(err))
+	}
+	flagConfig = &c
+	return *flagConfig
 }
