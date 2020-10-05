@@ -1,24 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="unanet-aurora-db.app-nonprod.unanet.io" uuid="4e1a08ee-7a91-436f-a885-3eb9ac6310bd">
-      <driver-ref>postgresql</driver-ref>
-      <synchronize>true</synchronize>
-      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://unanet-aurora-db.app-nonprod.unanet.io:5432/qa_current_tenant_cloud</jdbc-url>
-    </data-source>
-    <data-source source="LOCAL" name="exago-db.app-nonprod.unanet.io" uuid="0644c0fa-0b52-440f-baea-ea5aa2c63f5c">
-      <driver-ref>sqlserver.ms</driver-ref>
-      <synchronize>true</synchronize>
-      <jdbc-driver>com.microsoft.sqlserver.jdbc.SQLServerDriver</jdbc-driver>
-      <jdbc-url>jdbc:sqlserver://exago-db.app-nonprod.unanet.io:1433;database=analytics_int_current</jdbc-url>
-    </data-source>
-    <data-source source="LOCAL" name="awsunadbcldtnt-rds.cluster-csltrkgf6gmh.us-east-2.rds.amazonaws.com" uuid="a273f31f-5ee8-4824-a9e7-64fc87b840b8">
-      <driver-ref>postgresql</driver-ref>
-      <synchronize>true</synchronize>
-      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://awsunadbcldtnt-rds.cluster-csltrkgf6gmh.us-east-2.rds.amazonaws.com:5432/</jdbc-url>
-    </data-source>
     <data-source source="LOCAL" name="eve" uuid="6f2e6c3b-c363-4574-bb2e-d5641d878743">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
