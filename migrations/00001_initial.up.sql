@@ -70,7 +70,9 @@ CREATE TABLE artifact (
     run_as character varying (20) DEFAULT '1101' NOT NULL,
     metadata jsonb DEFAULT '{}'::json NOT NULL,
     liveliness_probe jsonb DEFAULT '{}'::json NOT NULL,
-    readiness_probe jsonb DEFAULT '{}'::json NOT NULL
+    readiness_probe jsonb DEFAULT '{}'::json NOT NULL,
+    resource_limits jsonb DEFAULT '{}'::json NOT NULL,
+    resource_requests jsonb DEFAULT '{}'::json NOT NULL
 );
 CREATE UNIQUE INDEX artifact_name_uindex ON artifact USING btree (name);
 ALTER TABLE ONLY artifact ADD CONSTRAINT artifact_pk PRIMARY KEY (id);
