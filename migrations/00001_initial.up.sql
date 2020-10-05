@@ -153,7 +153,9 @@ CREATE TABLE service (
     sticky_sessions bool DEFAULT false NOT NULL,
     count int DEFAULT 2 NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    resource_limits jsonb DEFAULT '{}'::json NOT NULL,
+    resource_requests jsonb DEFAULT '{}'::json NOT NULL
 );
 CREATE SEQUENCE service_id_seq
     AS integer
