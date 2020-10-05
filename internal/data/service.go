@@ -37,19 +37,21 @@ type DeployService struct {
 type DeployServices []DeployService
 
 type Service struct {
-	ID              int            `db:"id"`
-	NamespaceID     int            `db:"namespace_id"`
-	NamespaceName   string         `db:"namespace_name"`
-	ArtifactID      int            `db:"artifact_id"`
-	ArtifactName    string         `db:"artifact_name"`
-	OverrideVersion sql.NullString `db:"override_version"`
-	DeployedVersion sql.NullString `db:"deployed_version"`
-	Metadata        json.Text      `db:"metadata"`
-	CreatedAt       sql.NullTime   `db:"created_at"`
-	UpdatedAt       sql.NullTime   `db:"updated_at"`
-	Name            string         `db:"name"`
-	StickySessions  bool           `db:"sticky_sessions"`
-	Count           int            `db:"count"`
+	ID               int            `db:"id"`
+	NamespaceID      int            `db:"namespace_id"`
+	NamespaceName    string         `db:"namespace_name"`
+	ArtifactID       int            `db:"artifact_id"`
+	ArtifactName     string         `db:"artifact_name"`
+	OverrideVersion  sql.NullString `db:"override_version"`
+	DeployedVersion  sql.NullString `db:"deployed_version"`
+	Metadata         json.Text      `db:"metadata"`
+	CreatedAt        sql.NullTime   `db:"created_at"`
+	UpdatedAt        sql.NullTime   `db:"updated_at"`
+	Name             string         `db:"name"`
+	StickySessions   bool           `db:"sticky_sessions"`
+	Count            int            `db:"count"`
+	ResourceLimits   json.Text      `db:"resource_limits"`
+	ResourceRequests json.Text      `db:"resource_requests"`
 }
 
 func (r *Repo) UpdateDeployedServiceVersion(ctx context.Context, id int, version string) error {
@@ -209,7 +211,7 @@ func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) ([]Service, 
 		       s.updated_at, 
 		       s.name, 
 		       s.sticky_sessions, 
-		       s.count, 
+		       s.count,
 		       n.name as namespace_name,
 		       a.name as artifact_name
 		from service s 
