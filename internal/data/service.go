@@ -28,6 +28,8 @@ type DeployService struct {
 	Metadata         json.Text      `db:"metadata"`
 	LivelinessProbe  json.Text      `db:"liveliness_probe"`
 	ReadinessProbe   json.Text      `db:"readiness_probe"`
+	ResourceLimits   json.Text      `db:"resource_limits"`
+	ResourceRequests json.Text      `db:"resource_requests"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
 }

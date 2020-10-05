@@ -75,6 +75,8 @@ func fromDataService(s data.DeployService) *eve.DeployService {
 			Result:           eve.DeployArtifactResultNoop,
 			RunAs:            s.RunAs,
 		},
+		ResourceLimits:   s.ResourceLimits,
+		ResourceRequests: s.ResourceRequests,
 	}
 }
 
