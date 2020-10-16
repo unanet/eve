@@ -25,6 +25,7 @@ type Artifact struct {
 	ResourceLimits    json.Text      `db:"resource_limits"`
 	ResourceRequests  json.Text      `db:"resource_requests"`
 	UtilizationLimits json.Text      `db:"utilization_limits"`
+	ReplicaLimits     json.Text      `db:"replica_limits"`
 }
 
 type Artifacts []Artifact

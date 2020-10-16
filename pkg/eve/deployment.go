@@ -87,6 +87,11 @@ type UtilizationLimits struct {
 	Memory int `json:"memory"`
 }
 
+type ReplicaLimits struct {
+	Min int `json:"min"`
+	Max int `json:"max"`
+}
+
 type DeployService struct {
 	*DeployArtifact
 	ServiceID         int    `json:"service_id"`
@@ -100,6 +105,7 @@ type DeployService struct {
 	ResourceLimits    []byte `json:"resource_limits"`
 	ResourceRequests  []byte `json:"resource_requests"`
 	UtilizationLimits []byte `json:"utilization_limits"`
+	ReplicaLimits     []byte `json:"replica_limits"`
 }
 
 type DeployServices []*DeployService
