@@ -12,46 +12,48 @@ import (
 )
 
 type DeployService struct {
-	ServiceID        int            `db:"service_id"`
-	ServiceName      string         `db:"service_name"`
-	ArtifactID       int            `db:"artifact_id"`
-	ArtifactName     string         `db:"artifact_name"`
-	RequestedVersion string         `db:"requested_version"`
-	DeployedVersion  sql.NullString `db:"deployed_version"`
-	ServicePort      int            `db:"service_port"`
-	MetricsPort      int            `db:"metrics_port"`
-	ServiceAccount   string         `db:"service_account"`
-	ImageTag         string         `db:"image_tag"`
-	RunAs            int            `db:"run_as"`
-	StickySessions   bool           `db:"sticky_sessions"`
-	Count            int            `db:"count"`
-	Metadata         json.Text      `db:"metadata"`
-	LivelinessProbe  json.Text      `db:"liveliness_probe"`
-	ReadinessProbe   json.Text      `db:"readiness_probe"`
-	ResourceLimits   json.Text      `db:"resource_limits"`
-	ResourceRequests json.Text      `db:"resource_requests"`
-	CreatedAt        sql.NullTime   `db:"created_at"`
-	UpdatedAt        sql.NullTime   `db:"updated_at"`
+	ServiceID         int            `db:"service_id"`
+	ServiceName       string         `db:"service_name"`
+	ArtifactID        int            `db:"artifact_id"`
+	ArtifactName      string         `db:"artifact_name"`
+	RequestedVersion  string         `db:"requested_version"`
+	DeployedVersion   sql.NullString `db:"deployed_version"`
+	ServicePort       int            `db:"service_port"`
+	MetricsPort       int            `db:"metrics_port"`
+	ServiceAccount    string         `db:"service_account"`
+	ImageTag          string         `db:"image_tag"`
+	RunAs             int            `db:"run_as"`
+	StickySessions    bool           `db:"sticky_sessions"`
+	Count             int            `db:"count"`
+	Metadata          json.Text      `db:"metadata"`
+	LivelinessProbe   json.Text      `db:"liveliness_probe"`
+	ReadinessProbe    json.Text      `db:"readiness_probe"`
+	ResourceLimits    json.Text      `db:"resource_limits"`
+	ResourceRequests  json.Text      `db:"resource_requests"`
+	UtilizationLimits json.Text      `db:"utilization_limits"`
+	CreatedAt         sql.NullTime   `db:"created_at"`
+	UpdatedAt         sql.NullTime   `db:"updated_at"`
 }
 
 type DeployServices []DeployService
 
 type Service struct {
-	ID               int            `db:"id"`
-	NamespaceID      int            `db:"namespace_id"`
-	NamespaceName    string         `db:"namespace_name"`
-	ArtifactID       int            `db:"artifact_id"`
-	ArtifactName     string         `db:"artifact_name"`
-	OverrideVersion  sql.NullString `db:"override_version"`
-	DeployedVersion  sql.NullString `db:"deployed_version"`
-	Metadata         json.Text      `db:"metadata"`
-	CreatedAt        sql.NullTime   `db:"created_at"`
-	UpdatedAt        sql.NullTime   `db:"updated_at"`
-	Name             string         `db:"name"`
-	StickySessions   bool           `db:"sticky_sessions"`
-	Count            int            `db:"count"`
-	ResourceLimits   json.Text      `db:"resource_limits"`
-	ResourceRequests json.Text      `db:"resource_requests"`
+	ID                int            `db:"id"`
+	NamespaceID       int            `db:"namespace_id"`
+	NamespaceName     string         `db:"namespace_name"`
+	ArtifactID        int            `db:"artifact_id"`
+	ArtifactName      string         `db:"artifact_name"`
+	OverrideVersion   sql.NullString `db:"override_version"`
+	DeployedVersion   sql.NullString `db:"deployed_version"`
+	Metadata          json.Text      `db:"metadata"`
+	CreatedAt         sql.NullTime   `db:"created_at"`
+	UpdatedAt         sql.NullTime   `db:"updated_at"`
+	Name              string         `db:"name"`
+	StickySessions    bool           `db:"sticky_sessions"`
+	Count             int            `db:"count"`
+	ResourceLimits    json.Text      `db:"resource_limits"`
+	ResourceRequests  json.Text      `db:"resource_requests"`
+	UtilizationLimits json.Text      `db:"utilization_limits"`
 }
 
 func (r *Repo) UpdateDeployedServiceVersion(ctx context.Context, id int, version string) error {
@@ -79,6 +81,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		   a.readiness_probe,
 		   jsonb_merge(a.resource_limits,s.resource_limits) as resource_limits,
 	       jsonb_merge(a.resource_requests,s.resource_requests) as resource_requests, 
+		   jsonb_merge(a.utilization_limits,s.utilization_limits) as utilization_limits, 
 		   a.image_tag,
 		   a.metrics_port,
 		   a.service_account,
