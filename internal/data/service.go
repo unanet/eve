@@ -25,13 +25,14 @@ type DeployService struct {
 	RunAs             int            `db:"run_as"`
 	StickySessions    bool           `db:"sticky_sessions"`
 	Count             int            `db:"count"`
+	MinPod            int            `db:"min_pod"`
+	MaxPod            int            `db:"max_pod"`
 	Metadata          json.Text      `db:"metadata"`
 	LivelinessProbe   json.Text      `db:"liveliness_probe"`
 	ReadinessProbe    json.Text      `db:"readiness_probe"`
 	ResourceLimits    json.Text      `db:"resource_limits"`
 	ResourceRequests  json.Text      `db:"resource_requests"`
 	UtilizationLimits json.Text      `db:"utilization_limits"`
-	ReplicaLimits     json.Text      `db:"replica_limits"`
 	CreatedAt         sql.NullTime   `db:"created_at"`
 	UpdatedAt         sql.NullTime   `db:"updated_at"`
 }
@@ -52,10 +53,11 @@ type Service struct {
 	Name              string         `db:"name"`
 	StickySessions    bool           `db:"sticky_sessions"`
 	Count             int            `db:"count"`
+	MinPod            int            `db:"min_pod"`
+	MaxPod            int            `db:"max_pod"`
 	ResourceLimits    json.Text      `db:"resource_limits"`
 	ResourceRequests  json.Text      `db:"resource_requests"`
 	UtilizationLimits json.Text      `db:"utilization_limits"`
-	ReplicaLimits     json.Text      `db:"replica_limits"`
 }
 
 func (r *Repo) UpdateDeployedServiceVersion(ctx context.Context, id int, version string) error {
@@ -84,12 +86,13 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		   jsonb_merge(a.resource_limits,s.resource_limits) as resource_limits,
 	       jsonb_merge(a.resource_requests,s.resource_requests) as resource_requests, 
 		   jsonb_merge(a.utilization_limits,s.utilization_limits) as utilization_limits, 
-		   jsonb_merge(a.replica_limits,s.replica_limits) as replica_limits, 
 		   a.image_tag,
 		   a.metrics_port,
 		   a.service_account,
 		   s.sticky_sessions,
 		   s.count,
+		   s.min_pod,
+		   s.max_pod,
            s.name as service_name,
 		   a.run_as as run_as,
 		   s.artifact_id,
@@ -218,6 +221,8 @@ func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) ([]Service, 
 		       s.name, 
 		       s.sticky_sessions, 
 		       s.count,
+               s.min_pod,
+               s.max_pod,
 		       n.name as namespace_name,
 		       a.name as artifact_name
 		from service s 

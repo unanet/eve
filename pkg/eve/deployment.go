@@ -101,12 +101,13 @@ type DeployService struct {
 	ServiceName       string `json:"service_name"`
 	StickySessions    bool   `json:"sticky_sessions"`
 	Count             int    `json:"count"`
+	MinPod            int    `json:"min_pod"`
+	MaxPod            int    `json:"max_pod"`
 	LivelinessProbe   []byte `json:"liveliness_probe"`
 	ReadinessProbe    []byte `json:"readiness_probe"`
 	ResourceLimits    []byte `json:"resource_limits"`
 	ResourceRequests  []byte `json:"resource_requests"`
 	UtilizationLimits []byte `json:"utilization_limits"`
-	ReplicaLimits     []byte `json:"replica_limits"`
 }
 
 type DeployServices []*DeployService

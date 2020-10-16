@@ -30,7 +30,7 @@ func getRepo(t *testing.T) *data.Repo {
 
 func TestRepo_CreateDeployment(t *testing.T) {
 	repo := getRepo(t)
-	result, err := repo.DeployedServicesByNamespaceID(context.TODO(), 18)
+	result, err := repo.DeployedServicesByNamespaceID(context.TODO(), 3)
 	require.NoError(t, err)
 
 	fmt.Println(string(result[0].Metadata))
