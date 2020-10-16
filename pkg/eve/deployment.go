@@ -81,12 +81,13 @@ func (da DeployArtifact) EvalImageTag() string {
 	return imageTag
 }
 
-// `{"cpu":75, "memory":75}
+// {"cpu":75, "memory":75}
 type UtilizationLimits struct {
 	CPU    int `json:"cpu"`
 	Memory int `json:"memory"`
 }
 
+// {"min":2, "max":15}
 type ReplicaLimits struct {
 	Min int `json:"min"`
 	Max int `json:"max"`
