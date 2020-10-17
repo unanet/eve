@@ -74,7 +74,8 @@ CREATE TABLE artifact (
     resource_limits jsonb DEFAULT '{}'::json NOT NULL,
     resource_requests jsonb DEFAULT '{}'::json NOT NULL,
     utilization_limits jsonb DEFAULT '{}'::json NOT NULL,
-    autoscaling jsonb DEFAULT '{}'::json NOT NULL
+    autoscaling jsonb DEFAULT '{}'::json NOT NULL,
+    pod_resource jsonb DEFAULT '{}'::json NOT NULL
 );
 CREATE UNIQUE INDEX artifact_name_uindex ON artifact USING btree (name);
 ALTER TABLE ONLY artifact ADD CONSTRAINT artifact_pk PRIMARY KEY (id);
@@ -161,7 +162,8 @@ CREATE TABLE service (
     utilization_limits jsonb DEFAULT '{}'::json NOT NULL,
     min_pod int DEFAULT 2 NOT NULL,
     max_pod int DEFAULT 10 NOT NULL,
-    autoscaling jsonb DEFAULT '{}'::json NOT NULL
+    autoscaling jsonb DEFAULT '{}'::json NOT NULL,
+    pod_resource jsonb DEFAULT '{}'::json NOT NULL
 
 );
 CREATE SEQUENCE service_id_seq

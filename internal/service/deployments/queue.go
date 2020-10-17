@@ -81,6 +81,7 @@ func fromDataService(s data.DeployService) *eve.DeployService {
 		ResourceRequests:  s.ResourceRequests,
 		UtilizationLimits: s.UtilizationLimits,
 		Autoscaling:       s.Autoscaling,
+		PodResource:       s.PodResource,
 	}
 }
 

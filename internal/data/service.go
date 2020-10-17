@@ -33,6 +33,7 @@ type DeployService struct {
 	ResourceLimits    json.Text      `db:"resource_limits"`
 	ResourceRequests  json.Text      `db:"resource_requests"`
 	UtilizationLimits json.Text      `db:"utilization_limits"`
+	PodResource       json.Text      `db:"pod_resource"`
 	Autoscaling       json.Text      `db:"autoscaling"`
 	CreatedAt         sql.NullTime   `db:"created_at"`
 	UpdatedAt         sql.NullTime   `db:"updated_at"`
@@ -60,6 +61,7 @@ type Service struct {
 	ResourceRequests  json.Text      `db:"resource_requests"`
 	UtilizationLimits json.Text      `db:"utilization_limits"`
 	Autoscaling       json.Text      `db:"autoscaling"`
+	PodResource       json.Text      `db:"pod_resource"`
 }
 
 func (r *Repo) UpdateDeployedServiceVersion(ctx context.Context, id int, version string) error {
@@ -89,6 +91,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 	       jsonb_merge(a.resource_requests,s.resource_requests) as resource_requests, 
 		   jsonb_merge(a.utilization_limits,s.utilization_limits) as utilization_limits, 
 		   jsonb_merge(a.autoscaling,s.autoscaling) as autoscaling, 
+		   jsonb_merge(a.pod_resource,s.pod_resource) as pod_resource, 
 		   a.image_tag,
 		   a.metrics_port,
 		   a.service_account,
