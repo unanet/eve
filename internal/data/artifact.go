@@ -22,6 +22,7 @@ type Artifact struct {
 	RunAs             int            `db:"run_as"`
 	LivelinessProbe   json.Text      `db:"liveliness_probe"`
 	ReadinessProbe    json.Text      `db:"readiness_probe"`
+	Autoscaling       json.Text      `db:"autoscaling"`
 	ResourceLimits    json.Text      `db:"resource_limits"`
 	ResourceRequests  json.Text      `db:"resource_requests"`
 	UtilizationLimits json.Text      `db:"utilization_limits"`

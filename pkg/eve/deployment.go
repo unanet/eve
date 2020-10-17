@@ -102,6 +102,7 @@ type DeployService struct {
 	ResourceLimits    []byte `json:"resource_limits"`
 	ResourceRequests  []byte `json:"resource_requests"`
 	UtilizationLimits []byte `json:"utilization_limits"`
+	Autoscaling       []byte `json:"autoscaling"`
 }
 
 type DeployServices []*DeployService
