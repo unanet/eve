@@ -12,56 +12,46 @@ import (
 )
 
 type DeployService struct {
-	ServiceID         int            `db:"service_id"`
-	ServiceName       string         `db:"service_name"`
-	ArtifactID        int            `db:"artifact_id"`
-	ArtifactName      string         `db:"artifact_name"`
-	RequestedVersion  string         `db:"requested_version"`
-	DeployedVersion   sql.NullString `db:"deployed_version"`
-	ServicePort       int            `db:"service_port"`
-	MetricsPort       int            `db:"metrics_port"`
-	ServiceAccount    string         `db:"service_account"`
-	ImageTag          string         `db:"image_tag"`
-	RunAs             int            `db:"run_as"`
-	StickySessions    bool           `db:"sticky_sessions"`
-	Count             int            `db:"count"`
-	MinPod            int            `db:"min_pod"`
-	MaxPod            int            `db:"max_pod"`
-	Metadata          json.Text      `db:"metadata"`
-	LivelinessProbe   json.Text      `db:"liveliness_probe"`
-	ReadinessProbe    json.Text      `db:"readiness_probe"`
-	ResourceLimits    json.Text      `db:"resource_limits"`
-	ResourceRequests  json.Text      `db:"resource_requests"`
-	UtilizationLimits json.Text      `db:"utilization_limits"`
-	PodResource       json.Text      `db:"pod_resource"`
-	Autoscaling       json.Text      `db:"autoscaling"`
-	CreatedAt         sql.NullTime   `db:"created_at"`
-	UpdatedAt         sql.NullTime   `db:"updated_at"`
+	ServiceID        int            `db:"service_id"`
+	ServiceName      string         `db:"service_name"`
+	ArtifactID       int            `db:"artifact_id"`
+	ArtifactName     string         `db:"artifact_name"`
+	RequestedVersion string         `db:"requested_version"`
+	DeployedVersion  sql.NullString `db:"deployed_version"`
+	ServicePort      int            `db:"service_port"`
+	MetricsPort      int            `db:"metrics_port"`
+	ServiceAccount   string         `db:"service_account"`
+	ImageTag         string         `db:"image_tag"`
+	RunAs            int            `db:"run_as"`
+	StickySessions   bool           `db:"sticky_sessions"`
+	Count            int            `db:"count"`
+	Metadata         json.Text      `db:"metadata"`
+	LivelinessProbe  json.Text      `db:"liveliness_probe"`
+	ReadinessProbe   json.Text      `db:"readiness_probe"`
+	PodResource      json.Text      `db:"pod_resource"`
+	Autoscaling      json.Text      `db:"autoscaling"`
+	CreatedAt        sql.NullTime   `db:"created_at"`
+	UpdatedAt        sql.NullTime   `db:"updated_at"`
 }
 
 type DeployServices []DeployService
 
 type Service struct {
-	ID                int            `db:"id"`
-	NamespaceID       int            `db:"namespace_id"`
-	NamespaceName     string         `db:"namespace_name"`
-	ArtifactID        int            `db:"artifact_id"`
-	ArtifactName      string         `db:"artifact_name"`
-	OverrideVersion   sql.NullString `db:"override_version"`
-	DeployedVersion   sql.NullString `db:"deployed_version"`
-	Metadata          json.Text      `db:"metadata"`
-	CreatedAt         sql.NullTime   `db:"created_at"`
-	UpdatedAt         sql.NullTime   `db:"updated_at"`
-	Name              string         `db:"name"`
-	StickySessions    bool           `db:"sticky_sessions"`
-	Count             int            `db:"count"`
-	MinPod            int            `db:"min_pod"`
-	MaxPod            int            `db:"max_pod"`
-	ResourceLimits    json.Text      `db:"resource_limits"`
-	ResourceRequests  json.Text      `db:"resource_requests"`
-	UtilizationLimits json.Text      `db:"utilization_limits"`
-	Autoscaling       json.Text      `db:"autoscaling"`
-	PodResource       json.Text      `db:"pod_resource"`
+	ID              int            `db:"id"`
+	NamespaceID     int            `db:"namespace_id"`
+	NamespaceName   string         `db:"namespace_name"`
+	ArtifactID      int            `db:"artifact_id"`
+	ArtifactName    string         `db:"artifact_name"`
+	OverrideVersion sql.NullString `db:"override_version"`
+	DeployedVersion sql.NullString `db:"deployed_version"`
+	Metadata        json.Text      `db:"metadata"`
+	CreatedAt       sql.NullTime   `db:"created_at"`
+	UpdatedAt       sql.NullTime   `db:"updated_at"`
+	Name            string         `db:"name"`
+	StickySessions  bool           `db:"sticky_sessions"`
+	Count           int            `db:"count"`
+	Autoscaling     json.Text      `db:"autoscaling"`
+	PodResource     json.Text      `db:"pod_resource"`
 }
 
 func (r *Repo) UpdateDeployedServiceVersion(ctx context.Context, id int, version string) error {
@@ -86,10 +76,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		select s.id as service_id,
 		   a.service_port,
 		   a.liveliness_probe,
-		   a.readiness_probe,
-		   jsonb_merge(a.resource_limits,s.resource_limits) as resource_limits,
-	       jsonb_merge(a.resource_requests,s.resource_requests) as resource_requests, 
-		   jsonb_merge(a.utilization_limits,s.utilization_limits) as utilization_limits, 
+		   a.readiness_probe, 
 		   jsonb_merge(a.autoscaling,s.autoscaling) as autoscaling, 
 		   jsonb_merge(a.pod_resource,s.pod_resource) as pod_resource, 
 		   a.image_tag,
@@ -97,8 +84,6 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		   a.service_account,
 		   s.sticky_sessions,
 		   s.count,
-		   s.min_pod,
-		   s.max_pod,
            s.name as service_name,
 		   a.run_as as run_as,
 		   s.artifact_id,
@@ -227,8 +212,6 @@ func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) ([]Service, 
 		       s.name, 
 		       s.sticky_sessions, 
 		       s.count,
-               s.min_pod,
-               s.max_pod,
 		       n.name as namespace_name,
 		       a.name as artifact_name
 		from service s 

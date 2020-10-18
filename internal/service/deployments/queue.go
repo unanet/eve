@@ -62,8 +62,6 @@ func fromDataService(s data.DeployService) *eve.DeployService {
 		ServiceName:     s.ServiceName,
 		StickySessions:  s.StickySessions,
 		Count:           s.Count,
-		MinPod:          s.MinPod,
-		MaxPod:          s.MaxPod,
 		LivelinessProbe: s.LivelinessProbe,
 		ReadinessProbe:  s.ReadinessProbe,
 		DeployArtifact: &eve.DeployArtifact{
@@ -77,11 +75,8 @@ func fromDataService(s data.DeployService) *eve.DeployService {
 			Result:           eve.DeployArtifactResultNoop,
 			RunAs:            s.RunAs,
 		},
-		ResourceLimits:    s.ResourceLimits,
-		ResourceRequests:  s.ResourceRequests,
-		UtilizationLimits: s.UtilizationLimits,
-		Autoscaling:       s.Autoscaling,
-		PodResource:       s.PodResource,
+		Autoscaling: s.Autoscaling,
+		PodResource: s.PodResource,
 	}
 }
 

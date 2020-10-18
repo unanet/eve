@@ -71,9 +71,6 @@ CREATE TABLE artifact (
     metadata jsonb DEFAULT '{}'::json NOT NULL,
     liveliness_probe jsonb DEFAULT '{}'::json NOT NULL,
     readiness_probe jsonb DEFAULT '{}'::json NOT NULL,
-    resource_limits jsonb DEFAULT '{}'::json NOT NULL,
-    resource_requests jsonb DEFAULT '{}'::json NOT NULL,
-    utilization_limits jsonb DEFAULT '{}'::json NOT NULL,
     autoscaling jsonb DEFAULT '{}'::json NOT NULL,
     pod_resource jsonb DEFAULT '{}'::json NOT NULL
 );
@@ -157,11 +154,6 @@ CREATE TABLE service (
     count int DEFAULT 2 NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
-    resource_limits jsonb DEFAULT '{}'::json NOT NULL,
-    resource_requests jsonb DEFAULT '{}'::json NOT NULL,
-    utilization_limits jsonb DEFAULT '{}'::json NOT NULL,
-    min_pod int DEFAULT 2 NOT NULL,
-    max_pod int DEFAULT 10 NOT NULL,
     autoscaling jsonb DEFAULT '{}'::json NOT NULL,
     pod_resource jsonb DEFAULT '{}'::json NOT NULL
 

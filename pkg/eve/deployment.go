@@ -81,29 +81,18 @@ func (da DeployArtifact) EvalImageTag() string {
 	return imageTag
 }
 
-// {"cpu":75, "memory":75}
-type UtilizationLimits struct {
-	CPU    int `json:"cpu"`
-	Memory int `json:"memory"`
-}
-
 type DeployService struct {
 	*DeployArtifact
-	ServiceID         int    `json:"service_id"`
-	ServicePort       int    `json:"service_port"`
-	MetricsPort       int    `json:"metrics_port"`
-	ServiceName       string `json:"service_name"`
-	StickySessions    bool   `json:"sticky_sessions"`
-	Count             int    `json:"count"`
-	MinPod            int    `json:"min_pod"`
-	MaxPod            int    `json:"max_pod"`
-	LivelinessProbe   []byte `json:"liveliness_probe"`
-	ReadinessProbe    []byte `json:"readiness_probe"`
-	ResourceLimits    []byte `json:"resource_limits"`
-	ResourceRequests  []byte `json:"resource_requests"`
-	UtilizationLimits []byte `json:"utilization_limits"`
-	Autoscaling       []byte `json:"autoscaling"`
-	PodResource       []byte `json:"pod_resource"`
+	ServiceID       int    `json:"service_id"`
+	ServicePort     int    `json:"service_port"`
+	MetricsPort     int    `json:"metrics_port"`
+	ServiceName     string `json:"service_name"`
+	StickySessions  bool   `json:"sticky_sessions"`
+	Count           int    `json:"count"`
+	LivelinessProbe []byte `json:"liveliness_probe"`
+	ReadinessProbe  []byte `json:"readiness_probe"`
+	Autoscaling     []byte `json:"autoscaling"`
+	PodResource     []byte `json:"pod_resource"`
 }
 
 type DeployServices []*DeployService

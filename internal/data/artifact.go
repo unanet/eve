@@ -9,24 +9,21 @@ import (
 )
 
 type Artifact struct {
-	ID                int            `db:"id"`
-	Name              string         `db:"name"`
-	FeedType          string         `db:"feed_type"`
-	ProviderGroup     string         `db:"provider_group"`
-	FunctionPointer   sql.NullString `db:"function_pointer"`
-	Metadata          json.Text      `db:"metadata"`
-	ImageTag          string         `db:"image_tag"`
-	ServicePort       int            `db:"service_port"`
-	MetricsPort       int            `db:"metrics_port"`
-	ServiceAccount    string         `db:"service_account"`
-	RunAs             int            `db:"run_as"`
-	LivelinessProbe   json.Text      `db:"liveliness_probe"`
-	ReadinessProbe    json.Text      `db:"readiness_probe"`
-	Autoscaling       json.Text      `db:"autoscaling"`
-	ResourceLimits    json.Text      `db:"resource_limits"`
-	ResourceRequests  json.Text      `db:"resource_requests"`
-	UtilizationLimits json.Text      `db:"utilization_limits"`
-	PodResource       json.Text      `db:"pod_resource"`
+	ID              int            `db:"id"`
+	Name            string         `db:"name"`
+	FeedType        string         `db:"feed_type"`
+	ProviderGroup   string         `db:"provider_group"`
+	FunctionPointer sql.NullString `db:"function_pointer"`
+	Metadata        json.Text      `db:"metadata"`
+	ImageTag        string         `db:"image_tag"`
+	ServicePort     int            `db:"service_port"`
+	MetricsPort     int            `db:"metrics_port"`
+	ServiceAccount  string         `db:"service_account"`
+	RunAs           int            `db:"run_as"`
+	LivelinessProbe json.Text      `db:"liveliness_probe"`
+	ReadinessProbe  json.Text      `db:"readiness_probe"`
+	Autoscaling     json.Text      `db:"autoscaling"`
+	PodResource     json.Text      `db:"pod_resource"`
 }
 
 type Artifacts []Artifact
