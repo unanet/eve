@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	goErrors "errors"
 	"time"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
@@ -71,7 +72,7 @@ func (r *Repo) NamespaceByName(ctx context.Context, name string) (*Namespace, er
 	row := r.db.QueryRowxContext(ctx, "select * from namespace where name = $1", name)
 	err := row.StructScan(&namespace)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
+		if goErrors.Is(err, sql.ErrNoRows) {
 			return nil, NotFoundErrorf("namespace with name: %s, not found", name)
 		}
 		return nil, errors.Wrap(err)
@@ -86,7 +87,7 @@ func (r *Repo) NamespaceByID(ctx context.Context, id int) (*Namespace, error) {
 	row := r.db.QueryRowxContext(ctx, "select * from namespace where id = $1", id)
 	err := row.StructScan(&namespace)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
+		if goErrors.Is(err, sql.ErrNoRows) {
 			return nil, NotFoundErrorf("namespace with id: %d, not found", id)
 		}
 		return nil, errors.Wrap(err)

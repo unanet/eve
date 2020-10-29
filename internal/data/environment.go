@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	goErrors "errors"
 	"time"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
@@ -26,7 +27,7 @@ func (r *Repo) EnvironmentByName(ctx context.Context, name string) (*Environment
 	row := r.db.QueryRowxContext(ctx, "select * from environment where name = $1", name)
 	err := row.StructScan(&environment)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
+		if goErrors.Is(err, sql.ErrNoRows) {
 			return nil, NotFoundErrorf("environment with name: %s, not found", name)
 		}
 		return nil, errors.Wrap(err)
@@ -41,7 +42,7 @@ func (r *Repo) EnvironmentByID(ctx context.Context, id int) (*Environment, error
 	row := r.db.QueryRowxContext(ctx, "select * from environment where id = $1", id)
 	err := row.StructScan(&environment)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
+		if goErrors.Is(err, sql.ErrNoRows) {
 			return nil, NotFoundErrorf("environment with id: %d, not found", id)
 		}
 		return nil, errors.Wrap(err)
