@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	goErrors "errors"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -25,6 +26,8 @@ type DeployService struct {
 	RunAs            int            `db:"run_as"`
 	StickySessions   bool           `db:"sticky_sessions"`
 	Count            int            `db:"count"`
+	EnvironmentID    int            `db:"environment_id"`
+	NamespaceID      int            `db:"namespace_id"`
 	Metadata         json.Text      `db:"metadata"`
 	LivelinessProbe  json.Text      `db:"liveliness_probe"`
 	ReadinessProbe   json.Text      `db:"readiness_probe"`
@@ -50,8 +53,6 @@ type Service struct {
 	Name            string         `db:"name"`
 	StickySessions  bool           `db:"sticky_sessions"`
 	Count           int            `db:"count"`
-	Autoscaling     json.Text      `db:"autoscaling"`
-	PodResource     json.Text      `db:"pod_resource"`
 }
 
 func (r *Repo) UpdateDeployedServiceVersion(ctx context.Context, id int, version string) error {
@@ -77,8 +78,8 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		   a.service_port,
 		   a.liveliness_probe,
 		   a.readiness_probe, 
-		   jsonb_merge(a.autoscaling,s.autoscaling) as autoscaling, 
-		   jsonb_merge(a.pod_resource,s.pod_resource) as pod_resource, 
+		   e.id as environment_id,
+		   n.id as namespace_id,
 		   a.image_tag,
 		   a.metrics_port,
 		   a.service_account,
@@ -98,11 +99,13 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 			left join namespace n on s.namespace_id = n.id
 			left join environment e on n.environment_id = e.id
 		where s.namespace_id = $1
+
 	`, namespaceID)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
 	var services []DeployService
+
 	for rows.Next() {
 		var service DeployService
 		err = rows.StructScan(&service)
@@ -111,6 +114,25 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		}
 		services = append(services, service)
 	}
+
+	// This is where we are setting the Dynamic Configuration
+	// Autoscale,Pod Resource, and soon to be Metadata...
+	// TODO: Add HydrateDeployServiceMetadata method to use new stacking map table
+	for i := 0; i <= len(services)-1; i++ {
+		services[i].Autoscaling, err = r.HydrateDeployServicePodAutoscale(ctx, services[i])
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+		services[i].PodResource, err = r.HydrateDeployServicePodResource(ctx, services[i])
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+		//services[i].Metadata, err = r.HydrateDeployServiceMetadata(ctx, services[i])
+		//if err != nil {
+		//	return nil, errors.Wrap(err)
+		//}
+	}
+
 	return services, nil
 }
 
@@ -162,7 +184,7 @@ func (r *Repo) ServiceByName(ctx context.Context, name string, namespace string)
 		`, name, namespace)
 	err := row.StructScan(&service)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
+		if goErrors.Is(err, sql.ErrNoRows) {
 			return nil, NotFoundErrorf("service with name: %s, namespace: %s, not found", name, namespace)
 		}
 		return nil, errors.Wrap(err)
@@ -183,7 +205,7 @@ func (r *Repo) ServiceByID(ctx context.Context, id int) (*Service, error) {
 		`, id)
 	err := row.StructScan(&service)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
+		if goErrors.Is(err, sql.ErrNoRows) {
 			return nil, NotFoundErrorf("service with id: %d, not found", id)
 		}
 		return nil, errors.Wrap(err)

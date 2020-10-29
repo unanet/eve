@@ -2,6 +2,8 @@ package data
 
 import (
 	"context"
+	"database/sql"
+	goErrors "errors"
 	"time"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
@@ -24,7 +26,7 @@ func (r *Repo) ClusterByID(ctx context.Context, id int) (*Cluster, error) {
 	row := r.db.QueryRowxContext(ctx, "select * from cluster where id = $1", id)
 	err := row.StructScan(&cluster)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
+		if goErrors.Is(err, sql.ErrNoRows) {
 			return nil, NotFoundErrorf("cluster with id: %d, not found", id)
 		}
 		return nil, errors.Wrap(err)

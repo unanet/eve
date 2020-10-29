@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	goErrors "errors"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/json"
@@ -22,8 +23,6 @@ type Artifact struct {
 	RunAs           int            `db:"run_as"`
 	LivelinessProbe json.Text      `db:"liveliness_probe"`
 	ReadinessProbe  json.Text      `db:"readiness_probe"`
-	Autoscaling     json.Text      `db:"autoscaling"`
-	PodResource     json.Text      `db:"pod_resource"`
 }
 
 type Artifacts []Artifact
@@ -34,7 +33,7 @@ func (r *Repo) ArtifactByName(ctx context.Context, name string) (*Artifact, erro
 	row := r.db.QueryRowxContext(ctx, "select * from artifact where name = $1", name)
 	err := row.StructScan(&artifact)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
+		if goErrors.Is(err, sql.ErrNoRows) {
 			return nil, NotFoundErrorf("artifact with name: %s, not found", name)
 		}
 		return nil, errors.Wrap(err)

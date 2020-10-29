@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	goErrors "errors"
 	"fmt"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
@@ -44,7 +45,7 @@ func (r *Repo) RequestServiceArtifactByEnvironment(ctx context.Context, serviceN
 
 	err := row.StructScan(&requestedArtifact)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
+		if goErrors.Is(err, sql.ErrNoRows) {
 			return nil, NotFoundErrorf("service with name: %s not found", serviceName)
 		}
 		return nil, errors.Wrap(err)
@@ -73,7 +74,7 @@ func (r *Repo) RequestJobArtifactByEnvironment(ctx context.Context, jobName stri
 
 	err := row.StructScan(&requestedArtifact)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
+		if goErrors.Is(err, sql.ErrNoRows) {
 			return nil, NotFoundErrorf("job with name: %s not found", jobName)
 		}
 		return nil, errors.Wrap(err)
@@ -103,7 +104,7 @@ func (r *Repo) RequestDatabaseArtifactByEnvironment(ctx context.Context, databas
 
 	err := row.StructScan(&requestedArtifact)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
+		if goErrors.Is(err, sql.ErrNoRows) {
 			return nil, NotFoundErrorf("database instance with name: %s not found", databaseName)
 		}
 		return nil, errors.Wrap(err)
