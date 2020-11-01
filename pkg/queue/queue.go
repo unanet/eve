@@ -96,6 +96,8 @@ func (q *Q) Message(ctx context.Context, m *M) error {
 		QueueUrl:       &q.c.QueueURL,
 	}
 
+	q.logWith(m).Info("preparing to send message to queue", zap.String("queue", *awsM.QueueUrl))
+
 	if len(m.Body) > 0 {
 		awsM.MessageBody = aws.String(m.Body.String())
 	} else {

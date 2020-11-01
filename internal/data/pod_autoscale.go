@@ -23,9 +23,15 @@ type PodAutoscaleMap struct {
 	PodAutoscaleMapDescription string    `db:"pam_description"`
 }
 
-func (r *Repo) HydrateDeployServicePodAutoscale(ctx context.Context, svc DeployService) (json.Text, error) {
-	log.Logger.Info("hydrate pod autoscale")
-	// Get all of the matching records from the map table
+type PodAutoscaleByStackingOrder []PodAutoscaleMap
+
+func (a PodAutoscaleByStackingOrder) Len() int { return len(a) }
+func (a PodAutoscaleByStackingOrder) Less(i, j int) bool {
+	return a[i].StackingOrder < a[j].StackingOrder
+}
+func (a PodAutoscaleByStackingOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+
+func (r *Repo) PodAutoscaleMap(ctx context.Context, serviceID, environmentID, namespaceID int) ([]PodAutoscaleMap, error) {
 	rows, err := r.db.QueryxContext(ctx, `
 		SELECT
 		   pam.service_id, 
@@ -37,18 +43,21 @@ func (r *Repo) HydrateDeployServicePodAutoscale(ctx context.Context, svc DeployS
 		   pa.description as pa_description
 		FROM
 			pod_autoscale as pa
-		LEFT JOIN
+		JOIN
 			pod_autoscale_map pam on pa.id = pam.pod_autoscale_id
 		WHERE
-			pam.service_id = $1 OR pam.environment_id = $2 OR pam.namespace_id = $3
+		    pam.service_id = $1 AND (pam.namespace_id IS NULL AND pam.environment_id IS NULL)
+		OR  
+			pam.environment_id = $2 AND (pam.service_id IS NULL AND pam.namespace_id IS NULL)
+		OR  
+			pam.namespace_id = $3 AND (pam.service_id IS NULL AND pam.environment_id IS NULL)		
 		ORDER BY
-		    pam.stacking_order,pam.service_id,pam.namespace_id,pam.environment_id
-	`, svc.ServiceID, svc.EnvironmentID, svc.NamespaceID)
+		    pam.stacking_order
+	`, serviceID, environmentID, namespaceID)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
 	defer rows.Close()
-
 	// Hydrate a slice of the records to the Data Structure (PodAutoscaleMap)
 	var pads []PodAutoscaleMap
 	for rows.Next() {
@@ -59,18 +68,32 @@ func (r *Repo) HydrateDeployServicePodAutoscale(ctx context.Context, svc DeployS
 		}
 		pads = append(pads, pad)
 	}
+	return pads, nil
+}
 
+func (r *Repo) NamespacePodAutoscaleMap(ctx context.Context, namespaceID int) ([]PodAutoscaleMap, error) {
+	log.Logger.Info("namespace pod autoscale map")
+	return r.PodAutoscaleMap(ctx, 0, 0, namespaceID)
+}
+
+func (r *Repo) EnvironmentPodAutoscaleMap(ctx context.Context, environmentID int) ([]PodAutoscaleMap, error) {
+	log.Logger.Info("environment pod autoscale map")
+	return r.PodAutoscaleMap(ctx, 0, environmentID, 0)
+}
+
+func (r *Repo) PodAutoscaleStacked(pams []PodAutoscaleMap) (json.Text, error) {
 	// Guard against no values set in the DB
-	if len(pads) == 0 {
-		log.Logger.Debug("no pod autoscale values set", zap.Any("service", svc))
+	if len(pams) == 0 {
+		log.Logger.Debug("no pod autoscale values set")
 		return json.EmptyJSONText, nil
 	}
 
 	// Explicitly Sort the slice based on stacking Order
 	// this is done on sql ORDER BY, but I want to be explicit about it
-	sort.SliceStable(pads, func(i, j int) bool {
-		return pads[i].StackingOrder < pads[j].StackingOrder
-	})
+	sort.Sort(PodAutoscaleByStackingOrder(pams))
+	//sort.SliceStable(pads, func(i, j int) bool {
+	//	return pads[i].StackingOrder < pads[j].StackingOrder
+	//})
 
 	// Declare the "final" autoscale setting struct
 	// this is the destination when we merge data on top of it
@@ -80,7 +103,7 @@ func (r *Repo) HydrateDeployServicePodAutoscale(ctx context.Context, svc DeployS
 	// Unmarshal the JSON Bytes to a temp map structure
 	// Merge the temp structure onto the target/dest map structure
 	// rinse and repeat, until all have been merged on top (Highest StackOrder is the last to be merged...it "wins")
-	for _, pad := range pads {
+	for _, pad := range pams {
 		var dataMap map[string]interface{}
 		merr := goJSON.Unmarshal(pad.Data, &dataMap)
 		if merr != nil {
@@ -89,7 +112,17 @@ func (r *Repo) HydrateDeployServicePodAutoscale(ctx context.Context, svc DeployS
 		targetAutoScaleSettings = mergemap.Merge(targetAutoScaleSettings, dataMap)
 	}
 	// Serialize the final struct back to a Byte Slice (JSON.Text) and return to the caller
-	log.Logger.Debug("hydrate pod autoscale value", zap.Any("autoscale", targetAutoScaleSettings), zap.Any("service", svc))
+	log.Logger.Debug("hydrate pod autoscale value", zap.Any("autoscale", targetAutoScaleSettings))
 	return json.StructToJson(targetAutoScaleSettings)
+}
 
+func (r *Repo) HydrateDeployServicePodAutoscale(ctx context.Context, svc DeployService) (json.Text, error) {
+	log.Logger.Info("hydrate deploy service pod autoscale")
+	// Get all of the matching records from the map table
+	pams, err := r.PodAutoscaleMap(ctx, svc.ServiceID, svc.EnvironmentID, svc.NamespaceID)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	return r.PodAutoscaleStacked(pams)
 }

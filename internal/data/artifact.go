@@ -41,3 +41,18 @@ func (r *Repo) ArtifactByName(ctx context.Context, name string) (*Artifact, erro
 
 	return &artifact, nil
 }
+
+func (r *Repo) ArtifactByID(ctx context.Context, id int) (*Artifact, error) {
+	var artifact Artifact
+
+	row := r.db.QueryRowxContext(ctx, "select * from artifact where id = $1", id)
+	err := row.StructScan(&artifact)
+	if err != nil {
+		if goErrors.Is(err, sql.ErrNoRows) {
+			return nil, NotFoundErrorf("artifact with id: %v, not found", id)
+		}
+		return nil, errors.Wrap(err)
+	}
+
+	return &artifact, nil
+}
