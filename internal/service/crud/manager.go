@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
+	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 type Repo interface {
@@ -32,6 +33,20 @@ type Repo interface {
 	PreviousFeedByPromotionOrderType(ctx context.Context, promotionOrder int, feedType string) (*data.Feed, error)
 
 	ArtifactByName(ctx context.Context, name string) (*data.Artifact, error)
+	ArtifactByID(ctx context.Context, id int) (*data.Artifact, error)
+
+	PodAutoscaleMap(ctx context.Context, serviceID, environmentID, namespaceID int) ([]data.PodAutoscaleMap, error)
+	PodAutoscaleStacked(pams []data.PodAutoscaleMap) (json.Text, error)
+	NamespacePodAutoscaleMap(ctx context.Context, namespaceID int) ([]data.PodAutoscaleMap, error)
+	EnvironmentPodAutoscaleMap(ctx context.Context, environmentID int) ([]data.PodAutoscaleMap, error)
+	HydrateDeployServicePodAutoscale(ctx context.Context, svc data.DeployService) (json.Text, error)
+
+	PodResourcesMap(ctx context.Context, serviceID, environmentID, namespaceID, artifactID int) ([]data.PodResourcesMap, error)
+	PodResourcesStacked(prms []data.PodResourcesMap) (json.Text, error)
+	NamespacePodResourcesMap(ctx context.Context, namespaceID int) ([]data.PodResourcesMap, error)
+	EnvironmentPodResourcesMap(ctx context.Context, environmentID int) ([]data.PodResourcesMap, error)
+	ArtifactPodResourcesMap(ctx context.Context, artifactID, environmentID, namespaceID int) ([]data.PodResourcesMap, error)
+	HydrateDeployServicePodResource(ctx context.Context, svc data.DeployService) (json.Text, error)
 }
 
 func NewManager(r Repo) *Manager {

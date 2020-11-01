@@ -38,6 +38,45 @@ func (s CrudController) Setup(r chi.Router) {
 	r.Post("/services/{service}", s.updateService)
 	r.Patch("/services/{service}/metadata", s.updateMetadata)
 	r.Delete("/services/{service}/metadata/{key}", s.deleteMetadata)
+
+	r.Get("/pod-resources", s.podResources)
+	r.Get("/pod-autoscale", s.podAutoscale)
+}
+
+func extractOptionalQueryParam(r *http.Request, s string) string {
+	if param := r.URL.Query().Get(s); param != "" {
+		return param
+	}
+	return ""
+}
+
+func (s CrudController) podAutoscale(w http.ResponseWriter, r *http.Request) {
+	serviceID := r.URL.Query().Get("service")
+	environmentID := r.URL.Query().Get("environment")
+	namespaceID := r.URL.Query().Get("namespace")
+
+	result, err := s.manager.PodAutoscale(r.Context(), serviceID, environmentID, namespaceID)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, result)
+}
+
+func (s CrudController) podResources(w http.ResponseWriter, r *http.Request) {
+	serviceID := r.URL.Query().Get("service")
+	environmentID := r.URL.Query().Get("environment")
+	namespaceID := r.URL.Query().Get("namespace")
+	artifactID := r.URL.Query().Get("artifact")
+
+	result, err := s.manager.PodResources(r.Context(), serviceID, environmentID, namespaceID, artifactID)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, result)
 }
 
 func (s CrudController) environments(w http.ResponseWriter, r *http.Request) {
