@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"strings"
 
+	"go.uber.org/zap"
+
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/internal/service/crud"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
 type ReleaseSvc struct {
@@ -96,7 +99,10 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 	// Artifactory fails when copy/move an artifact to a location that already exists
 	_, _ = svc.artifactoryClient.DeleteArtifact(ctx, fmt.Sprintf("%s-local", toFeed.Name), toPath)
 
-	resp, err := svc.artifactoryClient.MoveArtifact(ctx, fmt.Sprintf("%s-local", fromFeed.Name), fromPath, fmt.Sprintf("%s-local", toFeed.Name), toPath, false)
+	fromRepo := fmt.Sprintf("%s-local", fromFeed.Name)
+	toRepo := fmt.Sprintf("%s-local", toFeed.Name)
+
+	resp, err := svc.artifactoryClient.MoveArtifact(ctx, fromRepo, fromPath, toRepo, toPath, false)
 	if err != nil {
 		return success, errors.Wrap(err)
 	}
@@ -106,6 +112,20 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 	success.ToFeed = toFeed.Alias
 	success.FromFeed = fromFeed.Alias
 	success.Message = resp.ToString()
+
+	// If we are releasing to prod we tag the commit in GitLab
+	if strings.ToLower(toFeed.Alias) == "prod" {
+		artifactProps, perr := svc.artifactoryClient.GetArtifactProperties(ctx, toRepo, toPath)
+		if perr != nil {
+			return success, errors.Wrap(err)
+		}
+
+		gitBranch := artifactProps.Property("gitlab-build-properties.git-branch")
+		gitSHA := artifactProps.Property("gitlab-build-properties.git-sha")
+		gitProjectID := artifactProps.Property("gitlab-build-properties.project-id")
+		v := artifactProps.Property("version")
+		log.Logger.Info("release properties", zap.String("branch", gitBranch), zap.String("sha", gitSHA), zap.String("project", gitProjectID), zap.String("version", v))
+	}
 
 	return success, nil
 }
