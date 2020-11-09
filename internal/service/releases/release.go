@@ -91,6 +91,8 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 		return success, err
 	}
 
+	log.Logger.Warn("release artifact version", zap.String("version", artifactVersion))
+
 	toFeed, err := svc.toFeed(ctx, release, artifact, fromFeed)
 	if err != nil {
 		return success, errors.Wrap(err)
