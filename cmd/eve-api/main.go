@@ -11,6 +11,7 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/service/deployments"
 	"gitlab.unanet.io/devops/eve/internal/service/releases"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
+	"gitlab.unanet.io/devops/eve/pkg/gitlab"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/mux"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
@@ -58,8 +59,9 @@ func main() {
 	artifactoryClient := artifactory.NewClient(config.ArtifactoryConfig)
 	deploymentPlanGenerator := deployments.NewPlanGenerator(repo, artifactoryClient, apiQueue)
 	crudManager := crud.NewManager(repo)
+	gitlabClient := gitlab.NewClient(config.GitlabConfig)
 
-	releaseSvc := releases.NewReleaseSvc(repo, artifactoryClient)
+	releaseSvc := releases.NewReleaseSvc(repo, artifactoryClient, gitlabClient)
 
 	controllers, err := api.InitializeControllers(deploymentPlanGenerator, crudManager, releaseSvc)
 	if err != nil {

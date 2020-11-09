@@ -3,6 +3,7 @@ package releases
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"go.uber.org/zap"
@@ -13,18 +14,21 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"gitlab.unanet.io/devops/eve/pkg/gitlab"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
 type ReleaseSvc struct {
 	repo              crud.Repo
 	artifactoryClient *artifactory.Client
+	gitlabClient      *gitlab.Client
 }
 
-func NewReleaseSvc(r crud.Repo, a *artifactory.Client) *ReleaseSvc {
+func NewReleaseSvc(r crud.Repo, a *artifactory.Client, g *gitlab.Client) *ReleaseSvc {
 	return &ReleaseSvc{
 		repo:              r,
 		artifactoryClient: a,
+		gitlabClient:      g,
 	}
 }
 
@@ -125,6 +129,20 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 		gitProjectID := artifactProps.Property("gitlab-build-properties.project-id")
 		v := artifactProps.Property("version")
 		log.Logger.Info("release properties", zap.String("branch", gitBranch), zap.String("sha", gitSHA), zap.String("project", gitProjectID), zap.String("version", v))
+
+		projectID, cerr := strconv.Atoi(gitProjectID)
+		if cerr != nil {
+			return success, errors.Wrap(cerr)
+		}
+
+		_, gerr := svc.gitlabClient.TagCommit(ctx, gitlab.TagOptions{
+			ProjectID: projectID,
+			TagName:   v,
+			GitHash:   gitSHA,
+		})
+		if gerr != nil {
+			return success, errors.Wrap(gerr)
+		}
 	}
 
 	return success, nil
