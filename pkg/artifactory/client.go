@@ -81,24 +81,27 @@ func (c *Client) MoveArtifact(ctx context.Context, srcRepo, srcPath, destRepo, d
 
 	r, err := c.sling.New().Post(fmt.Sprintf("move/%s/%s", srcRepo, srcPath)).Request()
 	if err != nil {
-		log.Logger.Debug("move artifact client req", zap.Error(err))
+		log.Logger.Error("move artifact client req failed", zap.Error(err))
 		return nil, err
 	}
 	r.URL.RawQuery = fmt.Sprintf("to=/%s/%s&dry=%d", destRepo, destPath, Bool2int(dryRun))
-	log.Logger.Debug("move artifact request obj", zap.Any("req", r))
+
 	resp, err := c.sling.Do(r.WithContext(ctx), &success, &failure)
 	if err != nil {
-		log.Logger.Debug("move artifact client req do", zap.Error(err))
+		log.Logger.Error("move artifact client req do failed", zap.Error(err))
 		return nil, err
 	}
 
-	log.Logger.Debug("move artifact client req status", zap.Any("Status", resp.Status), zap.Any("StatusCode", resp.StatusCode))
-
-	if http.StatusOK == resp.StatusCode {
+	switch resp.StatusCode {
+	case http.StatusOK:
 		return &success, nil
+	case http.StatusNotFound:
+		return nil, NotFoundErrorf("the artifact was not found; source_repo: %s source_path: %s dest_repo: %s dest_path: %s", srcRepo, srcPath, destRepo, destPath)
+	case http.StatusServiceUnavailable:
+		return nil, ServiceUnavailableErrorf("Artifactory returned a 503 and appears to be unavailable")
+	default:
+		return nil, failure
 	}
-	log.Logger.Debug("move artifact client req failure", zap.Any("failure", failure))
-	return nil, failure
 }
 
 func (c *Client) DeleteArtifact(ctx context.Context, repo, path string) (*MessagesResponse, error) {

@@ -108,6 +108,9 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 
 	resp, err := svc.artifactoryClient.MoveArtifact(ctx, fromRepo, fromPath, toRepo, toPath, false)
 	if err != nil {
+		if _, ok := err.(artifactory.NotFoundError); ok {
+			return success, errors.NotFound(fmt.Sprintf("artifact not found: %s", err.Error()))
+		}
 		return success, errors.Wrap(err)
 	}
 
@@ -121,7 +124,10 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 	if strings.ToLower(toFeed.Alias) == "prod" {
 		artifactProps, perr := svc.artifactoryClient.GetArtifactProperties(ctx, toRepo, toPath)
 		if perr != nil {
-			return success, errors.Wrap(err)
+			if _, ok := err.(artifactory.NotFoundError); ok {
+				return success, errors.NotFound(fmt.Sprintf("artifact not found: %s", perr.Error()))
+			}
+			return success, errors.Wrap(perr)
 		}
 
 		gitBranch := artifactProps.Property("gitlab-build-properties.git-branch")
