@@ -1,8 +1,8 @@
 CREATE TABLE job (
    id integer NOT NULL,
-   name character varying(50),
+   name character varying(50) NOT NULL,
    artifact_id integer NOT NULL,
-   namespace_id integer NOT NULL,
+   namespace_id integer DEFAULT NULL,
    override_version character varying(50),
    deployed_version character varying(50),
    metadata jsonb DEFAULT '{}'::json NOT NULL,
