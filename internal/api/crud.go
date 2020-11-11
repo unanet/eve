@@ -251,7 +251,7 @@ func (s CrudController) updateMetadata(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var metadata map[string]interface{}
+	var metadata eve.Metadata
 	if err := json.ParseBody(r, &metadata); err != nil {
 		render.Respond(w, r, err)
 		return
