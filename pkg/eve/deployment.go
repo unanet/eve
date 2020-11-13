@@ -88,6 +88,7 @@ type DeployService struct {
 	MetricsPort     int    `json:"metrics_port"`
 	ServiceName     string `json:"service_name"`
 	StickySessions  bool   `json:"sticky_sessions"`
+	NodeGroup       string `json:"node_group"`
 	Count           int    `json:"count"`
 	LivelinessProbe []byte `json:"liveliness_probe"`
 	ReadinessProbe  []byte `json:"readiness_probe"`

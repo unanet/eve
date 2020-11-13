@@ -25,6 +25,7 @@ type DeployService struct {
 	ImageTag         string         `db:"image_tag"`
 	RunAs            int            `db:"run_as"`
 	StickySessions   bool           `db:"sticky_sessions"`
+	NodeGroup        string         `db:"node_group"`
 	Count            int            `db:"count"`
 	EnvironmentID    int            `db:"environment_id"`
 	NamespaceID      int            `db:"namespace_id"`
@@ -52,6 +53,7 @@ type Service struct {
 	UpdatedAt       sql.NullTime   `db:"updated_at"`
 	Name            string         `db:"name"`
 	StickySessions  bool           `db:"sticky_sessions"`
+	NodeGroup       string         `db:"node_group"`
 	Count           int            `db:"count"`
 }
 
@@ -84,6 +86,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		   a.metrics_port,
 		   a.service_account,
 		   s.sticky_sessions,
+           s.node_group,
 		   s.count,
            s.name as service_name,
 		   a.run_as as run_as,
@@ -233,6 +236,7 @@ func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) ([]Service, 
 		       s.updated_at, 
 		       s.name, 
 		       s.sticky_sessions, 
+               s.node_group,
 		       s.count,
 		       n.name as namespace_name,
 		       a.name as artifact_name
