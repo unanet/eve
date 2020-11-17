@@ -17,5 +17,6 @@ func InitializeControllers(
 		NewDeploymentPlanController(deploymentPlanGenerator),
 		NewCrudController(manager),
 		NewReleaseController(releaseSvc),
+		NewMetadataController(manager),
 	}, nil
 }
