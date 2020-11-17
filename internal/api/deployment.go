@@ -6,26 +6,27 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"gitlab.unanet.io/devops/eve/internal/service/deployments"
+	"gitlab.unanet.io/devops/eve/internal/service/plans"
 	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 type DeploymentsController struct {
-	planGenerator *deployments.PlanGenerator
+	planGenerator *plans.PlanGenerator
 }
 
-func NewDeploymentPlanController(planGenerator *deployments.PlanGenerator) *DeploymentsController {
+func NewDeploymentPlanController(planGenerator *plans.PlanGenerator) *DeploymentsController {
 	return &DeploymentsController{
 		planGenerator: planGenerator,
 	}
 }
 
 func (c DeploymentsController) Setup(r chi.Router) {
-	r.Post("/deployment-plans", c.createDeployment)
+	r.Post("/deployment-plans", c.createDeploymentPlan)
+	r.Post("/job-plans", c.createJobPlan)
 }
 
-func (c DeploymentsController) createDeployment(w http.ResponseWriter, r *http.Request) {
-	var options deployments.PlanOptions
+func (c DeploymentsController) createDeploymentPlan(w http.ResponseWriter, r *http.Request) {
+	var options plans.DeploymentPlanOptions
 	if err := json.ParseBody(r, &options); err != nil {
 		render.Respond(w, r, err)
 		return
@@ -43,4 +44,8 @@ func (c DeploymentsController) createDeployment(w http.ResponseWriter, r *http.R
 		render.Status(r, http.StatusAccepted)
 	}
 	render.Respond(w, r, options)
+}
+
+func (c DeploymentsController) createJobPlan(w http.ResponseWriter, r *http.Request) {
+
 }

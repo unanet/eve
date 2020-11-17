@@ -1,0 +1,324 @@
+package data
+
+import (
+	"context"
+	"database/sql"
+	goErrors "errors"
+	"time"
+
+	"go.uber.org/zap"
+
+	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/eve/pkg/json"
+	"gitlab.unanet.io/devops/eve/pkg/log"
+)
+
+type Metadata struct {
+	ID           int          `db:"id"`
+	Description  string       `db:"description"`
+	Value        json.Text    `db:"value"`
+	MigratedFrom int          `db:"migrated_from"`
+	CreatedAt    sql.NullTime `db:"created_at"`
+	UpdatedAt    sql.NullTime `db:"updated_at"`
+}
+
+type MetadataServiceMap struct {
+	Description   string       `db:"description"`
+	MetadataID    int          `db:"metadata_id"`
+	EnvironmentID int          `db:"environment_id"`
+	ArtifactID    int          `db:"artifact_id"`
+	NamespaceID   int          `db:"namespace_id"`
+	ServiceID     int          `db:"service_id"`
+	StackingOrder int          `db:"stacking_order"`
+	CreatedAt     sql.NullTime `db:"created_at"`
+	UpdatedAt     sql.NullTime `db:"updated_at"`
+}
+
+type MetadataService struct {
+	MetadataID          int          `db:"metadata_id"`
+	Metadata            json.Text    `db:"metadata"`
+	MetadataDescription string       `db:"metadata_description"`
+	MapDescription      string       `db:"map_description"`
+	MapEnvironmentID    int          `db:"map_environment_id"`
+	MapArtifactID       int          `db:"map_artifact_id"`
+	MapNamespaceID      int          `db:"map_namespace_id"`
+	MapServiceID        int          `db:"map_service_id"`
+	StackingOrder       int          `db:"stacking_order"`
+	CreatedAt           sql.NullTime `db:"created_at"`
+	UpdatedAt           sql.NullTime `db:"updated_at"`
+}
+
+type MetadataJob struct {
+	MetadataID          int          `db:"metadata_id"`
+	Metadata            json.Text    `db:"metadata"`
+	MetadataDescription string       `db:"metadata_description"`
+	MapDescription      string       `db:"map_description"`
+	MapEnvironmentId    int          `db:"map_environment_id"`
+	MapArtifactId       int          `db:"map_artifact_id"`
+	MapNamespaceId      int          `db:"map_namespace_id"`
+	MapJobId            int          `db:"map_job_id"`
+	StackingOrder       int          `db:"stacking_order"`
+	CreatedAt           sql.NullTime `db:"created_at"`
+	UpdatedAt           sql.NullTime `db:"updated_at"`
+}
+
+func (r *Repo) UpsertMergeMetadata(ctx context.Context, m *Metadata) error {
+	now := time.Now().UTC()
+	m.CreatedAt = sql.NullTime{
+		Time:  now,
+		Valid: true,
+	}
+	m.UpdatedAt = sql.NullTime{
+		Time:  now,
+		Valid: true,
+	}
+
+	err := r.db.QueryRowxContext(ctx, `
+	
+	INSERT INTO metadata(description, value, created_at, updated_at)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (description)
+		DO UPDATE SET value = value || $2, updated_at = $4
+		RETURNING id, created_at
+	`, m.Description, m.Value, m.CreatedAt, m.UpdatedAt).
+		Scan(&m.ID)
+
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	return nil
+}
+
+func (r *Repo) UpsertMetadata(ctx context.Context, m *Metadata) error {
+	now := time.Now().UTC()
+	m.CreatedAt = sql.NullTime{
+		Time:  now,
+		Valid: true,
+	}
+	m.UpdatedAt = sql.NullTime{
+		Time:  now,
+		Valid: true,
+	}
+
+	err := r.db.QueryRowxContext(ctx, `
+	
+	INSERT INTO metadata(description, value, created_at, updated_at)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (description)
+		DO UPDATE SET value = value, updated_at = $4
+		RETURNING id, created_at
+	
+	`, m.Description, m.Value, m.CreatedAt, m.UpdatedAt).
+		Scan(&m.ID)
+
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	return nil
+}
+
+func (r *Repo) UpsertMetadataServiceMap(ctx context.Context, msm *MetadataServiceMap) error {
+	now := time.Now().UTC()
+	msm.CreatedAt = sql.NullTime{
+		Time:  now,
+		Valid: true,
+	}
+	msm.UpdatedAt = sql.NullTime{
+		Time:  now,
+		Valid: true,
+	}
+
+	err := r.db.QueryRowxContext(ctx, `
+	
+	INSERT INTO metadata_service_map(description, metadata_id, environment_id, artifact_id, namespace_id, service_id, stacking_order, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+	ON CONFLICT (description)
+	DO UPDATE SET environment_id = $3, artifact_id = $4, namespace_id = $5, service_id = $6, stacking_order = $7, updated_at = $9
+	RETURNING created_at
+	
+	`, msm.Description, msm.MetadataID, msm.EnvironmentID, msm.ArtifactID, msm.NamespaceID, msm.ServiceID, msm.StackingOrder, msm.CreatedAt, msm.UpdatedAt).
+		Scan(&msm)
+
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	return nil
+}
+
+func (r *Repo) GetMetadata(ctx context.Context, metadataID int) (*Metadata, error) {
+	var metadata Metadata
+
+	row := r.db.QueryRowxContext(ctx, `
+		select id, description, value, created_at, updated_at
+		from metadata
+		where id = $1
+		`, metadataID)
+	err := row.StructScan(&metadata)
+	if err != nil {
+		if goErrors.Is(err, sql.ErrNoRows) {
+			return nil, NotFoundErrorf("metadata with id: %d not found", metadataID)
+		}
+		return nil, errors.Wrap(err)
+	}
+
+	return &metadata, nil
+}
+
+func (r *Repo) GetMetadataByDescription(ctx context.Context, description string) (*Metadata, error) {
+	var metadata Metadata
+
+	row := r.db.QueryRowxContext(ctx, `
+		select id, description, value, created_at, updated_at
+		from metadata
+		where description = $1
+		`, description)
+	err := row.StructScan(&metadata)
+	if err != nil {
+		if goErrors.Is(err, sql.ErrNoRows) {
+			return nil, NotFoundErrorf("metadata with description: %s not found", description)
+		}
+		return nil, errors.Wrap(err)
+	}
+
+	return &metadata, nil
+}
+
+func (r *Repo) Metadata(ctx context.Context) ([]Metadata, error) {
+	rows, err := r.db.QueryxContext(ctx, `
+		select id, description, value, created_at, updated_at from metadata
+	`)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	defer rows.Close()
+
+	var ms []Metadata
+	for rows.Next() {
+		if rows.Err() != nil {
+			return nil, errors.Wrap(err)
+		}
+
+		var m Metadata
+		err = rows.StructScan(&m)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+		ms = append(ms, m)
+	}
+
+	return ms, nil
+}
+
+func (r *Repo) DeleteMetadataKey(ctx context.Context, metadataID int, key string) (*Metadata, error) {
+	var metadata Metadata
+	err := r.db.QueryRowxContext(ctx, `
+		UPDATE metadata SET value = value - $1 WHERE id = $2
+		RETURNING id, metadata, description, created_at, updated_at
+	`, key, metadataID).Scan(&metadata)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	return &metadata, nil
+}
+
+func (r *Repo) DeleteMetadata(ctx context.Context, metadataID int) error {
+	result, err := r.db.ExecContext(ctx, `
+		DELETE FROM metadata WHERE id = $1
+	`, metadataID)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if affected == 0 {
+		return errors.NotFoundf("metadata id: %d not found", metadataID)
+	}
+
+	return nil
+}
+
+func (r *Repo) DeleteMetadataServiceMap(ctx context.Context, metadataID int, mapDescription string) error {
+	result, err := r.db.ExecContext(ctx, `
+		DELETE FROM eve.public.metadata_service_map WHERE metadata_id = $1 AND description = $2
+	`, metadataID, mapDescription)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if affected == 0 {
+		return errors.NotFoundf("metadata map with  metadata_id: %d and description: %s not found", metadataID, mapDescription)
+	}
+
+	return nil
+}
+
+func (r *Repo) ServiceMetadata(ctx context.Context, serviceID int) ([]MetadataService, error) {
+	log.Logger.Debug("metadata map", zap.Any("service", serviceID))
+	rows, err := r.db.QueryxContext(ctx, `
+		WITH env_data AS (
+			select s.id as service_id, environment_id, namespace_id, artifact_id from service s left join namespace n on s.namespace_id = n.id left join environment e on n.environment_id = e.id
+			where s.id = $1
+		)
+		
+		SELECT m.id as metadata_id,
+		       m.value as metadata,
+		       m.description as metadata_description,
+		       msm.description as map_description,
+		       msm.environment_id as map_environment_id,
+		       msm.artifact_id as map_artifact_id,
+		       msm.namespace_id as map_namespace_id,
+		       msm.service_id as map_service_id,
+		       msm.stacking_order as stacking_order,
+		       m.created_at,
+		       m.updated_at
+		FROM metadata_service_map msm 
+		    LEFT JOIN metadata m ON msm.metadata_id = m.id 
+			LEFT JOIN env_data ed on ed.service_id = $1
+			LEFT JOIN service s on ed.service_id = s.id
+			LEFT JOIN namespace n on s.namespace_id = n.id
+		WHERE
+			(msm.service_id = $1)
+		OR 
+		    (msm.environment_id = n.environment_id AND msm.artifact_id IS NULL) 
+		OR
+		    (msm.namespace_id = s.namespace_id AND msm.artifact_id IS NULL)
+		OR
+		    (msm.artifact_id = s.artifact_id AND msm.environment_id IS NULL AND msm.namespace_id IS NULL)
+		OR
+		    (msm.artifact_id = s.artifact_id AND msm.environment_id = n.environment_id)
+		OR
+		    (msm.artifact_id = s.artifact_id AND msm.namespace_id = s.namespace_id)
+		ORDER BY
+			msm.stacking_order
+	`, serviceID)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	defer rows.Close()
+
+	// Hydrate a slice of the records to the Data Structure (PodAutoscaleMap)
+	var msms []MetadataService
+	for rows.Next() {
+		var msm MetadataService
+		err = rows.StructScan(&msm)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+		msms = append(msms, msm)
+	}
+
+	return msms, nil
+}

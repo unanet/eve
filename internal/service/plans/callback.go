@@ -1,4 +1,4 @@
-package deployments
+package plans
 
 import (
 	"context"

@@ -47,6 +47,17 @@ type Repo interface {
 	EnvironmentPodResourcesMap(ctx context.Context, environmentID int) ([]data.PodResourcesMap, error)
 	ArtifactPodResourcesMap(ctx context.Context, artifactID, environmentID, namespaceID int) ([]data.PodResourcesMap, error)
 	HydrateDeployServicePodResource(ctx context.Context, svc data.DeployService) (json.Text, error)
+
+	UpsertMergeMetadata(ctx context.Context, m *data.Metadata) error
+	UpsertMetadata(ctx context.Context, m *data.Metadata) error
+	UpsertMetadataServiceMap(ctx context.Context, msm *data.MetadataServiceMap) error
+	Metadata(ctx context.Context) ([]data.Metadata, error)
+	ServiceMetadata(ctx context.Context, serviceID int) ([]data.MetadataService, error)
+	DeleteMetadataKey(ctx context.Context, metadataID int, key string) (*data.Metadata, error)
+	DeleteMetadata(ctx context.Context, metadataID int) error
+	GetMetadata(ctx context.Context, metadataID int) (*data.Metadata, error)
+	GetMetadataByDescription(ctx context.Context, description string) (*data.Metadata, error)
+	DeleteMetadataServiceMap(ctx context.Context, metadataID int, mapDescription string) error
 }
 
 func NewManager(r Repo) *Manager {

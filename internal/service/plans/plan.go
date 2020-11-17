@@ -1,4 +1,4 @@
-package deployments
+package plans
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/queue"
 )
 
-type PlanRepo interface {
+type Repo interface {
 	EnvironmentByName(ctx context.Context, name string) (*data.Environment, error)
 	NamespacesByEnvironmentID(ctx context.Context, environmentID int) (data.Namespaces, error)
 	ServiceArtifacts(ctx context.Context, namespaceIDs []int) (data.RequestArtifacts, error)
@@ -111,7 +111,7 @@ func (ad ArtifactDefinitions) UnMatched() ArtifactDefinitions {
 	return unmatched
 }
 
-type PlanOptions struct {
+type DeploymentPlanOptions struct {
 	Artifacts        ArtifactDefinitions `json:"artifacts"`
 	ForceDeploy      bool                `json:"force_deploy"`
 	User             string              `json:"user"`
@@ -137,19 +137,19 @@ type NamespacePlanOptions struct {
 	Type              PlanType              `json:"type"`
 }
 
-func (po *PlanOptions) Message(format string, a ...interface{}) {
+func (po *DeploymentPlanOptions) Message(format string, a ...interface{}) {
 	po.Messages = append(po.Messages, fmt.Sprintf(format, a...))
 }
 
-func (po PlanOptions) HasArtifacts() bool {
+func (po DeploymentPlanOptions) HasArtifacts() bool {
 	return len(po.Artifacts) > 0
 }
 
-func (po PlanOptions) HasNamespaceAliases() bool {
+func (po DeploymentPlanOptions) HasNamespaceAliases() bool {
 	return len(po.NamespaceAliases) > 0
 }
 
-func (po PlanOptions) ValidateWithContext(ctx context.Context) error {
+func (po DeploymentPlanOptions) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, &po,
 		validation.Field(&po.Environment, validation.Required),
 		validation.Field(&po.Type, validation.Required, validation.In(DeploymentPlanTypeApplication, DeploymentPlanTypeMigration, DeploymentPlanTypeJob)),
@@ -157,12 +157,12 @@ func (po PlanOptions) ValidateWithContext(ctx context.Context) error {
 }
 
 type PlanGenerator struct {
-	repo PlanRepo
+	repo Repo
 	vq   VersionQuery
 	q    QWriter
 }
 
-func NewPlanGenerator(r PlanRepo, v VersionQuery, q QWriter) *PlanGenerator {
+func NewPlanGenerator(r Repo, v VersionQuery, q QWriter) *PlanGenerator {
 	return &PlanGenerator{
 		repo: r,
 		vq:   v,
@@ -170,7 +170,7 @@ func NewPlanGenerator(r PlanRepo, v VersionQuery, q QWriter) *PlanGenerator {
 	}
 }
 
-func (d *PlanGenerator) QueuePlan(ctx context.Context, options *PlanOptions) error {
+func (d *PlanGenerator) QueuePlan(ctx context.Context, options *DeploymentPlanOptions) error {
 	// make sure the environment name is valid
 	env, err := d.repo.EnvironmentByName(ctx, options.Environment)
 	if err != nil {
@@ -250,7 +250,7 @@ func (d *PlanGenerator) QueuePlan(ctx context.Context, options *PlanOptions) err
 	return nil
 }
 
-func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *data.Environment, options *PlanOptions, ns eve.NamespaceRequests) error {
+func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *data.Environment, options *DeploymentPlanOptions, ns eve.NamespaceRequests) error {
 	// If services were supplied, we check those against the database to make sure they are valid and pull
 	// required info needed to lookup in Artifactory
 	// It's important to note here that we're matching on the service/database name that's configured in the database which can be different than the artifact name.
@@ -308,7 +308,7 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 	return nil
 }
 
-func (d *PlanGenerator) validateNamespaces(ctx context.Context, env *data.Environment, options *PlanOptions) (eve.NamespaceRequests, error) {
+func (d *PlanGenerator) validateNamespaces(ctx context.Context, env *data.Environment, options *DeploymentPlanOptions) (eve.NamespaceRequests, error) {
 	// lets start with all the namespaces in the Env and filter it down based on additional information passed in.
 	namespacesToDeploy, err := d.repo.NamespacesByEnvironmentID(ctx, env.ID)
 	if err != nil {
@@ -353,7 +353,7 @@ func (d *PlanGenerator) validateNamespaces(ctx context.Context, env *data.Enviro
 	return namespaceRequests, nil
 }
 
-func (d *PlanGenerator) setArtifactoryVersions(ctx context.Context, options *PlanOptions) error {
+func (d *PlanGenerator) setArtifactoryVersions(ctx context.Context, options *DeploymentPlanOptions) error {
 	// now we query artifactory for the actual version
 	var artifacts ArtifactDefinitions
 	for _, a := range options.Artifacts {

@@ -8,7 +8,7 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/api"
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service/crud"
-	"gitlab.unanet.io/devops/eve/internal/service/deployments"
+	"gitlab.unanet.io/devops/eve/internal/service/plans"
 	"gitlab.unanet.io/devops/eve/internal/service/releases"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/gitlab"
@@ -57,7 +57,7 @@ func main() {
 	repo := data.NewRepo(db)
 
 	artifactoryClient := artifactory.NewClient(config.ArtifactoryConfig)
-	deploymentPlanGenerator := deployments.NewPlanGenerator(repo, artifactoryClient, apiQueue)
+	deploymentPlanGenerator := plans.NewPlanGenerator(repo, artifactoryClient, apiQueue)
 	crudManager := crud.NewManager(repo)
 	gitlabClient := gitlab.NewClient(config.GitlabConfig)
 
@@ -77,10 +77,10 @@ func main() {
 	})
 
 	s3Downloader := s3.NewDownloader(awsSession)
-	httpCallBack := deployments.NewCallback(config.HttpCallbackTimeout)
-	deploymentQueue := deployments.NewQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, s3Uploader, s3Downloader, httpCallBack)
+	httpCallBack := plans.NewCallback(config.HttpCallbackTimeout)
+	deploymentQueue := plans.NewQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, s3Uploader, s3Downloader, httpCallBack)
 
-	cron := deployments.NewDeploymentCron(repo, deploymentPlanGenerator, config.CronTimeout)
+	cron := plans.NewDeploymentCron(repo, deploymentPlanGenerator, config.CronTimeout)
 	cron.Start()
 
 	deploymentQueue.Start()

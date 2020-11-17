@@ -113,7 +113,7 @@ func (m *Manager) UpdateService(ctx context.Context, s *eve.Service) (*eve.Servi
 	return &s2, nil
 }
 
-func (m *Manager) UpdateServiceMetadata(ctx context.Context, serviceID int, metadata eve.Metadata) (*eve.Service, error) {
+func (m *Manager) UpdateServiceMetadata(ctx context.Context, serviceID int, metadata map[string]interface{}) (*eve.Service, error) {
 	err := m.repo.UpdateServiceMetadata(ctx, serviceID, metadata)
 	if err != nil {
 		return nil, service.CheckForNotFoundError(err)

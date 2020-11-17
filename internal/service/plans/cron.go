@@ -1,4 +1,4 @@
-package deployments
+package plans
 
 import (
 	"context"
@@ -21,7 +21,7 @@ type DeploymentCronRepo interface {
 }
 
 type DeploymentQueuer interface {
-	QueuePlan(ctx context.Context, options *PlanOptions) error
+	QueuePlan(ctx context.Context, options *DeploymentPlanOptions) error
 }
 
 type DeploymentCron struct {
@@ -63,7 +63,7 @@ func (dc *DeploymentCron) scheduler(ctx context.Context, job *data.DeploymentCro
 		return nil, nil
 	}
 
-	var options PlanOptions
+	var options DeploymentPlanOptions
 	err = json.Unmarshal(job.PlanOptions, &options)
 	if err != nil {
 		return nil, errors.Wrap(err)
