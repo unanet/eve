@@ -90,7 +90,7 @@ func (r *Repo) UpsertMergeMetadata(ctx context.Context, m *Metadata) error {
 	INSERT INTO metadata(description, value, created_at, updated_at)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (description)
-		DO UPDATE SET value = value || $2, updated_at = $4
+		DO UPDATE SET value = metadata.value || $2, updated_at = $4
 		RETURNING id, created_at
 	`, m.Description, m.Value, m.CreatedAt, m.UpdatedAt).
 		StructScan(&m)
