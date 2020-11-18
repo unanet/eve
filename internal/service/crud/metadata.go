@@ -9,6 +9,7 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/eve/pkg/json"
+	"gitlab.unanet.io/devops/eve/pkg/mergemap"
 )
 
 func toDataMetadataServiceMap(m eve.MetadataServiceMap) data.MetadataServiceMap {
@@ -186,4 +187,27 @@ func (m *Manager) DeleteMetadataServiceMap(ctx context.Context, metadataID int, 
 	}
 
 	return nil
+}
+
+func (m *Manager) ServiceMetadata(ctx context.Context, id int) (eve.MetadataField, error) {
+	metadata, err := m.repo.ServiceMetadata(ctx, id)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	var collectedMetadata []eve.MetadataField
+	for _, x := range metadata {
+		collectedMetadata = append(collectedMetadata, x.Metadata.AsMap())
+	}
+
+	return m.mergeMetadata(collectedMetadata), nil
+}
+
+func (m *Manager) mergeMetadata(metadataList []eve.MetadataField) eve.MetadataField {
+	mergedMetadata := make(map[string]interface{})
+	for _, metadata := range metadataList {
+		mergedMetadata = mergemap.Merge(mergedMetadata, metadata)
+	}
+
+	return mergedMetadata
 }

@@ -34,6 +34,18 @@ type MetadataServiceMap struct {
 	UpdatedAt     sql.NullTime  `db:"updated_at"`
 }
 
+type MetadataJobMap struct {
+	Description   string        `db:"description"`
+	MetadataID    int           `db:"metadata_id"`
+	EnvironmentID sql.NullInt32 `db:"environment_id"`
+	ArtifactID    sql.NullInt32 `db:"artifact_id"`
+	NamespaceID   sql.NullInt32 `db:"namespace_id"`
+	ServiceID     sql.NullInt32 `db:"service_id"`
+	StackingOrder int           `db:"stacking_order"`
+	CreatedAt     sql.NullTime  `db:"created_at"`
+	UpdatedAt     sql.NullTime  `db:"updated_at"`
+}
+
 type MetadataService struct {
 	MetadataID          int           `db:"metadata_id"`
 	Metadata            json.Text     `db:"metadata"`
