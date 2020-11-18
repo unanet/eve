@@ -12,15 +12,33 @@ import (
 )
 
 func toDataMetadataServiceMap(m eve.MetadataServiceMap) data.MetadataServiceMap {
-	return data.MetadataServiceMap{
+	dm := data.MetadataServiceMap{
 		Description:   m.Description,
 		MetadataID:    m.MetadataID,
-		EnvironmentID: m.EnvironmentID,
-		ArtifactID:    m.ArtifactID,
-		NamespaceID:   m.NamespaceID,
-		ServiceID:     m.ServiceID,
 		StackingOrder: m.StackingOrder,
 	}
+
+	if m.EnvironmentID != 0 {
+		dm.EnvironmentID.Int32 = int32(m.EnvironmentID)
+		dm.EnvironmentID.Valid = true
+	}
+
+	if m.ArtifactID != 0 {
+		dm.ArtifactID.Int32 = int32(m.ArtifactID)
+		dm.ArtifactID.Valid = true
+	}
+
+	if m.NamespaceID != 0 {
+		dm.NamespaceID.Int32 = int32(m.NamespaceID)
+		dm.NamespaceID.Valid = true
+	}
+
+	if m.ServiceID != 0 {
+		dm.ServiceID.Int32 = int32(m.ServiceID)
+		dm.ServiceID.Valid = true
+	}
+
+	return dm
 }
 
 func toDataMetadata(m eve.Metadata) data.Metadata {

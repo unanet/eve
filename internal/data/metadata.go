@@ -23,43 +23,43 @@ type Metadata struct {
 }
 
 type MetadataServiceMap struct {
-	Description   string       `db:"description"`
-	MetadataID    int          `db:"metadata_id"`
-	EnvironmentID int          `db:"environment_id"`
-	ArtifactID    int          `db:"artifact_id"`
-	NamespaceID   int          `db:"namespace_id"`
-	ServiceID     int          `db:"service_id"`
-	StackingOrder int          `db:"stacking_order"`
-	CreatedAt     sql.NullTime `db:"created_at"`
-	UpdatedAt     sql.NullTime `db:"updated_at"`
+	Description   string        `db:"description"`
+	MetadataID    int           `db:"metadata_id"`
+	EnvironmentID sql.NullInt32 `db:"environment_id"`
+	ArtifactID    sql.NullInt32 `db:"artifact_id"`
+	NamespaceID   sql.NullInt32 `db:"namespace_id"`
+	ServiceID     sql.NullInt32 `db:"service_id"`
+	StackingOrder int           `db:"stacking_order"`
+	CreatedAt     sql.NullTime  `db:"created_at"`
+	UpdatedAt     sql.NullTime  `db:"updated_at"`
 }
 
 type MetadataService struct {
-	MetadataID          int          `db:"metadata_id"`
-	Metadata            json.Text    `db:"metadata"`
-	MetadataDescription string       `db:"metadata_description"`
-	MapDescription      string       `db:"map_description"`
-	MapEnvironmentID    int          `db:"map_environment_id"`
-	MapArtifactID       int          `db:"map_artifact_id"`
-	MapNamespaceID      int          `db:"map_namespace_id"`
-	MapServiceID        int          `db:"map_service_id"`
-	StackingOrder       int          `db:"stacking_order"`
-	CreatedAt           sql.NullTime `db:"created_at"`
-	UpdatedAt           sql.NullTime `db:"updated_at"`
+	MetadataID          int           `db:"metadata_id"`
+	Metadata            json.Text     `db:"metadata"`
+	MetadataDescription string        `db:"metadata_description"`
+	MapDescription      string        `db:"map_description"`
+	MapEnvironmentID    sql.NullInt32 `db:"map_environment_id"`
+	MapArtifactID       sql.NullInt32 `db:"map_artifact_id"`
+	MapNamespaceID      sql.NullInt32 `db:"map_namespace_id"`
+	MapServiceID        sql.NullInt32 `db:"map_service_id"`
+	StackingOrder       int           `db:"stacking_order"`
+	CreatedAt           sql.NullTime  `db:"created_at"`
+	UpdatedAt           sql.NullTime  `db:"updated_at"`
 }
 
 type MetadataJob struct {
-	MetadataID          int          `db:"metadata_id"`
-	Metadata            json.Text    `db:"metadata"`
-	MetadataDescription string       `db:"metadata_description"`
-	MapDescription      string       `db:"map_description"`
-	MapEnvironmentId    int          `db:"map_environment_id"`
-	MapArtifactId       int          `db:"map_artifact_id"`
-	MapNamespaceId      int          `db:"map_namespace_id"`
-	MapJobId            int          `db:"map_job_id"`
-	StackingOrder       int          `db:"stacking_order"`
-	CreatedAt           sql.NullTime `db:"created_at"`
-	UpdatedAt           sql.NullTime `db:"updated_at"`
+	MetadataID          int           `db:"metadata_id"`
+	Metadata            json.Text     `db:"metadata"`
+	MetadataDescription string        `db:"metadata_description"`
+	MapDescription      string        `db:"map_description"`
+	MapEnvironmentId    sql.NullInt32 `db:"map_environment_id"`
+	MapArtifactId       sql.NullInt32 `db:"map_artifact_id"`
+	MapNamespaceId      sql.NullInt32 `db:"map_namespace_id"`
+	MapJobId            sql.NullInt32 `db:"map_job_id"`
+	StackingOrder       int           `db:"stacking_order"`
+	CreatedAt           sql.NullTime  `db:"created_at"`
+	UpdatedAt           sql.NullTime  `db:"updated_at"`
 }
 
 func (r *Repo) UpsertMergeMetadata(ctx context.Context, m *Metadata) error {
