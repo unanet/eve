@@ -130,6 +130,7 @@ func (m Manager) UpsertMergeMetadata(ctx context.Context, metadata *eve.Metadata
 	metadata.UpdatedAt = dataMetadata.UpdatedAt.Time
 	metadata.CreatedAt = dataMetadata.CreatedAt.Time
 	metadata.ID = dataMetadata.ID
+	metadata.Value = dataMetadata.Value.AsMap()
 	return nil
 }
 
