@@ -87,7 +87,7 @@ func (c MetadataController) deleteMetadataKey(w http.ResponseWriter, r *http.Req
 	metadataID := chi.URLParam(r, "metadata")
 	intID, err := strconv.Atoi(metadataID)
 	if err != nil {
-		render.Respond(w, r, errors.BadRequest("invalid metadata route parameter"))
+		render.Respond(w, r, errors.BadRequest("invalid metadata route parameter, required int value"))
 		return
 	}
 
@@ -110,7 +110,7 @@ func (c MetadataController) deleteMetadata(w http.ResponseWriter, r *http.Reques
 	metadataID := chi.URLParam(r, "metadata")
 	intID, err := strconv.Atoi(metadataID)
 	if err != nil {
-		render.Respond(w, r, errors.BadRequest("invalid metadata route parameter"))
+		render.Respond(w, r, errors.BadRequest("invalid metadata route parameter, required int value"))
 		return
 	}
 	err = c.manager.DeleteMetadata(r.Context(), intID)
@@ -137,7 +137,7 @@ func (c MetadataController) upsertMetadataServiceMap(w http.ResponseWriter, r *h
 	metadataID := chi.URLParam(r, "metadata")
 	intID, err := strconv.Atoi(metadataID)
 	if err != nil {
-		render.Respond(w, r, errors.BadRequest("invalid metadata route parameter"))
+		render.Respond(w, r, errors.BadRequest("invalid metadata route parameter, required int value"))
 		return
 	}
 
@@ -161,7 +161,7 @@ func (c MetadataController) deleteServiceMetadataMap(w http.ResponseWriter, r *h
 	metadataID := chi.URLParam(r, "metadata")
 	intID, err := strconv.Atoi(metadataID)
 	if err != nil {
-		render.Respond(w, r, errors.BadRequest("invalid metadata route parameter"))
+		render.Respond(w, r, errors.BadRequest("invalid metadata route parameter, required int value"))
 		return
 	}
 
@@ -181,13 +181,13 @@ func (c MetadataController) deleteServiceMetadataMap(w http.ResponseWriter, r *h
 }
 
 func (c MetadataController) getServiceMetadata(w http.ResponseWriter, r *http.Request) {
-	metadataID := chi.URLParam(r, "metadata")
-	intID, err := strconv.Atoi(metadataID)
+	service := chi.URLParam(r, "service")
+	serviceID, err := strconv.Atoi(service)
 	if err != nil {
-		render.Respond(w, r, errors.BadRequest("invalid metadata route parameter"))
+		render.Respond(w, r, errors.BadRequest("invalid service route parameter, required int value"))
 		return
 	}
-	result, err := c.manager.ServiceMetadata(r.Context(), intID)
+	result, err := c.manager.ServiceMetadata(r.Context(), serviceID)
 	if err != nil {
 		render.Respond(w, r, err)
 		return
