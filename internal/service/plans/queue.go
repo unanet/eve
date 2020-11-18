@@ -10,7 +10,6 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
-	json2 "gitlab.unanet.io/devops/eve/pkg/json"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
 )
 
@@ -24,19 +23,6 @@ type QueueWorker interface {
 	DeleteMessage(ctx context.Context, m *queue.M) error
 	// Message sends a message to a different queue given a url, not this one
 	Message(ctx context.Context, qUrl string, m *queue.M) error
-}
-
-type QueueRepo interface {
-	UpdateDeploymentReceiptHandle(ctx context.Context, id uuid.UUID, receiptHandle string) (*data.Deployment, error)
-	DeployedServicesByNamespaceID(ctx context.Context, namespaceID int) (data.DeployServices, error)
-	DeployedDatabaseInstancesByNamespaceID(ctx context.Context, namespaceID int) (data.DatabaseInstances, error)
-	UpdateDeploymentPlanLocation(ctx context.Context, id uuid.UUID, location json2.Text) error
-	UpdateDeploymentResult(ctx context.Context, id uuid.UUID) (*data.Deployment, error)
-	ClusterByID(ctx context.Context, id int) (*data.Cluster, error)
-	UpdateDeployedServiceVersion(ctx context.Context, id int, version string) error
-	UpdateDeployedMigrationVersion(ctx context.Context, id int, version string) error
-	UpdateDeployedJobVersion(ctx context.Context, id int, version string) error
-	DeployedJobsByNamespaceID(ctx context.Context, namespaceID int) (data.Jobs, error)
 }
 
 // API Queue Commands
@@ -144,7 +130,7 @@ type messageLogger func(format string, a ...interface{})
 
 type Queue struct {
 	worker     QueueWorker
-	repo       QueueRepo
+	repo       *data.Repo
 	uploader   eve.CloudUploader
 	callback   HttpCallback
 	downloader eve.CloudDownloader
@@ -152,7 +138,7 @@ type Queue struct {
 
 func NewQueue(
 	worker QueueWorker,
-	repo QueueRepo,
+	repo *data.Repo,
 	uploader eve.CloudUploader,
 	downloader eve.CloudDownloader,
 	httpCallBack HttpCallback) *Queue {

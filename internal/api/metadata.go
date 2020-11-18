@@ -30,18 +30,16 @@ func (c MetadataController) Setup(r chi.Router) {
 	r.Delete("/metadata/{metadata}/{key}", c.deleteMetadataKey)
 	r.Delete("/metadata/{metadata}", c.deleteMetadata)
 	r.Get("/metadata/{metadata}", c.getMetadata)
-	r.Put("/metadata/{metadata}/service", c.upsertMetadataServiceMap)
-	r.Delete("/metadata/{metadata}/service/{description}", c.deleteServiceMetadataMap)
+	r.Put("/metadata/{metadata}/service-maps", c.upsertMetadataServiceMap)
+	r.Delete("/metadata/{metadata}/service-maps/{description}", c.deleteServiceMetadataMap)
+	r.Get("/metadata/{metadata}/service-maps", c.getServiceMetadataMapsByMetadataID)
 
 	r.Get("/services/{service}/metadata", c.getServiceMetadata)
 	r.Get("/services/{service}/metadata-maps", c.getServiceMetadataMaps)
 }
 
 func (c MetadataController) metadata(w http.ResponseWriter, r *http.Request) {
-	serviceID := r.URL.Query().Get("service")
-	namespaceName := r.URL.Query().Get("namespace")
-
-	result, err := c.manager.Metadata(r.Context(), serviceID, namespaceName)
+	result, err := c.manager.Metadata(r.Context())
 	if err != nil {
 		render.Respond(w, r, err)
 		return
@@ -205,6 +203,22 @@ func (c MetadataController) getServiceMetadataMaps(w http.ResponseWriter, r *htt
 		return
 	}
 	result, err := c.manager.ServiceMetadataMaps(r.Context(), serviceID)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, result)
+}
+
+func (c MetadataController) getServiceMetadataMapsByMetadataID(w http.ResponseWriter, r *http.Request) {
+	metadata := chi.URLParam(r, "metadata")
+	metadataID, err := strconv.Atoi(metadata)
+	if err != nil {
+		render.Respond(w, r, errors.BadRequest("invalid metadata route parameter, required int value"))
+		return
+	}
+	result, err := c.manager.ServiceMetadataMapsByMetadataID(r.Context(), metadataID)
 	if err != nil {
 		render.Respond(w, r, err)
 		return

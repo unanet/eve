@@ -10,7 +10,6 @@ import (
 
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
-	"gitlab.unanet.io/devops/eve/internal/service/crud"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
@@ -19,12 +18,12 @@ import (
 )
 
 type ReleaseSvc struct {
-	repo              crud.Repo
+	repo              *data.Repo
 	artifactoryClient *artifactory.Client
 	gitlabClient      *gitlab.Client
 }
 
-func NewReleaseSvc(r crud.Repo, a *artifactory.Client, g *gitlab.Client) *ReleaseSvc {
+func NewReleaseSvc(r *data.Repo, a *artifactory.Client, g *gitlab.Client) *ReleaseSvc {
 	return &ReleaseSvc{
 		repo:              r,
 		artifactoryClient: a,

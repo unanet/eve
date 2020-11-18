@@ -19,19 +19,6 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/queue"
 )
 
-type Repo interface {
-	EnvironmentByName(ctx context.Context, name string) (*data.Environment, error)
-	NamespacesByEnvironmentID(ctx context.Context, environmentID int) (data.Namespaces, error)
-	ServiceArtifacts(ctx context.Context, namespaceIDs []int) (data.RequestArtifacts, error)
-	DatabaseInstanceArtifacts(ctx context.Context, namespaceIDs []int) (data.RequestArtifacts, error)
-	RequestServiceArtifactByEnvironment(ctx context.Context, artifactName string, environmentID int) (*data.RequestArtifact, error)
-	RequestDatabaseArtifactByEnvironment(ctx context.Context, databaseName string, environmentID int) (*data.RequestArtifact, error)
-	RequestJobArtifactByEnvironment(ctx context.Context, jobName string, environmentID int) (*data.RequestArtifact, error)
-	CreateDeployment(ctx context.Context, d *data.Deployment) error
-	UpdateDeploymentMessageID(ctx context.Context, id uuid.UUID, messageID string) error
-	JobArtifacts(ctx context.Context, namespaceIDs []int) (data.RequestArtifacts, error)
-}
-
 type StringList []string
 
 func (s StringList) Contains(value string) bool {
@@ -157,12 +144,12 @@ func (po DeploymentPlanOptions) ValidateWithContext(ctx context.Context) error {
 }
 
 type PlanGenerator struct {
-	repo Repo
+	repo *data.Repo
 	vq   VersionQuery
 	q    QWriter
 }
 
-func NewPlanGenerator(r Repo, v VersionQuery, q QWriter) *PlanGenerator {
+func NewPlanGenerator(r *data.Repo, v VersionQuery, q QWriter) *PlanGenerator {
 	return &PlanGenerator{
 		repo: r,
 		vq:   v,

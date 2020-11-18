@@ -108,25 +108,12 @@ func fromDataMetadataServiceList(m []data.MetadataService) []eve.MetadataService
 	return list
 }
 
-func (m Manager) Metadata(ctx context.Context, serviceID string, namespaceID string) ([]eve.Metadata, error) {
-	if len(serviceID) != 0 {
-		s, err := m.Service(ctx, serviceID, namespaceID)
-		if err != nil {
-			return nil, service.CheckForNotFoundError(err)
-		}
-		sMetadata, err := m.repo.ServiceMetadata(ctx, s.ID)
-		if err != nil {
-			return nil, errors.Wrap(err)
-		}
-
-		return fromDataMetadataServiceListToMetadataList(sMetadata), nil
-	} else {
-		metadata, err := m.repo.Metadata(ctx)
-		if err != nil {
-			return nil, errors.Wrap(err)
-		}
-		return fromDataMetadataList(metadata), nil
+func (m Manager) Metadata(ctx context.Context) ([]eve.Metadata, error) {
+	metadata, err := m.repo.Metadata(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err)
 	}
+	return fromDataMetadataList(metadata), nil
 }
 
 func (m Manager) CreateMetadata(ctx context.Context, metadata *eve.Metadata) error {
@@ -192,6 +179,15 @@ func (m *Manager) DeleteMetadata(ctx context.Context, id int) error {
 }
 
 func (m *Manager) ServiceMetadataMaps(ctx context.Context, id int) ([]eve.MetadataServiceMap, error) {
+	maps, err := m.repo.ServiceMetadata(ctx, id)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	return fromDataMetadataServiceList(maps), nil
+}
+
+func (m *Manager) ServiceMetadataMapsByMetadataID(ctx context.Context, id int) ([]eve.MetadataServiceMap, error) {
 	maps, err := m.repo.ServiceMetadata(ctx, id)
 	if err != nil {
 		return nil, service.CheckForNotFoundError(err)

@@ -276,6 +276,25 @@ func (r *Repo) DeleteMetadataServiceMap(ctx context.Context, metadataID int, map
 	return nil
 }
 
+func (r *Repo) ServiceMetadataMapsByMetadataID(ctx context.Context, metadataID int) (*MetadataServiceMap, error) {
+	var metadataMap MetadataServiceMap
+
+	row := r.db.QueryRowxContext(ctx, `
+		select description, metadata_id, environment_id, artifact_id, namespace_id, service_id, stacking_order, created_at, updated_at
+		from metadata_service_map
+		where metadata_id = $1
+		`, metadataID)
+	err := row.StructScan(&metadataMap)
+	if err != nil {
+		if goErrors.Is(err, sql.ErrNoRows) {
+			return nil, NotFoundErrorf("service metadata map with metadata_id: %d not found", metadataID)
+		}
+		return nil, errors.Wrap(err)
+	}
+
+	return &metadataMap, nil
+}
+
 func (r *Repo) ServiceMetadata(ctx context.Context, serviceID int) ([]MetadataService, error) {
 	log.Logger.Debug("metadata map", zap.Any("service", serviceID))
 	rows, err := r.db.QueryxContext(ctx, `
