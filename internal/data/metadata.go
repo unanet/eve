@@ -122,7 +122,7 @@ func (r *Repo) UpsertMetadata(ctx context.Context, m *Metadata) error {
 		RETURNING id, created_at
 	
 	`, m.Description, m.Value, m.CreatedAt, m.UpdatedAt).
-		Scan(&m.ID)
+		Scan(&m)
 
 	if err != nil {
 		return errors.Wrap(err)
