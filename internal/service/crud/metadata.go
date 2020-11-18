@@ -86,6 +86,28 @@ func fromDataMetadataServiceListToMetadataList(m []data.MetadataService) []eve.M
 	return list
 }
 
+func fromDataMetadataService(m data.MetadataService) eve.MetadataServiceMap {
+	return eve.MetadataServiceMap{
+		Description:   m.MapDescription,
+		MetadataID:    m.MetadataID,
+		EnvironmentID: int(m.MapEnvironmentID.Int32),
+		ArtifactID:    int(m.MapArtifactID.Int32),
+		NamespaceID:   int(m.MapNamespaceID.Int32),
+		ServiceID:     int(m.MapServiceID.Int32),
+		StackingOrder: m.StackingOrder,
+		CreatedAt:     m.CreatedAt.Time,
+		UpdatedAt:     m.UpdatedAt.Time,
+	}
+}
+
+func fromDataMetadataServiceList(m []data.MetadataService) []eve.MetadataServiceMap {
+	var list []eve.MetadataServiceMap
+	for _, x := range m {
+		list = append(list, fromDataMetadataService(x))
+	}
+	return list
+}
+
 func (m Manager) Metadata(ctx context.Context, serviceID string, namespaceID string) ([]eve.Metadata, error) {
 	if len(serviceID) != 0 {
 		s, err := m.Service(ctx, serviceID, namespaceID)
@@ -167,6 +189,15 @@ func (m *Manager) DeleteMetadata(ctx context.Context, id int) error {
 		return service.CheckForNotFoundError(err)
 	}
 	return nil
+}
+
+func (m *Manager) ServiceMetadataMaps(ctx context.Context, id int) ([]eve.MetadataServiceMap, error) {
+	maps, err := m.repo.ServiceMetadata(ctx, id)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	return fromDataMetadataServiceList(maps), nil
 }
 
 func (m *Manager) UpsertMetadataServiceMap(ctx context.Context, serviceMap *eve.MetadataServiceMap) error {

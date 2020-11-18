@@ -34,6 +34,7 @@ func (c MetadataController) Setup(r chi.Router) {
 	r.Delete("/metadata/{metadata}/service/{description}", c.deleteServiceMetadataMap)
 
 	r.Get("/services/{service}/metadata", c.getServiceMetadata)
+	r.Get("/services/{service}/metadata-maps", c.getServiceMetadataMaps)
 }
 
 func (c MetadataController) metadata(w http.ResponseWriter, r *http.Request) {
@@ -188,6 +189,22 @@ func (c MetadataController) getServiceMetadata(w http.ResponseWriter, r *http.Re
 		return
 	}
 	result, err := c.manager.ServiceMetadata(r.Context(), serviceID)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, result)
+}
+
+func (c MetadataController) getServiceMetadataMaps(w http.ResponseWriter, r *http.Request) {
+	service := chi.URLParam(r, "service")
+	serviceID, err := strconv.Atoi(service)
+	if err != nil {
+		render.Respond(w, r, errors.BadRequest("invalid service route parameter, required int value"))
+		return
+	}
+	result, err := c.manager.ServiceMetadataMaps(r.Context(), serviceID)
 	if err != nil {
 		render.Respond(w, r, err)
 		return
