@@ -276,23 +276,33 @@ func (r *Repo) DeleteMetadataServiceMap(ctx context.Context, metadataID int, map
 	return nil
 }
 
-func (r *Repo) ServiceMetadataMapsByMetadataID(ctx context.Context, metadataID int) (*MetadataServiceMap, error) {
-	var metadataMap MetadataServiceMap
-
-	row := r.db.QueryRowxContext(ctx, `
+func (r *Repo) ServiceMetadataMapsByMetadataID(ctx context.Context, metadataID int) ([]MetadataServiceMap, error) {
+	rows, err := r.db.QueryxContext(ctx, `
 		select description, metadata_id, environment_id, artifact_id, namespace_id, service_id, stacking_order, created_at, updated_at
 		from metadata_service_map
 		where metadata_id = $1
 		`, metadataID)
-	err := row.StructScan(&metadataMap)
+
 	if err != nil {
-		if goErrors.Is(err, sql.ErrNoRows) {
-			return nil, NotFoundErrorf("service metadata map with metadata_id: %d not found", metadataID)
-		}
 		return nil, errors.Wrap(err)
 	}
+	defer rows.Close()
 
-	return &metadataMap, nil
+	// Hydrate a slice of the records to the Data Structure (PodAutoscaleMap)
+	var msms []MetadataServiceMap
+	for rows.Next() {
+		if rows.Err() != nil {
+			return nil, errors.Wrap(err)
+		}
+		var msm MetadataServiceMap
+		err = rows.StructScan(&msm)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+		msms = append(msms, msm)
+	}
+
+	return msms, nil
 }
 
 func (r *Repo) ServiceMetadata(ctx context.Context, serviceID int) ([]MetadataService, error) {
@@ -342,6 +352,9 @@ func (r *Repo) ServiceMetadata(ctx context.Context, serviceID int) ([]MetadataSe
 	// Hydrate a slice of the records to the Data Structure (PodAutoscaleMap)
 	var msms []MetadataService
 	for rows.Next() {
+		if rows.Err() != nil {
+			return nil, errors.Wrap(err)
+		}
 		var msm MetadataService
 		err = rows.StructScan(&msm)
 		if err != nil {
