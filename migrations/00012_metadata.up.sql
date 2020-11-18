@@ -92,13 +92,7 @@ create unique index metadata_service_map_description_uindex
 
 create table metadata_history
 (
-    id serial not null
-        constraint metadata_history_pk
-            primary key,
-    metadata_id integer not null
-        constraint metadata_history_metadata_id_fk
-            references metadata
-            on update cascade on delete cascade,
+    metadata_id integer not null,
     description varchar(100) not null,
     value jsonb not null,
     created timestamp,
@@ -137,7 +131,6 @@ $$
 CREATE TRIGGER metadata_delete_trigger
     AFTER DELETE ON metadata
     FOR EACH ROW EXECUTE PROCEDURE metadata_delete();
-
 
 CREATE OR REPLACE FUNCTION metadata_update() RETURNS trigger AS
 $$
