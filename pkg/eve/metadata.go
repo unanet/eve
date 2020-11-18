@@ -2,6 +2,7 @@ package eve
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -80,24 +81,26 @@ func (m MetadataServiceMap) serviceIDSet() int {
 }
 
 func (m MetadataServiceMap) ValidateWithContext(ctx context.Context) error {
-	if err := validation.ValidateStructWithContext(ctx, &m,
-		validation.Field(&m.Description, validation.Required)); err != nil {
-		return err
-	}
-
-	if m.EnvironmentID+m.ArtifactID+m.NamespaceID+m.ServiceID == 0 {
-		return validation.NewError("400", "you must set either service_id, environment_id, namespace_id, or artifact_id")
-	}
-
-	if m.serviceIDSet()+m.environmentIDSet()+m.namespaceIDSet() > 1 {
-		return validation.NewError("400", "you may only set one of the 3 fields: service_id, namespace_id, or environment_id")
-	}
-
-	if m.artifactIDSet()+m.serviceIDSet() > 1 {
-		return validation.NewError("400", "you may only set the artifact_id or service_id field")
-	}
-
-	return nil
+	return validation.ValidateStructWithContext(ctx, &m,
+		validation.Field(&m.Description, validation.Required),
+		validation.Field(&m.ServiceID, validation.By(func(value interface{}) error {
+			if m.EnvironmentID+m.ArtifactID+m.NamespaceID+m.ServiceID == 0 {
+				return errors.New("you must set either service_id, environment_id, namespace_id, or artifact_id")
+			}
+			return nil
+		})),
+		validation.Field(&m.ServiceID, validation.By(func(value interface{}) error {
+			if m.serviceIDSet()+m.environmentIDSet()+m.namespaceIDSet() > 1 {
+				return errors.New("you may only set one of the 3 fields: service_id, namespace_id, or environment_id")
+			}
+			return nil
+		})),
+		validation.Field(&m.ArtifactID, validation.By(func(value interface{}) error {
+			if m.artifactIDSet()+m.serviceIDSet() > 1 {
+				return errors.New("you may only set the artifact_id or service_id field")
+			}
+			return nil
+		})))
 }
 
 type MetadataJobMap struct {
@@ -145,23 +148,24 @@ func (m MetadataJobMap) jobIDSet() int {
 }
 
 func (m MetadataJobMap) ValidateWithContext(ctx context.Context) error {
-	if err := validation.ValidateStructWithContext(ctx, &m,
-		validation.Field(&m.Description, validation.Required)); err != nil {
-		return err
-	}
-
-	if m.EnvironmentID+m.ArtifactID+m.NamespaceID+m.JobID == 0 {
-		return validation.NewError("400", "you must set either job_id, environment_id, namespace_id, or artifact_id")
-	}
-
-	if m.jobIDSet()+m.environmentIDSet()+m.namespaceIDSet() > 1 {
-		return validation.NewError("400", "you may only set one of the 3 fields: job_id, namespace_id, or environment_id")
-
-	}
-
-	if m.artifactIDSet()+m.jobIDSet() > 1 {
-		return validation.NewError("400", "you may only set the artifact_id or job_id field")
-	}
-
-	return nil
+	return validation.ValidateStructWithContext(ctx, &m,
+		validation.Field(&m.Description, validation.Required),
+		validation.Field(&m.JobID, validation.By(func(value interface{}) error {
+			if m.EnvironmentID+m.ArtifactID+m.NamespaceID+m.JobID == 0 {
+				return errors.New("you must set either job_id, environment_id, namespace_id, or artifact_id")
+			}
+			return nil
+		})),
+		validation.Field(&m.JobID, validation.By(func(value interface{}) error {
+			if m.jobIDSet()+m.environmentIDSet()+m.namespaceIDSet() > 1 {
+				return errors.New("you may only set one of the 3 fields: job_id, namespace_id, or environment_id")
+			}
+			return nil
+		})),
+		validation.Field(&m.ArtifactID, validation.By(func(value interface{}) error {
+			if m.artifactIDSet()+m.jobIDSet() > 1 {
+				return errors.New("you may only set the job_id or service_id field")
+			}
+			return nil
+		})))
 }
