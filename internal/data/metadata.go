@@ -122,7 +122,7 @@ func (r *Repo) UpsertMetadata(ctx context.Context, m *Metadata) error {
 		RETURNING id, created_at
 	
 	`, m.Description, m.Value, m.CreatedAt, m.UpdatedAt).
-		StructScan(&m)
+		StructScan(m)
 
 	if err != nil {
 		return errors.Wrap(err)
@@ -151,7 +151,7 @@ func (r *Repo) UpsertMetadataServiceMap(ctx context.Context, msm *MetadataServic
 	RETURNING created_at
 	
 	`, msm.Description, msm.MetadataID, msm.EnvironmentID, msm.ArtifactID, msm.NamespaceID, msm.ServiceID, msm.StackingOrder, msm.CreatedAt, msm.UpdatedAt).
-		StructScan(&msm)
+		StructScan(msm)
 
 	if err != nil {
 		return errors.Wrap(err)
