@@ -1,3 +1,4 @@
+delete from metadata_history;
 delete from metadata;
 delete from metadata_service_map;
 
