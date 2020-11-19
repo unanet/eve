@@ -11,7 +11,6 @@ import (
 	_ "github.com/lib/pq"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
-	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 type Job struct {
@@ -23,14 +22,19 @@ type Job struct {
 	ServiceAccount   string         `db:"service_account"`
 	ImageTag         string         `db:"image_tag"`
 	RunAs            int            `db:"run_as"`
-	Metadata         json.Text      `db:"metadata"`
 	JobName          string         `db:"job_name"`
 }
 
 type Jobs []Job
 
 func (r *Repo) UpdateDeployedJobVersion(ctx context.Context, id int, version string) error {
-	result, err := r.db.ExecContext(ctx, "update job set deployed_version = $1, updated_at = $2 where id = $3", version, time.Now().UTC(), id)
+	result, err := r.db.ExecContext(ctx, `
+		update job 
+		set 
+		    deployed_version = $1, 
+		    updated_at = $2 
+		where id = $3
+	`, version, time.Now().UTC(), id)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -57,7 +61,6 @@ func (r *Repo) DeployedJobsByNamespaceID(ctx context.Context, namespaceID int) (
 		    a.service_account as service_account,
 		    a.run_as as run_as,
 		    j.name as job_name,
-			jsonb_merge(e.metadata, jsonb_merge(a.metadata, jsonb_merge(ns.metadata, j.metadata))) as metadata,
 			COALESCE(j.override_version, ns.requested_version) as requested_version
 		from job as j 
 		    left join artifact a on j.artifact_id = a.id

@@ -30,9 +30,14 @@ func (c MetadataController) Setup(r chi.Router) {
 	r.Delete("/metadata/{metadata}/{key}", c.deleteMetadataKey)
 	r.Delete("/metadata/{metadata}", c.deleteMetadata)
 	r.Get("/metadata/{metadata}", c.getMetadata)
+
 	r.Put("/metadata/{metadata}/service-maps", c.upsertMetadataServiceMap)
 	r.Delete("/metadata/{metadata}/service-maps/{description}", c.deleteServiceMetadataMap)
 	r.Get("/metadata/{metadata}/service-maps", c.getServiceMetadataMapsByMetadataID)
+
+	r.Put("/metadata/{metadata}/job-maps", c.upsertMetadataJobMap)
+	r.Delete("/metadata/{metadata}/job-maps/{description}", c.deleteJobMetadataMap)
+	r.Get("/metadata/{metadata}/job-maps", c.getJobMetadataMapsByMetadataID)
 
 	r.Get("/services/{service}/metadata", c.getServiceMetadata)
 	r.Get("/services/{service}/metadata-maps", c.getServiceMetadataMaps)
@@ -212,6 +217,69 @@ func (c MetadataController) getServiceMetadataMaps(w http.ResponseWriter, r *htt
 }
 
 func (c MetadataController) getServiceMetadataMapsByMetadataID(w http.ResponseWriter, r *http.Request) {
+	metadata := chi.URLParam(r, "metadata")
+	metadataID, err := strconv.Atoi(metadata)
+	if err != nil {
+		render.Respond(w, r, errors.BadRequest("invalid metadata route parameter, required int value"))
+		return
+	}
+	result, err := c.manager.ServiceMetadataMapsByMetadataID(r.Context(), metadataID)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, result)
+}
+
+func (c MetadataController) upsertMetadataJobMap(w http.ResponseWriter, r *http.Request) {
+	metadataID := chi.URLParam(r, "metadata")
+	intID, err := strconv.Atoi(metadataID)
+	if err != nil {
+		render.Respond(w, r, errors.BadRequest("invalid metadata route parameter, required int value"))
+		return
+	}
+
+	var m eve.MetadataJobMap
+	if err = json.ParseBody(r, &m); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	m.MetadataID = intID
+
+	err = c.manager.UpsertMetadataJobMap(r.Context(), &m)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+	render.Respond(w, r, m)
+}
+
+func (c MetadataController) deleteJobMetadataMap(w http.ResponseWriter, r *http.Request) {
+	metadataID := chi.URLParam(r, "metadata")
+	intID, err := strconv.Atoi(metadataID)
+	if err != nil {
+		render.Respond(w, r, errors.BadRequest("invalid metadata route parameter, required int value"))
+		return
+	}
+
+	description := chi.URLParam(r, "description")
+	if description == "" {
+		render.Respond(w, r, errors.BadRequest("invalid description route parameter"))
+		return
+	}
+
+	err = c.manager.DeleteMetadataJobMap(r.Context(), intID, description)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusNoContent)
+}
+
+func (c MetadataController) getJobMetadataMapsByMetadataID(w http.ResponseWriter, r *http.Request) {
 	metadata := chi.URLParam(r, "metadata")
 	metadataID, err := strconv.Atoi(metadata)
 	if err != nil {

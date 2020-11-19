@@ -111,7 +111,6 @@ func fromDataJob(s data.Job) *eve.DeployJob {
 			DeployedVersion:  s.DeployedVersion.String,
 			ServiceAccount:   s.ServiceAccount,
 			ImageTag:         s.ImageTag,
-			Metadata:         s.Metadata.AsMap(),
 			Result:           eve.DeployArtifactResultNoop,
 			RunAs:            s.RunAs,
 		},
@@ -262,6 +261,11 @@ func (dq *Queue) createJobsDeployment(ctx context.Context, deploymentID uuid.UUI
 	}
 	jobs := fromDataJobs(dataJobs)
 	for _, x := range jobs {
+		metadata, mErr := dq.crud.JobMetadata(ctx, x.JobID)
+		if mErr != nil {
+			return nil, errors.Wrap(mErr)
+		}
+		x.Metadata = metadata
 		dq.matchArtifact(x.DeployArtifact, x.JobName, options, nSDeploymentPlan.Message)
 	}
 	if options.ArtifactsSupplied {

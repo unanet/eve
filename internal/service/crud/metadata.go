@@ -42,6 +42,36 @@ func toDataMetadataServiceMap(m eve.MetadataServiceMap) data.MetadataServiceMap 
 	return dm
 }
 
+func toDataMetadataJobMap(m eve.MetadataJobMap) data.MetadataJobMap {
+	dm := data.MetadataJobMap{
+		Description:   m.Description,
+		MetadataID:    m.MetadataID,
+		StackingOrder: m.StackingOrder,
+	}
+
+	if m.EnvironmentID != 0 {
+		dm.EnvironmentID.Int32 = int32(m.EnvironmentID)
+		dm.EnvironmentID.Valid = true
+	}
+
+	if m.ArtifactID != 0 {
+		dm.ArtifactID.Int32 = int32(m.ArtifactID)
+		dm.ArtifactID.Valid = true
+	}
+
+	if m.NamespaceID != 0 {
+		dm.NamespaceID.Int32 = int32(m.NamespaceID)
+		dm.NamespaceID.Valid = true
+	}
+
+	if m.JobID != 0 {
+		dm.JobID.Int32 = int32(m.JobID)
+		dm.JobID.Valid = true
+	}
+
+	return dm
+}
+
 func toDataMetadata(m eve.Metadata) data.Metadata {
 	return data.Metadata{
 		ID:          m.ID,
@@ -90,6 +120,28 @@ func fromDataMetadataServiceMaps(m []data.MetadataServiceMap) []eve.MetadataServ
 	var list []eve.MetadataServiceMap
 	for _, x := range m {
 		list = append(list, fromDataMetadataServiceMap(x))
+	}
+	return list
+}
+
+func fromDataMetadataJobMap(m data.MetadataJobMap) eve.MetadataJobMap {
+	return eve.MetadataJobMap{
+		Description:   m.Description,
+		MetadataID:    m.MetadataID,
+		EnvironmentID: int(m.EnvironmentID.Int32),
+		ArtifactID:    int(m.ArtifactID.Int32),
+		NamespaceID:   int(m.NamespaceID.Int32),
+		JobID:         int(m.JobID.Int32),
+		StackingOrder: m.StackingOrder,
+		CreatedAt:     m.CreatedAt.Time,
+		UpdatedAt:     m.UpdatedAt.Time,
+	}
+}
+
+func fromDataMetadataJobMaps(m []data.MetadataJobMap) []eve.MetadataJobMap {
+	var list []eve.MetadataJobMap
+	for _, x := range m {
+		list = append(list, fromDataMetadataJobMap(x))
 	}
 	return list
 }
@@ -218,6 +270,27 @@ func (m *Manager) ServiceMetadataMapsByMetadataID(ctx context.Context, id int) (
 	return fromDataMetadataServiceMaps(maps), nil
 }
 
+func (m *Manager) JobMetadataMapsByMetadataID(ctx context.Context, id int) ([]eve.MetadataJobMap, error) {
+	maps, err := m.repo.JobMetadataMapsByMetadataID(ctx, id)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	return fromDataMetadataJobMaps(maps), nil
+}
+
+func (m *Manager) UpsertMetadataJobMap(ctx context.Context, e *eve.MetadataJobMap) error {
+	dataMetadataJobMap := toDataMetadataJobMap(*e)
+	err := m.repo.UpsertMetadataJobMap(ctx, &dataMetadataJobMap)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	e.UpdatedAt = dataMetadataJobMap.UpdatedAt.Time
+	e.CreatedAt = dataMetadataJobMap.CreatedAt.Time
+	return nil
+}
+
 func (m *Manager) UpsertMetadataServiceMap(ctx context.Context, serviceMap *eve.MetadataServiceMap) error {
 	dataMetadataServiceMap := toDataMetadataServiceMap(*serviceMap)
 	err := m.repo.UpsertMetadataServiceMap(ctx, &dataMetadataServiceMap)
@@ -227,6 +300,15 @@ func (m *Manager) UpsertMetadataServiceMap(ctx context.Context, serviceMap *eve.
 
 	serviceMap.UpdatedAt = dataMetadataServiceMap.UpdatedAt.Time
 	serviceMap.CreatedAt = dataMetadataServiceMap.CreatedAt.Time
+	return nil
+}
+
+func (m *Manager) DeleteMetadataJobMap(ctx context.Context, metadataID int, description string) error {
+	err := m.repo.DeleteMetadataJobMap(ctx, metadataID, description)
+	if err != nil {
+		return service.CheckForNotFoundError(err)
+	}
+
 	return nil
 }
 
@@ -241,6 +323,20 @@ func (m *Manager) DeleteMetadataServiceMap(ctx context.Context, metadataID int, 
 
 func (m *Manager) ServiceMetadata(ctx context.Context, id int) (eve.MetadataField, error) {
 	metadata, err := m.repo.ServiceMetadata(ctx, id)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	var collectedMetadata []eve.MetadataField
+	for _, x := range metadata {
+		collectedMetadata = append(collectedMetadata, x.Metadata.AsMap())
+	}
+
+	return m.mergeMetadata(collectedMetadata), nil
+}
+
+func (m *Manager) JobMetadata(ctx context.Context, id int) (eve.MetadataField, error) {
+	metadata, err := m.repo.JobMetadata(ctx, id)
 	if err != nil {
 		return nil, service.CheckForNotFoundError(err)
 	}

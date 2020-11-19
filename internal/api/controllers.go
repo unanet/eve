@@ -15,8 +15,11 @@ func InitializeControllers(
 	return []mux.EveController{
 		NewPingController(),
 		NewDeploymentPlanController(deploymentPlanGenerator),
-		NewCrudController(manager),
+		NewPodController(manager),
 		NewReleaseController(releaseSvc),
 		NewMetadataController(manager),
+		NewEnvironmentController(manager),
+		NewNamespaceController(manager),
+		NewServiceController(manager),
 	}, nil
 }
