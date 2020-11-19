@@ -39,7 +39,6 @@ type PlanType string
 const (
 	DeploymentPlanTypeApplication PlanType = "application"
 	DeploymentPlanTypeMigration   PlanType = "migration"
-	DeploymentPlanTypeJob         PlanType = "job"
 )
 
 type ArtifactDefinition struct {
@@ -139,7 +138,7 @@ func (po DeploymentPlanOptions) HasNamespaceAliases() bool {
 func (po DeploymentPlanOptions) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, &po,
 		validation.Field(&po.Environment, validation.Required),
-		validation.Field(&po.Type, validation.Required, validation.In(DeploymentPlanTypeApplication, DeploymentPlanTypeMigration, DeploymentPlanTypeJob)),
+		validation.Field(&po.Type, validation.Required, validation.In(DeploymentPlanTypeApplication, DeploymentPlanTypeMigration)),
 		validation.Field(&po.User, validation.Required))
 }
 
@@ -271,11 +270,10 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 		var err error
 		if options.Type == DeploymentPlanTypeApplication {
 			dataArtifacts, err = d.repo.ServiceArtifacts(ctx, ns.ToIDs())
-		} else if options.Type == DeploymentPlanTypeMigration {
-			dataArtifacts, err = d.repo.DatabaseInstanceArtifacts(ctx, ns.ToIDs())
 		} else {
-			dataArtifacts, err = d.repo.JobArtifacts(ctx, ns.ToIDs())
+			dataArtifacts, err = d.repo.DatabaseInstanceArtifacts(ctx, ns.ToIDs())
 		}
+
 		if err != nil {
 			return errors.Wrap(err)
 		}

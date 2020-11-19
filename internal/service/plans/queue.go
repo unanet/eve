@@ -100,24 +100,24 @@ func fromDataDatabaseInstances(d data.DatabaseInstances) eve.DeployMigrations {
 	return list
 }
 
-func fromDataJob(s data.Job) *eve.DeployJob {
+func fromDataJob(j data.DeployJob) *eve.DeployJob {
 	return &eve.DeployJob{
-		JobID:   s.JobID,
-		JobName: s.JobName,
+		JobID:   j.JobID,
+		JobName: j.JobName,
 		DeployArtifact: &eve.DeployArtifact{
-			ArtifactID:       s.ArtifactID,
-			ArtifactName:     s.ArtifactName,
-			RequestedVersion: s.RequestedVersion,
-			DeployedVersion:  s.DeployedVersion.String,
-			ServiceAccount:   s.ServiceAccount,
-			ImageTag:         s.ImageTag,
+			ArtifactID:       j.ArtifactID,
+			ArtifactName:     j.ArtifactName,
+			RequestedVersion: j.RequestedVersion,
+			DeployedVersion:  j.DeployedVersion.String,
+			ServiceAccount:   j.ServiceAccount,
+			ImageTag:         j.ImageTag,
 			Result:           eve.DeployArtifactResultNoop,
-			RunAs:            s.RunAs,
+			RunAs:            j.RunAs,
 		},
 	}
 }
 
-func fromDataJobs(d data.Jobs) eve.DeployJobs {
+func fromDataJobs(d data.DeployJobs) eve.DeployJobs {
 	var list eve.DeployJobs
 	for _, x := range d {
 		list = append(list, fromDataJob(x))
