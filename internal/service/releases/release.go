@@ -137,18 +137,18 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 		v := artifactProps.Property("version")
 		log.Logger.Info("release properties", zap.String("branch", gitBranch), zap.String("sha", gitSHA), zap.String("project", gitProjectID), zap.String("version", v))
 
-		projectID, cerr := strconv.Atoi(gitProjectID)
-		if cerr != nil {
-			return success, errors.Wrap(cerr)
+		projectID, cErr := strconv.Atoi(gitProjectID)
+		if cErr != nil {
+			return success, errors.Wrap(cErr)
 		}
 
-		_, gerr := svc.gitlabClient.TagCommit(ctx, gitlab.TagOptions{
+		_, gErr := svc.gitlabClient.TagCommit(ctx, gitlab.TagOptions{
 			ProjectID: projectID,
 			TagName:   v,
 			GitHash:   gitSHA,
 		})
-		if gerr != nil {
-			return success, errors.Wrap(gerr)
+		if gErr != nil {
+			return success, errors.Wrap(gErr)
 		}
 	}
 

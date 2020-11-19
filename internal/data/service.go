@@ -29,7 +29,6 @@ type DeployService struct {
 	Count            int            `db:"count"`
 	EnvironmentID    int            `db:"environment_id"`
 	NamespaceID      int            `db:"namespace_id"`
-	Metadata         json.Text      `db:"metadata"`
 	LivelinessProbe  json.Text      `db:"liveliness_probe"`
 	ReadinessProbe   json.Text      `db:"readiness_probe"`
 	PodResource      json.Text      `db:"pod_resource"`
@@ -48,7 +47,6 @@ type Service struct {
 	ArtifactName    string         `db:"artifact_name"`
 	OverrideVersion sql.NullString `db:"override_version"`
 	DeployedVersion sql.NullString `db:"deployed_version"`
-	Metadata        json.Text      `db:"metadata"`
 	CreatedAt       sql.NullTime   `db:"created_at"`
 	UpdatedAt       sql.NullTime   `db:"updated_at"`
 	Name            string         `db:"name"`
@@ -58,7 +56,12 @@ type Service struct {
 }
 
 func (r *Repo) UpdateDeployedServiceVersion(ctx context.Context, id int, version string) error {
-	result, err := r.db.ExecContext(ctx, "update service set deployed_version = $1, updated_at = $2 where id = $3", version, time.Now().UTC(), id)
+	result, err := r.db.ExecContext(ctx, `
+		update service 
+		set deployed_version = $1, 
+		    updated_at = $2 
+		where id = $3
+	`, version, time.Now().UTC(), id)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -93,7 +96,6 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		   s.artifact_id,
 		   a.name as artifact_name, 
 		   s.deployed_version,
-		   jsonb_merge(e.metadata, jsonb_merge(a.metadata, jsonb_merge(n.metadata, s.metadata))) as metadata,
 		   COALESCE(s.override_version, n.requested_version) as requested_version,
 		   s.created_at,
 		   s.updated_at
@@ -130,10 +132,6 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		if err != nil {
 			return nil, errors.Wrap(err)
 		}
-		//services[i].Metadata, err = r.HydrateDeployServiceMetadata(ctx, services[i])
-		//if err != nil {
-		//	return nil, errors.Wrap(err)
-		//}
 	}
 
 	return services, nil
@@ -179,7 +177,18 @@ func (r *Repo) ServiceByName(ctx context.Context, name string, namespace string)
 	var service Service
 
 	row := r.db.QueryRowxContext(ctx, `
-		select s.*, n.name as namespace_name, a.name as artifact_name
+		select s.id, 
+		       s.name, 
+		       s.namespace_id, 
+		       s.artifact_id, 
+		       s.override_version,
+		       s.sticky_sessions,
+		       s.count,
+		       s.created_at,
+		       s.updated_at,
+		       s.node_group,
+		       n.name as namespace_name, 
+		       a.name as artifact_name
 		from service s 
 		    left join namespace n on s.namespace_id = n.id
 			left join artifact a on s.artifact_id = a.id
@@ -200,7 +209,18 @@ func (r *Repo) ServiceByID(ctx context.Context, id int) (*Service, error) {
 	var service Service
 
 	row := r.db.QueryRowxContext(ctx, `
-		select s.*, n.name as namespace_name, a.name as artifact_name
+		select s.id, 
+		       s.name, 
+		       s.namespace_id, 
+		       s.artifact_id, 
+		       s.override_version,
+		       s.sticky_sessions,
+		       s.count,
+		       s.created_at,
+		       s.updated_at,
+		       s.node_group,
+		       n.name as namespace_name, 
+		       a.name as artifact_name
 		from service s 
 		    left join namespace n on s.namespace_id = n.id
 			left join artifact a on s.artifact_id = a.id
@@ -264,9 +284,6 @@ func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) ([]Service, 
 func (r *Repo) UpdateService(ctx context.Context, service *Service) error {
 	service.UpdatedAt.Time = time.Now().UTC()
 	service.UpdatedAt.Valid = true
-	if service.Metadata == nil {
-		service.Metadata = json.EmptyJSONText
-	}
 
 	result, err := r.db.ExecContext(ctx, `
 		update service set 
@@ -275,18 +292,16 @@ func (r *Repo) UpdateService(ctx context.Context, service *Service) error {
 			artifact_id = $3,
 		   	override_version = $4,
 		    deployed_version = $5,
-		   	metadata = $6,
-			sticky_sessions = $7,
-		    count = $8,
-		    updated_at = $9
-		where id = $10
+			sticky_sessions = $6,
+		    count = $7,
+		    updated_at = $8
+		where id = $9
 	`,
 		service.Name,
 		service.NamespaceID,
 		service.ArtifactID,
 		service.OverrideVersion,
 		service.DeployedVersion,
-		service.Metadata,
 		service.StickySessions,
 		service.Count,
 		service.UpdatedAt,
@@ -313,45 +328,6 @@ func (r *Repo) UpdateServiceCount(ctx context.Context, serviceID int, count int)
 	result, err := r.db.ExecContext(ctx, `
 		update service set count = $1 where id = $2
 	`, count, serviceID)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	if affected == 0 {
-		return errors.NotFoundf("service id: %d not found", serviceID)
-	}
-	return nil
-}
-
-func (r *Repo) UpdateServiceMetadata(ctx context.Context, serviceID int, metadata map[string]interface{}) error {
-	m := json.FromMap(metadata)
-	result, err := r.db.ExecContext(ctx, `
-		update service set metadata = metadata || $1 where id = $2
-	`, m, serviceID)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	if affected == 0 {
-		return errors.NotFoundf("service id: %d not found", serviceID)
-	}
-	return nil
-}
-
-func (r *Repo) DeleteServiceMetadataKey(ctx context.Context, serviceID int, key string) error {
-	result, err := r.db.ExecContext(ctx, `
-		update service set metadata = metadata - $1 where id = $2
-	`, key, serviceID)
 	if err != nil {
 		return errors.Wrap(err)
 	}

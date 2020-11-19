@@ -36,8 +36,6 @@ func (s CrudController) Setup(r chi.Router) {
 
 	r.Get("/services/{service}", s.service)
 	r.Post("/services/{service}", s.updateService)
-	r.Patch("/services/{service}/metadata", s.updateMetadata)
-	r.Delete("/services/{service}/metadata/{key}", s.deleteMetadata)
 
 	r.Get("/pod-resources", s.podResources)
 	r.Get("/pod-autoscale", s.podAutoscale)
@@ -176,13 +174,9 @@ func (s CrudController) updateService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var service eve.Service
-	if err := json.ParseBody(r, &service); err != nil {
-		render.Respond(w, r, err)
+	if iErr := json.ParseBody(r, &service); iErr != nil {
+		render.Respond(w, r, iErr)
 		return
-	}
-
-	if service.Metadata == nil {
-		service.Metadata = make(map[string]interface{})
 	}
 
 	service.ID = intID
@@ -241,50 +235,4 @@ func (s CrudController) updateEnvironment(w http.ResponseWriter, r *http.Request
 	}
 
 	render.Respond(w, r, rs)
-}
-
-func (s CrudController) updateMetadata(w http.ResponseWriter, r *http.Request) {
-	serviceID := chi.URLParam(r, "service")
-	intID, err := strconv.Atoi(serviceID)
-	if err != nil {
-		render.Respond(w, r, errors.BadRequest("invalid service in route"))
-		return
-	}
-
-	var metadata map[string]interface{}
-	if err := json.ParseBody(r, &metadata); err != nil {
-		render.Respond(w, r, err)
-		return
-	}
-
-	service, err := s.manager.UpdateServiceMetadata(r.Context(), intID, metadata)
-	if err != nil {
-		render.Respond(w, r, err)
-		return
-	}
-
-	render.Respond(w, r, service.Metadata)
-}
-
-func (s CrudController) deleteMetadata(w http.ResponseWriter, r *http.Request) {
-	serviceID := chi.URLParam(r, "service")
-	intID, err := strconv.Atoi(serviceID)
-	if err != nil {
-		render.Respond(w, r, errors.BadRequest("invalid service route parameter"))
-		return
-	}
-
-	key := chi.URLParam(r, "key")
-	if key == "" {
-		render.Respond(w, r, errors.BadRequest("invalid key route parameter"))
-		return
-	}
-
-	service, err := s.manager.DeleteServiceMetadata(r.Context(), intID, key)
-	if err != nil {
-		render.Respond(w, r, err)
-		return
-	}
-
-	render.Respond(w, r, service.Metadata)
 }

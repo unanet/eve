@@ -3,8 +3,6 @@
 package data_test
 
 import (
-	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -26,13 +24,4 @@ func getRepo(t *testing.T) *data.Repo {
 	require.NoError(t, err)
 	cachedRepo = data.NewRepo(db)
 	return cachedRepo
-}
-
-func TestRepo_CreateDeployment(t *testing.T) {
-	repo := getRepo(t)
-	result, err := repo.DeployedServicesByNamespaceID(context.TODO(), 3)
-	require.NoError(t, err)
-
-	fmt.Println(string(result[0].Metadata))
-
 }

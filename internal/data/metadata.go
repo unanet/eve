@@ -163,7 +163,11 @@ func (r *Repo) GetMetadata(ctx context.Context, metadataID int) (*Metadata, erro
 	var metadata Metadata
 
 	row := r.db.QueryRowxContext(ctx, `
-		select id, description, value, created_at, updated_at
+		select id, 
+		       description, 
+		       value, 
+		       created_at, 
+		       updated_at
 		from metadata
 		where id = $1
 		`, metadataID)
@@ -182,7 +186,11 @@ func (r *Repo) GetMetadataByDescription(ctx context.Context, description string)
 	var metadata Metadata
 
 	row := r.db.QueryRowxContext(ctx, `
-		select id, description, value, created_at, updated_at
+		select id, 
+		       description, 
+		       value, 
+		       created_at, 
+		       updated_at
 		from metadata
 		where description = $1
 		`, description)
@@ -199,7 +207,12 @@ func (r *Repo) GetMetadataByDescription(ctx context.Context, description string)
 
 func (r *Repo) Metadata(ctx context.Context) ([]Metadata, error) {
 	rows, err := r.db.QueryxContext(ctx, `
-		select id, description, value, created_at, updated_at from metadata
+		select id, 
+		       description, 
+		       value, 
+		       created_at, 
+		       updated_at 
+		from metadata
 	`)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -278,7 +291,15 @@ func (r *Repo) DeleteMetadataServiceMap(ctx context.Context, metadataID int, map
 
 func (r *Repo) ServiceMetadataMapsByMetadataID(ctx context.Context, metadataID int) ([]MetadataServiceMap, error) {
 	rows, err := r.db.QueryxContext(ctx, `
-		select description, metadata_id, environment_id, artifact_id, namespace_id, service_id, stacking_order, created_at, updated_at
+		select description, 
+		       metadata_id, 
+		       environment_id, 
+		       artifact_id, 
+		       namespace_id, 
+		       service_id, 
+		       stacking_order, 
+		       created_at, 
+		       updated_at
 		from metadata_service_map
 		where metadata_id = $1
 		`, metadataID)

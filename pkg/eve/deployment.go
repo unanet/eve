@@ -50,21 +50,21 @@ func (dps DeploymentPlanStatus) String() string {
 }
 
 type DeployArtifact struct {
-	ArtifactID          int                    `json:"artifact_id"`
-	ArtifactName        string                 `json:"artifact_name"`
-	RequestedVersion    string                 `json:"requested_version"`
-	DeployedVersion     string                 `json:"deployed_version"`
-	AvailableVersion    string                 `json:"available_version"`
-	ServiceAccount      string                 `json:"service_account"`
-	ImageTag            string                 `json:"image_tag"`
-	Metadata            map[string]interface{} `json:"metadata"`
-	ArtifactoryFeed     string                 `json:"artifactory_feed"`
-	ArtifactoryPath     string                 `json:"artifactory_path"`
-	ArtifactFnPtr       string                 `json:"artifact_fn"`
-	ArtifactoryFeedType string                 `json:"artifactory_feed_type"`
-	Result              DeployArtifactResult   `json:"result"`
-	RunAs               int                    `json:"run_as"`
-	Deploy              bool                   `json:"-"`
+	ArtifactID          int                  `json:"artifact_id"`
+	ArtifactName        string               `json:"artifact_name"`
+	RequestedVersion    string               `json:"requested_version"`
+	DeployedVersion     string               `json:"deployed_version"`
+	AvailableVersion    string               `json:"available_version"`
+	ServiceAccount      string               `json:"service_account"`
+	ImageTag            string               `json:"image_tag"`
+	Metadata            MetadataField        `json:"metadata"`
+	ArtifactoryFeed     string               `json:"artifactory_feed"`
+	ArtifactoryPath     string               `json:"artifactory_path"`
+	ArtifactFnPtr       string               `json:"artifact_fn"`
+	ArtifactoryFeedType string               `json:"artifactory_feed_type"`
+	Result              DeployArtifactResult `json:"result"`
+	RunAs               int                  `json:"run_as"`
+	Deploy              bool                 `json:"-"`
 }
 
 func (da DeployArtifact) EvalImageTag() string {

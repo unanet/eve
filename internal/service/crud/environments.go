@@ -8,7 +8,6 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
-	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 func fromDataEnvironment(environment data.Environment) eve.Environment {
@@ -17,7 +16,6 @@ func fromDataEnvironment(environment data.Environment) eve.Environment {
 		Name:        environment.Name,
 		Alias:       environment.Alias,
 		Description: environment.Description,
-		Metadata:    environment.Metadata.AsMap(),
 		UpdatedAt:   environment.UpdatedAt.Time,
 	}
 }
@@ -73,6 +71,5 @@ func toDataEnvironment(environment eve.Environment) data.Environment {
 		Name:        environment.Name,
 		Alias:       environment.Alias,
 		Description: environment.Description,
-		Metadata:    json.FromMap(environment.Metadata),
 	}
 }

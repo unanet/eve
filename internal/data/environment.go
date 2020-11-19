@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"gitlab.unanet.io/devops/eve/pkg/errors"
-	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
 type Environment struct {
@@ -15,7 +14,6 @@ type Environment struct {
 	Name        string       `db:"name"`
 	Alias       string       `db:"alias"`
 	Description string       `db:"description"`
-	Metadata    json.Text    `db:"metadata"`
 	UpdatedAt   sql.NullTime `db:"updated_at"`
 }
 
@@ -24,7 +22,14 @@ type Environments []Environment
 func (r *Repo) EnvironmentByName(ctx context.Context, name string) (*Environment, error) {
 	var environment Environment
 
-	row := r.db.QueryRowxContext(ctx, "select * from environment where name = $1", name)
+	row := r.db.QueryRowxContext(ctx, `
+		select id,
+		       name,
+		       alias,
+		       description,
+		       updated_at
+		from environment where name = $1
+		`, name)
 	err := row.StructScan(&environment)
 	if err != nil {
 		if goErrors.Is(err, sql.ErrNoRows) {
@@ -39,7 +44,14 @@ func (r *Repo) EnvironmentByName(ctx context.Context, name string) (*Environment
 func (r *Repo) EnvironmentByID(ctx context.Context, id int) (*Environment, error) {
 	var environment Environment
 
-	row := r.db.QueryRowxContext(ctx, "select * from environment where id = $1", id)
+	row := r.db.QueryRowxContext(ctx, `
+		select id,
+		       name,
+		       alias,
+		       description,
+		       updated_at
+		from environment where id = $1
+		`, id)
 	err := row.StructScan(&environment)
 	if err != nil {
 		if goErrors.Is(err, sql.ErrNoRows) {
@@ -52,7 +64,12 @@ func (r *Repo) EnvironmentByID(ctx context.Context, id int) (*Environment, error
 }
 
 func (r *Repo) Environments(ctx context.Context) (Environments, error) {
-	rows, err := r.db.QueryxContext(ctx, "select id, name, description from environment order by name")
+	rows, err := r.db.QueryxContext(ctx, `
+		select id, 
+		       name, 
+		       description 
+		from environment order by name
+		`)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
@@ -74,12 +91,10 @@ func (r *Repo) UpdateEnvironment(ctx context.Context, environment *Environment) 
 	environment.UpdatedAt.Valid = true
 	result, err := r.db.ExecContext(ctx, `
 		update environment set 
-			metadata = $1,
-			description = $2,
-			updated_at = $3
+			description = $1,
+			updated_at = $2
 		where id = $4
 	`,
-		environment.Metadata,
 		environment.Description,
 		environment.UpdatedAt,
 		environment.ID)

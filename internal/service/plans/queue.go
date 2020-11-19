@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
+	"gitlab.unanet.io/devops/eve/internal/service/crud"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
@@ -57,7 +58,6 @@ func fromDataService(s data.DeployService) *eve.DeployService {
 			DeployedVersion:  s.DeployedVersion.String,
 			ServiceAccount:   s.ServiceAccount,
 			ImageTag:         s.ImageTag,
-			Metadata:         s.Metadata.AsMap(),
 			Result:           eve.DeployArtifactResultNoop,
 			RunAs:            s.RunAs,
 		},
@@ -134,17 +134,20 @@ type Queue struct {
 	uploader   eve.CloudUploader
 	callback   HttpCallback
 	downloader eve.CloudDownloader
+	crud       *crud.Manager
 }
 
 func NewQueue(
 	worker QueueWorker,
 	repo *data.Repo,
+	crud *crud.Manager,
 	uploader eve.CloudUploader,
 	downloader eve.CloudDownloader,
 	httpCallBack HttpCallback) *Queue {
 	return &Queue{
 		worker:     worker,
 		repo:       repo,
+		crud:       crud,
 		uploader:   uploader,
 		downloader: downloader,
 		callback:   httpCallBack,
@@ -230,6 +233,11 @@ func (dq *Queue) createServicesDeployment(ctx context.Context, deploymentID uuid
 	}
 	services := fromDataServices(dataServices)
 	for _, x := range services {
+		metadata, mErr := dq.crud.ServiceMetadata(ctx, x.ServiceID)
+		if mErr != nil {
+			return nil, errors.Wrap(mErr)
+		}
+		x.Metadata = metadata
 		dq.matchArtifact(x.DeployArtifact, x.ServiceName, options, nSDeploymentPlan.Message)
 	}
 	if options.ArtifactsSupplied {
@@ -322,9 +330,9 @@ func (dq *Queue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 	}
 
 	if len(options.CallbackURL) > 0 {
-		err := dq.callback.Post(ctx, options.CallbackURL, nsDeploymentPlan)
-		if err != nil {
-			dq.Logger(ctx).Warn("callback failed", zap.String("callback_url", options.CallbackURL))
+		cErr := dq.callback.Post(ctx, options.CallbackURL, nsDeploymentPlan)
+		if cErr != nil {
+			dq.Logger(ctx).Warn("callback failed", zap.String("callback_url", options.CallbackURL), zap.Error(cErr))
 		}
 	}
 
@@ -421,8 +429,8 @@ func (dq *Queue) updateDeployment(ctx context.Context, m *queue.M) error {
 	}
 
 	if len(plan.CallbackURL) > 0 {
-		err := dq.callback.Post(ctx, plan.CallbackURL, plan)
-		if err != nil {
+		cErr := dq.callback.Post(ctx, plan.CallbackURL, plan)
+		if cErr != nil {
 			dq.Logger(ctx).Warn("callback failed", zap.String("callback_url", plan.CallbackURL))
 		}
 	}
