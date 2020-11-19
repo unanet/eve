@@ -12,7 +12,7 @@ type RestError struct {
 	OriginalError error  `json:"-"`
 }
 
-func (re *RestError) Error() string {
+func (re RestError) Error() string {
 	return re.Message
 }
 
