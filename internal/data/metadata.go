@@ -270,7 +270,7 @@ func (r *Repo) DeleteMetadataKey(ctx context.Context, metadataID int, key string
 	err := r.db.QueryRowxContext(ctx, `
 		UPDATE metadata SET value = value - $1 WHERE id = $2
 		RETURNING id, metadata, description, created_at, updated_at
-	`, key, metadataID).Scan(&metadata)
+	`, key, metadataID).StructScan(&metadata)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
