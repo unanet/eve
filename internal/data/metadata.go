@@ -268,8 +268,8 @@ func (r *Repo) Metadata(ctx context.Context) ([]Metadata, error) {
 func (r *Repo) DeleteMetadataKey(ctx context.Context, metadataID int, key string) (*Metadata, error) {
 	var metadata Metadata
 	err := r.db.QueryRowxContext(ctx, `
-		UPDATE metadata SET value = value - $1 WHERE id = $2
-		RETURNING id, metadata, description, created_at, updated_at
+		UPDATE metadata SET value = metadata.value - $1 WHERE id = $2
+		RETURNING id, value, description, created_at, updated_at
 	`, key, metadataID).StructScan(&metadata)
 	if err != nil {
 		return nil, errors.Wrap(err)
