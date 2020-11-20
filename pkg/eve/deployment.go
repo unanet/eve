@@ -83,17 +83,18 @@ func (da DeployArtifact) EvalImageTag() string {
 
 type DeployService struct {
 	*DeployArtifact
-	ServiceID       int    `json:"service_id"`
-	ServicePort     int    `json:"service_port"`
-	MetricsPort     int    `json:"metrics_port"`
-	ServiceName     string `json:"service_name"`
-	StickySessions  bool   `json:"sticky_sessions"`
-	NodeGroup       string `json:"node_group"`
-	Count           int    `json:"count"`
-	LivelinessProbe []byte `json:"liveliness_probe"`
-	ReadinessProbe  []byte `json:"readiness_probe"`
-	Autoscaling     []byte `json:"autoscaling"`
-	PodResource     []byte `json:"pod_resource"`
+	ServiceID        int    `json:"service_id"`
+	ServicePort      int    `json:"service_port"`
+	MetricsPort      int    `json:"metrics_port"`
+	ServiceName      string `json:"service_name"`
+	StickySessions   bool   `json:"sticky_sessions"`
+	NodeGroup        string `json:"node_group"`
+	Count            int    `json:"count"`
+	LivelinessProbe  []byte `json:"liveliness_probe"`
+	ReadinessProbe   []byte `json:"readiness_probe"`
+	Autoscaling      []byte `json:"autoscaling"`
+	PodResource      []byte `json:"pod_resource"`
+	SuccessExitCodes string `json:"success_exit_codes"`
 }
 
 type DeployServices []*DeployService
@@ -171,8 +172,10 @@ func (ds DeployMigrations) ToDeploy() DeployMigrations {
 
 type DeployJob struct {
 	*DeployArtifact
-	JobID   int    `json:"job_id"`
-	JobName string `json:"job_name"`
+	JobID            int    `json:"job_id"`
+	JobName          string `json:"job_name"`
+	NodeGroup        string `json:"node_group"`
+	SuccessExitCodes string `json:"success_exit_codes"`
 }
 
 type DeployJobs []*DeployJob
@@ -214,17 +217,18 @@ func (n NamespaceRequests) ToIDs() []int {
 }
 
 type NSDeploymentPlan struct {
-	DeploymentID     uuid.UUID            `json:"deployment_id"`
-	Namespace        *NamespaceRequest    `json:"namespace"`
-	EnvironmentName  string               `json:"environment_name"`
-	EnvironmentAlias string               `json:"environment_alias"`
-	Services         DeployServices       `json:"services,omitempty"`
-	Migrations       DeployMigrations     `json:"migrations,omitempty"`
-	Jobs             DeployJobs           `json:"jobs,omitempty"`
-	Messages         []string             `json:"messages,omitempty"`
-	SchQueueUrl      string               `json:"-"`
-	CallbackURL      string               `json:"callback_url"`
-	Status           DeploymentPlanStatus `json:"status"`
+	DeploymentID      uuid.UUID            `json:"deployment_id"`
+	Namespace         *NamespaceRequest    `json:"namespace"`
+	EnvironmentName   string               `json:"environment_name"`
+	EnvironmentAlias  string               `json:"environment_alias"`
+	Services          DeployServices       `json:"services,omitempty"`
+	Migrations        DeployMigrations     `json:"migrations,omitempty"`
+	Jobs              DeployJobs           `json:"jobs,omitempty"`
+	Messages          []string             `json:"messages,omitempty"`
+	SchQueueUrl       string               `json:"-"`
+	CallbackURL       string               `json:"callback_url"`
+	Status            DeploymentPlanStatus `json:"status"`
+	MetadataOverrides MetadataField        `json:"metadata_overrides"`
 }
 
 // DeploymentPlanType is a helper method to know if we are deploying migrations or services

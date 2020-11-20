@@ -26,6 +26,7 @@ type DeployJob struct {
 	NamespaceID      int            `db:"namespace_id"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
+	SuccessExitCodes string         `db:"success_exit_codes"`
 }
 
 type DeployJobs []DeployJob
@@ -78,6 +79,7 @@ func (r *Repo) DeployedJobsByNamespaceID(ctx context.Context, namespaceID int) (
 		   a.metrics_port,
 		   a.service_account,
            j.node_group,
+		   j.success_exit_codes,
            j.name as job_name,
 		   a.run_as as run_as,
 		   j.artifact_id,

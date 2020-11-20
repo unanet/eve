@@ -35,6 +35,7 @@ type DeployService struct {
 	Autoscaling      json.Text      `db:"autoscaling"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
+	SuccessExitCodes string         `db:"success_exit_codes"`
 }
 
 type DeployServices []DeployService
@@ -90,6 +91,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		   a.service_account,
 		   s.sticky_sessions,
            s.node_group,
+		   s.success_exit_codes,
 		   s.count,
            s.name as service_name,
 		   a.run_as as run_as,

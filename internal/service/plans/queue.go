@@ -43,14 +43,16 @@ type HttpCallback interface {
 
 func fromDataService(s data.DeployService) *eve.DeployService {
 	return &eve.DeployService{
-		ServiceID:       s.ServiceID,
-		ServicePort:     s.ServicePort,
-		MetricsPort:     s.MetricsPort,
-		ServiceName:     s.ServiceName,
-		StickySessions:  s.StickySessions,
-		Count:           s.Count,
-		LivelinessProbe: s.LivelinessProbe,
-		ReadinessProbe:  s.ReadinessProbe,
+		ServiceID:        s.ServiceID,
+		ServicePort:      s.ServicePort,
+		MetricsPort:      s.MetricsPort,
+		ServiceName:      s.ServiceName,
+		StickySessions:   s.StickySessions,
+		Count:            s.Count,
+		LivelinessProbe:  s.LivelinessProbe,
+		ReadinessProbe:   s.ReadinessProbe,
+		NodeGroup:        s.NodeGroup,
+		SuccessExitCodes: s.SuccessExitCodes,
 		DeployArtifact: &eve.DeployArtifact{
 			ArtifactID:       s.ArtifactID,
 			ArtifactName:     s.ArtifactName,
@@ -102,8 +104,10 @@ func fromDataDatabaseInstances(d data.DatabaseInstances) eve.DeployMigrations {
 
 func fromDataJob(j data.DeployJob) *eve.DeployJob {
 	return &eve.DeployJob{
-		JobID:   j.JobID,
-		JobName: j.JobName,
+		JobID:            j.JobID,
+		JobName:          j.JobName,
+		NodeGroup:        j.NodeGroup,
+		SuccessExitCodes: j.SuccessExitCodes,
 		DeployArtifact: &eve.DeployArtifact{
 			ArtifactID:       j.ArtifactID,
 			ArtifactName:     j.ArtifactName,
