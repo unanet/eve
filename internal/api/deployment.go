@@ -22,7 +22,6 @@ func NewDeploymentPlanController(planGenerator *plans.PlanGenerator) *Deployment
 
 func (c DeploymentsController) Setup(r chi.Router) {
 	r.Post("/deployment-plans", c.createDeploymentPlan)
-	r.Post("/job-plans", c.createJobPlan)
 }
 
 func (c DeploymentsController) createDeploymentPlan(w http.ResponseWriter, r *http.Request) {
@@ -44,8 +43,4 @@ func (c DeploymentsController) createDeploymentPlan(w http.ResponseWriter, r *ht
 		render.Status(r, http.StatusAccepted)
 	}
 	render.Respond(w, r, options)
-}
-
-func (c DeploymentsController) createJobPlan(w http.ResponseWriter, r *http.Request) {
-
 }
