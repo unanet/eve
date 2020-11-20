@@ -63,6 +63,7 @@ type DeployArtifact struct {
 	ArtifactFnPtr       string               `json:"artifact_fn"`
 	ArtifactoryFeedType string               `json:"artifactory_feed_type"`
 	Result              DeployArtifactResult `json:"result"`
+	ExitCode            int                  `json:"exit_code""`
 	RunAs               int                  `json:"run_as"`
 	Deploy              bool                 `json:"-"`
 }
