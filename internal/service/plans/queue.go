@@ -322,11 +322,12 @@ func (dq *Queue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 	}
 
 	var nsDeploymentPlan *eve.NSDeploymentPlan
-	if options.Type == DeploymentPlanTypeApplication {
+	switch options.Type {
+	case DeploymentPlanTypeApplication:
 		nsDeploymentPlan, err = dq.createServicesDeployment(ctx, deployment.ID, options)
-	} else if options.Type == DeploymentPlanTypeMigration {
+	case DeploymentPlanTypeMigration:
 		nsDeploymentPlan, err = dq.createMigrationsDeployment(ctx, deployment.ID, options)
-	} else {
+	case DeploymentPlanTypeJob:
 		nsDeploymentPlan, err = dq.createJobsDeployment(ctx, deployment.ID, options)
 	}
 	if err != nil {

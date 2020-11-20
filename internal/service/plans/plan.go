@@ -39,6 +39,7 @@ type PlanType string
 const (
 	DeploymentPlanTypeApplication PlanType = "application"
 	DeploymentPlanTypeMigration   PlanType = "migration"
+	DeploymentPlanTypeJob         PlanType = "job"
 )
 
 type ArtifactDefinition struct {
@@ -108,6 +109,7 @@ type DeploymentPlanOptions struct {
 	Messages         []string            `json:"messages,omitempty"`
 	Type             PlanType            `json:"type"`
 	DeploymentIDs    []uuid.UUID         `json:"deployment_ids,omitempty"`
+	Metadata         eve.MetadataField   `json:"metadata"`
 }
 
 type NamespacePlanOptions struct {
@@ -121,6 +123,7 @@ type NamespacePlanOptions struct {
 	EnvironmentName   string                `json:"environment_name"`
 	EnvironmentAlias  string                `json:"environment_alias"`
 	Type              PlanType              `json:"type"`
+	Metadata          eve.MetadataField     `json:"metadata"`
 }
 
 func (po *DeploymentPlanOptions) Message(format string, a ...interface{}) {
@@ -138,7 +141,7 @@ func (po DeploymentPlanOptions) HasNamespaceAliases() bool {
 func (po DeploymentPlanOptions) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, &po,
 		validation.Field(&po.Environment, validation.Required),
-		validation.Field(&po.Type, validation.Required, validation.In(DeploymentPlanTypeApplication, DeploymentPlanTypeMigration)),
+		validation.Field(&po.Type, validation.Required, validation.In(DeploymentPlanTypeApplication, DeploymentPlanTypeMigration, DeploymentPlanTypeJob)),
 		validation.Field(&po.User, validation.Required))
 }
 
@@ -244,11 +247,12 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 		for _, x := range options.Artifacts {
 			var ra *data.RequestArtifact
 			var err error
-			if options.Type == DeploymentPlanTypeApplication {
+			switch options.Type {
+			case DeploymentPlanTypeApplication:
 				ra, err = d.repo.RequestServiceArtifactByEnvironment(ctx, x.Name, env.ID)
-			} else if options.Type == DeploymentPlanTypeMigration {
+			case DeploymentPlanTypeMigration:
 				ra, err = d.repo.RequestDatabaseArtifactByEnvironment(ctx, x.Name, env.ID)
-			} else {
+			case DeploymentPlanTypeJob:
 				ra, err = d.repo.RequestJobArtifactByEnvironment(ctx, x.Name, env.ID)
 			}
 			if err != nil {
@@ -268,10 +272,13 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 		// If no services were supplied, we get all services for the supplied namespaces
 		var dataArtifacts data.RequestArtifacts
 		var err error
-		if options.Type == DeploymentPlanTypeApplication {
+		switch options.Type {
+		case DeploymentPlanTypeApplication:
 			dataArtifacts, err = d.repo.ServiceArtifacts(ctx, ns.ToIDs())
-		} else {
+		case DeploymentPlanTypeMigration:
 			dataArtifacts, err = d.repo.DatabaseInstanceArtifacts(ctx, ns.ToIDs())
+		case DeploymentPlanTypeJob:
+			dataArtifacts, err = d.repo.JobArtifacts(ctx, ns.ToIDs())
 		}
 
 		if err != nil {

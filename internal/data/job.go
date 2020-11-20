@@ -6,6 +6,8 @@ import (
 	goErrors "errors"
 	"time"
 
+	"github.com/jmoiron/sqlx"
+
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 )
 
@@ -136,6 +138,42 @@ func (r *Repo) JobByName(ctx context.Context, name string, namespace string) (*J
 	}
 
 	return &job, nil
+}
+
+func (r *Repo) JobArtifacts(ctx context.Context, namespaceIDs []int) (RequestArtifacts, error) {
+	esql, args, err := sqlx.In(`
+		select distinct j.artifact_id, 
+		                a.function_pointer as function_pointer,
+		                a.name as artifact_name, 
+		                a.provider_group as provider_group,
+		                a.feed_type as feed_type,
+		                f.name as feed_name,
+		                COALESCE(j.override_version, ns.requested_version) as requested_version 
+		from job as j 
+			left join namespace as ns on ns.id = j.namespace_id
+			left join artifact as a on a.id = j.artifact_id
+			left join environment e on ns.environment_id = e.id
+			left join environment_feed_map efm on e.id = efm.environment_id
+			left join feed f on efm.feed_id = f.id and f.feed_type = a.feed_type
+		where f.name is not null and ns.id in (?)`, namespaceIDs)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	esql = r.db.Rebind(esql)
+	rows, err := r.db.QueryxContext(ctx, esql, args...)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	var jobs []RequestArtifact
+	for rows.Next() {
+		var job RequestArtifact
+		err = rows.StructScan(&job)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+		jobs = append(jobs, job)
+	}
+	return jobs, nil
 }
 
 func (r *Repo) JobByID(ctx context.Context, id int) (*Job, error) {
