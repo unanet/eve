@@ -118,22 +118,16 @@ func (c *Client) DeleteArtifact(ctx context.Context, repo, path string) (*Messag
 
 	r, err := tmpClient.Base(artifactoryBaseURL).Delete(fmt.Sprintf("%s/%s", repo, path)).Request()
 	if err != nil {
-		log.Logger.Debug("delete artifact client req", zap.Error(err))
 		return nil, err
 	}
-	log.Logger.Debug("delete artifact request obj", zap.Any("req", r))
 	resp, err := c.sling.Do(r.WithContext(ctx), &success, &failure)
 	if err != nil {
-		log.Logger.Debug("delete artifact client req do", zap.Error(err))
 		return nil, err
 	}
-
-	log.Logger.Debug("delete artifact client req status", zap.Any("Status", resp.Status), zap.Any("StatusCode", resp.StatusCode))
 
 	if http.StatusNoContent == resp.StatusCode {
 		return &success, nil
 	}
-	log.Logger.Debug("delete artifact client req failure", zap.Any("failure", failure))
 	return nil, failure
 
 }

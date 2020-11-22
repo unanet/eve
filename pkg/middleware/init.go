@@ -16,7 +16,7 @@ func init() {
 			var restError *errors.RestError
 			if goErrors.As(err, &restError) {
 				render.Status(r, restError.Code)
-				LogFromRequest(r).Debug("Known Internal Server Error", zap.Error(err))
+				LogFromRequest(r).Debug("Known Internal Rest Error", zap.Error(err))
 				render.DefaultResponder(w, r, restError)
 				return
 			}

@@ -27,10 +27,10 @@ func NewCallback(timeout time.Duration) *Callback {
 		Transport: ehttp.LoggingTransport,
 	}
 
-	sling := sling.New().Client(httpClient).
+	slingClient := sling.New().Client(httpClient).
 		Add("User-Agent", userAgent).
 		ResponseDecoder(json.NewJsonDecoder())
-	return &Callback{sling: sling}
+	return &Callback{sling: slingClient}
 }
 
 func (c *Callback) Post(ctx context.Context, url string, body interface{}) error {

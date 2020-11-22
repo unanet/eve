@@ -5,8 +5,6 @@ import (
 	goJSON "encoding/json"
 	"sort"
 
-	"go.uber.org/zap"
-
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/json"
 	"gitlab.unanet.io/devops/eve/pkg/log"
@@ -84,7 +82,6 @@ func (r *Repo) EnvironmentPodAutoscaleMap(ctx context.Context, environmentID int
 func (r *Repo) PodAutoscaleStacked(pams []PodAutoscaleMap) (json.Text, error) {
 	// Guard against no values set in the DB
 	if len(pams) == 0 {
-		log.Logger.Debug("no pod autoscale values set")
 		return json.EmptyJSONText, nil
 	}
 
@@ -112,7 +109,6 @@ func (r *Repo) PodAutoscaleStacked(pams []PodAutoscaleMap) (json.Text, error) {
 		targetAutoScaleSettings = mergemap.Merge(targetAutoScaleSettings, dataMap)
 	}
 	// Serialize the final struct back to a Byte Slice (JSON.Text) and return to the caller
-	log.Logger.Debug("hydrate pod autoscale value", zap.Any("autoscale", targetAutoScaleSettings))
 	return json.StructToJson(targetAutoScaleSettings)
 }
 

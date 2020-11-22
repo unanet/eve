@@ -55,37 +55,35 @@ func main() {
 	})
 
 	repo := data.NewRepo(db)
-
 	artifactoryClient := artifactory.NewClient(config.ArtifactoryConfig)
 	deploymentPlanGenerator := plans.NewPlanGenerator(repo, artifactoryClient, apiQueue)
 	crudManager := crud.NewManager(repo)
 	gitlabClient := gitlab.NewClient(config.GitlabConfig)
-
 	releaseSvc := releases.NewReleaseSvc(repo, artifactoryClient, gitlabClient)
 
 	controllers, err := api.InitializeControllers(deploymentPlanGenerator, crudManager, releaseSvc)
 	if err != nil {
 		log.Logger.Panic("Unable to Initialize the Controllers")
 	}
-	api, err := mux.NewApi(controllers, config.MuxConfig)
+	apiServer, err := mux.NewApi(controllers, config.MuxConfig)
 	if err != nil {
 		log.Logger.Panic("Failed to Create Api App", zap.Error(err))
 	}
 
-	s3Uploader := s3.NewUploader(awsSession, s3.Config{
-		Bucket: config.S3Bucket,
-	})
-
-	s3Downloader := s3.NewDownloader(awsSession)
-	httpCallBack := plans.NewCallback(config.HttpCallbackTimeout)
-	deploymentQueue := plans.NewQueue(queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout), repo, crudManager, s3Uploader, s3Downloader, httpCallBack)
+	deploymentQueue := plans.NewQueue(
+		queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout),
+		repo,
+		crudManager,
+		s3.NewUploader(awsSession, s3.Config{Bucket: config.S3Bucket}),
+		s3.NewDownloader(awsSession),
+		plans.NewCallback(config.HttpCallbackTimeout),
+	)
 
 	cron := plans.NewDeploymentCron(repo, deploymentPlanGenerator, config.CronTimeout)
 	cron.Start()
-
 	deploymentQueue.Start()
 
-	api.Start(func() {
+	apiServer.Start(func() {
 		cron.Stop()
 		deploymentQueue.Stop()
 	})
