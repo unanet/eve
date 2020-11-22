@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/render"
 
 	"gitlab.unanet.io/devops/eve/internal/service/plans"
+	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/eve/pkg/json"
 )
 
@@ -25,7 +26,7 @@ func (c DeploymentsController) Setup(r chi.Router) {
 }
 
 func (c DeploymentsController) createDeploymentPlan(w http.ResponseWriter, r *http.Request) {
-	var options plans.DeploymentPlanOptions
+	var options eve.DeploymentPlanOptions
 	if err := json.ParseBody(r, &options); err != nil {
 		render.Respond(w, r, err)
 		return

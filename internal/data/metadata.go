@@ -6,11 +6,8 @@ import (
 	goErrors "errors"
 	"time"
 
-	"go.uber.org/zap"
-
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/json"
-	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
 type Metadata struct {
@@ -413,7 +410,6 @@ func (r *Repo) ServiceMetadataMapsByMetadataID(ctx context.Context, metadataID i
 }
 
 func (r *Repo) JobMetadata(ctx context.Context, jobID int) ([]MetadataJob, error) {
-	log.Logger.Debug("metadata map", zap.Any("job", jobID))
 	rows, err := r.db.QueryxContext(ctx, `
 		WITH env_data AS (
 			select j.id as job_id, 
@@ -477,7 +473,6 @@ func (r *Repo) JobMetadata(ctx context.Context, jobID int) ([]MetadataJob, error
 }
 
 func (r *Repo) ServiceMetadata(ctx context.Context, serviceID int) ([]MetadataService, error) {
-	log.Logger.Debug("metadata map", zap.Any("service", serviceID))
 	rows, err := r.db.QueryxContext(ctx, `
 		WITH env_data AS (
 			select s.id as service_id, 

@@ -12,6 +12,7 @@ import (
 
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/eve/pkg/log"
 )
 
@@ -21,7 +22,7 @@ type DeploymentCronRepo interface {
 }
 
 type DeploymentQueuer interface {
-	QueuePlan(ctx context.Context, options *DeploymentPlanOptions) error
+	QueuePlan(ctx context.Context, options *eve.DeploymentPlanOptions) error
 }
 
 type DeploymentCron struct {
@@ -63,7 +64,7 @@ func (dc *DeploymentCron) scheduler(ctx context.Context, job *data.DeploymentCro
 		return nil, nil
 	}
 
-	var options DeploymentPlanOptions
+	var options eve.DeploymentPlanOptions
 	err = json.Unmarshal(job.PlanOptions, &options)
 	if err != nil {
 		return nil, errors.Wrap(err)

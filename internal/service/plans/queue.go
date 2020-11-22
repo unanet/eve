@@ -26,17 +26,6 @@ type QueueWorker interface {
 	Message(ctx context.Context, qUrl string, m *queue.M) error
 }
 
-// API Queue Commands
-const (
-	CommandScheduleDeployment string = "api-schedule-deployment"
-	CommandUpdateDeployment   string = "api-update-deployment"
-)
-
-// Scheduler Queue Commands
-const (
-	CommandDeployNamespace string = "sch-deploy-namespace"
-)
-
 type HttpCallback interface {
 	Post(ctx context.Context, url string, body interface{}) error
 }
@@ -171,7 +160,7 @@ func (dq *Queue) Stop() {
 	dq.worker.Stop()
 }
 
-func (dq *Queue) matchArtifact(a *eve.DeployArtifact, optName string, options NamespacePlanOptions, logger messageLogger) {
+func (dq *Queue) matchArtifact(a *eve.DeployArtifact, optName string, options eve.NamespacePlanOptions, logger messageLogger) {
 	// match services to be deployed
 	// we need to pass in the service/database name here to match if it was supplied as we should only match services/databases that were specified
 	match := options.Artifacts.Match(a.ArtifactID, optName, a.RequestedVersion)
@@ -200,7 +189,7 @@ func (dq *Queue) matchArtifact(a *eve.DeployArtifact, optName string, options Na
 	a.Deploy = true
 }
 
-func (dq *Queue) setupNSDeploymentPlan(ctx context.Context, deploymentID uuid.UUID, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
+func (dq *Queue) setupNSDeploymentPlan(ctx context.Context, deploymentID uuid.UUID, options eve.NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
 	cluster, err := dq.repo.ClusterByID(ctx, options.NamespaceRequest.ClusterID)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -212,6 +201,7 @@ func (dq *Queue) setupNSDeploymentPlan(ctx context.Context, deploymentID uuid.UU
 		CallbackURL:      options.CallbackURL,
 		SchQueueUrl:      cluster.SchQueueUrl,
 		DeploymentID:     deploymentID,
+		Type:             options.Type,
 	}
 
 	plan.Namespace.ClusterName = cluster.Name
@@ -225,7 +215,7 @@ func (dq *Queue) setupNSDeploymentPlan(ctx context.Context, deploymentID uuid.UU
 	return &plan, nil
 }
 
-func (dq *Queue) createServicesDeployment(ctx context.Context, deploymentID uuid.UUID, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
+func (dq *Queue) createServicesDeployment(ctx context.Context, deploymentID uuid.UUID, options eve.NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
 	nSDeploymentPlan, err := dq.setupNSDeploymentPlan(ctx, deploymentID, options)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -243,7 +233,8 @@ func (dq *Queue) createServicesDeployment(ctx context.Context, deploymentID uuid
 		x.Metadata = metadata
 		dq.matchArtifact(x.DeployArtifact, x.ServiceName, options, nSDeploymentPlan.Message)
 	}
-	if options.ArtifactsSupplied {
+	// Trap the restart command, since we don't care about matching a service (we just want to restart whatever version is currently deployed)
+	if options.ArtifactsSupplied && options.Type != eve.DeploymentPlanTypeRestart {
 		unmatched := options.Artifacts.UnMatched()
 		for _, x := range unmatched {
 			nSDeploymentPlan.Message("unmatched service: %s:%s", x.Name, x.AvailableVersion)
@@ -254,7 +245,7 @@ func (dq *Queue) createServicesDeployment(ctx context.Context, deploymentID uuid
 	return nSDeploymentPlan, nil
 }
 
-func (dq *Queue) createJobsDeployment(ctx context.Context, deploymentID uuid.UUID, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
+func (dq *Queue) createJobsDeployment(ctx context.Context, deploymentID uuid.UUID, options eve.NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
 	nSDeploymentPlan, err := dq.setupNSDeploymentPlan(ctx, deploymentID, options)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -282,7 +273,7 @@ func (dq *Queue) createJobsDeployment(ctx context.Context, deploymentID uuid.UUI
 	return nSDeploymentPlan, nil
 }
 
-func (dq *Queue) createMigrationsDeployment(ctx context.Context, deploymentID uuid.UUID, options NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
+func (dq *Queue) createMigrationsDeployment(ctx context.Context, deploymentID uuid.UUID, options eve.NamespacePlanOptions) (*eve.NSDeploymentPlan, error) {
 	nSDeploymentPlan, err := dq.setupNSDeploymentPlan(ctx, deploymentID, options)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -319,7 +310,7 @@ func (dq *Queue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 		return dq.rollbackError(ctx, m, err)
 	}
 
-	var options NamespacePlanOptions
+	var options eve.NamespacePlanOptions
 	err = json.Unmarshal(deployment.PlanOptions, &options)
 	if err != nil {
 		return dq.rollbackError(ctx, m, err)
@@ -327,11 +318,11 @@ func (dq *Queue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 
 	var nsDeploymentPlan *eve.NSDeploymentPlan
 	switch options.Type {
-	case DeploymentPlanTypeApplication:
+	case eve.DeploymentPlanTypeApplication, eve.DeploymentPlanTypeRestart:
 		nsDeploymentPlan, err = dq.createServicesDeployment(ctx, deployment.ID, options)
-	case DeploymentPlanTypeMigration:
+	case eve.DeploymentPlanTypeMigration:
 		nsDeploymentPlan, err = dq.createMigrationsDeployment(ctx, deployment.ID, options)
-	case DeploymentPlanTypeJob:
+	case eve.DeploymentPlanTypeJob:
 		nsDeploymentPlan, err = dq.createJobsDeployment(ctx, deployment.ID, options)
 	}
 	if err != nil {
@@ -346,6 +337,7 @@ func (dq *Queue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 	}
 
 	if options.DryRun || nsDeploymentPlan.NothingToDeploy() {
+		dq.Logger(ctx).Info("scheduleDeployment NothingToDeploy")
 		err = dq.worker.DeleteMessage(ctx, m)
 		if err != nil {
 			return dq.rollbackError(ctx, m, err)
@@ -364,7 +356,7 @@ func (dq *Queue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 		ReqID:   queue.GetReqID(ctx),
 		GroupID: nsDeploymentPlan.Namespace.GetQueueGroupID(),
 		Body:    mBody,
-		Command: CommandDeployNamespace,
+		Command: nsDeploymentPlan.Type.Command(),
 	})
 	if err != nil {
 		return dq.rollbackError(ctx, m, err)
@@ -381,11 +373,11 @@ func (dq *Queue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 func (dq *Queue) handleMessage(ctx context.Context, m *queue.M) error {
 	switch m.Command {
 	// This means it hasn't been sent to the scheduler yet
-	case CommandScheduleDeployment:
+	case queue.CommandScheduleDeployment:
 		return dq.scheduleDeployment(ctx, m)
 
 	// This means it came back from the scheduler
-	case CommandUpdateDeployment:
+	case queue.CommandUpdateDeployment:
 		return dq.updateDeployment(ctx, m)
 
 	default:

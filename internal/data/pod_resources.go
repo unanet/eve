@@ -5,11 +5,8 @@ import (
 	goJSON "encoding/json"
 	"sort"
 
-	"go.uber.org/zap"
-
 	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/json"
-	"gitlab.unanet.io/devops/eve/pkg/log"
 	"gitlab.unanet.io/devops/eve/pkg/mergemap"
 )
 
@@ -33,26 +30,18 @@ func (a PodResourcesByStackingOrder) Less(i, j int) bool {
 func (a PodResourcesByStackingOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
 func (r *Repo) NamespacePodResourcesMap(ctx context.Context, namespaceID int) ([]PodResourcesMap, error) {
-	log.Logger.Debug("namespace pod resources map", zap.Int("namespace", namespaceID))
 	return r.PodResourcesMap(ctx, 0, 0, namespaceID, 0)
 }
 
 func (r *Repo) EnvironmentPodResourcesMap(ctx context.Context, environmentID int) ([]PodResourcesMap, error) {
-	log.Logger.Debug("environment pod resource", zap.Int("environment", environmentID))
 	return r.PodResourcesMap(ctx, 0, environmentID, 0, 0)
 }
 
 func (r *Repo) ArtifactPodResourcesMap(ctx context.Context, artifactID, environmentID, namespaceID int) ([]PodResourcesMap, error) {
-	log.Logger.Debug("artifact pod resource",
-		zap.Any("artifact", artifactID),
-		zap.Any("environment", environmentID),
-		zap.Any("namespace", namespaceID),
-	)
 	return r.PodResourcesMap(ctx, 0, environmentID, namespaceID, artifactID)
 }
 
 func (r *Repo) PodResourcesMap(ctx context.Context, serviceID, environmentID, namespaceID, artifactID int) ([]PodResourcesMap, error) {
-	log.Logger.Debug("pod resource map", zap.Any("service", serviceID))
 	rows, err := r.db.QueryxContext(ctx, `
 		SELECT
 		   prm.artifact_id,
@@ -104,7 +93,6 @@ func (r *Repo) PodResourcesMap(ctx context.Context, serviceID, environmentID, na
 func (r *Repo) PodResourcesStacked(prms []PodResourcesMap) (json.Text, error) {
 	// Guard against no values set in the DB
 	if len(prms) == 0 {
-		log.Logger.Debug("no pod resource values set")
 		return json.EmptyJSONText, nil
 	}
 	// Explicitly Sort the slice based on stacking Order (this is done on ORDER BY, but I want to be explicit about it)
@@ -125,7 +113,6 @@ func (r *Repo) PodResourcesStacked(prms []PodResourcesMap) (json.Text, error) {
 		targetPodResourceSettings = mergemap.Merge(targetPodResourceSettings, dataMap)
 	}
 	// Serialize the final struct back to a Byte Slice (JSON.Text) and return to the caller
-	log.Logger.Debug("stack pod resource data", zap.Any("resources", targetPodResourceSettings))
 	return json.StructToJson(targetPodResourceSettings)
 }
 

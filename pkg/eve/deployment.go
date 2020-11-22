@@ -5,13 +5,35 @@ import (
 	"strings"
 
 	uuid "github.com/satori/go.uuid"
+
+	"gitlab.unanet.io/devops/eve/pkg/queue"
+)
+
+const (
+	// ArtifactoryFeedTypeDocker is exposed in eve (and not used) but used in eve-sch
+	// ask Casey why this is? :)
+	ArtifactoryFeedTypeDocker = "docker"
+)
+
+type PlanType string
+
+func (t PlanType) Command() string {
+	switch t {
+	case DeploymentPlanTypeRestart:
+		return queue.CommandRestartNamespace
+	default:
+		return queue.CommandDeployNamespace
+	}
+}
+
+const (
+	DeploymentPlanTypeApplication PlanType = "application"
+	DeploymentPlanTypeMigration   PlanType = "migration"
+	DeploymentPlanTypeJob         PlanType = "job"
+	DeploymentPlanTypeRestart     PlanType = "restart"
 )
 
 type DeployArtifactResult string
-
-const (
-	ArtifactoryFeedTypeDocker = "docker"
-)
 
 const (
 	DeployArtifactResultNoop    DeployArtifactResult = "noop"
@@ -230,23 +252,16 @@ type NSDeploymentPlan struct {
 	CallbackURL       string               `json:"callback_url"`
 	Status            DeploymentPlanStatus `json:"status"`
 	MetadataOverrides MetadataField        `json:"metadata_overrides"`
+	Type              PlanType
 }
 
-// DeploymentPlanType is a helper method to know if we are deploying migrations or services
-// it would be nice if the plan.go structs were in pkg instead of internal, then they could be
-// shared across Eve services...
+// DeploymentPlanType is a helper method to know what type of deployment plan (application,job,migration,restart)
 func (ns *NSDeploymentPlan) DeploymentPlanType() string {
-	if len(ns.Migrations) > 0 {
-		return "migration"
-	}
-	if len(ns.Services) > 0 {
-		return "application"
-	}
-	return "unknown"
+	return string(ns.Type)
 }
 
 func (ns *NSDeploymentPlan) NothingToDeploy() bool {
-	if len(ns.Services) == 0 && len(ns.Migrations) == 0 {
+	if len(ns.Services) == 0 && len(ns.Migrations) == 0 && len(ns.Jobs) == 0 {
 		return true
 	}
 	return false
@@ -265,6 +280,12 @@ func (ns *NSDeploymentPlan) NoopExist() bool {
 		}
 	}
 
+	for _, x := range ns.Jobs {
+		if x.Result == DeployArtifactResultNoop {
+			return true
+		}
+	}
+
 	return false
 }
 
@@ -276,6 +297,12 @@ func (ns *NSDeploymentPlan) Failed() bool {
 	}
 
 	for _, x := range ns.Migrations {
+		if x.Result == DeployArtifactResultFailed {
+			return true
+		}
+	}
+
+	for _, x := range ns.Jobs {
 		if x.Result == DeployArtifactResultFailed {
 			return true
 		}

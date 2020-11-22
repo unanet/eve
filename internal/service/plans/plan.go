@@ -2,12 +2,10 @@ package plans
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"strconv"
 	"strings"
 
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	uuid "github.com/satori/go.uuid"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
@@ -19,130 +17,8 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/queue"
 )
 
-type StringList []string
-
-func (s StringList) Contains(value string) bool {
-	for _, a := range s {
-		if a == value {
-			return true
-		}
-	}
-	return false
-}
-
 type VersionQuery interface {
 	GetLatestVersion(ctx context.Context, repository string, path string, version string) (string, error)
-}
-
-type PlanType string
-
-const (
-	DeploymentPlanTypeApplication PlanType = "application"
-	DeploymentPlanTypeMigration   PlanType = "migration"
-	DeploymentPlanTypeJob         PlanType = "job"
-)
-
-type ArtifactDefinition struct {
-	ID               int    `json:"id"`
-	Name             string `json:"name"`
-	ArtifactName     string `json:"artifact_name"`
-	RequestedVersion string `json:"requested_version,omitempty"`
-	AvailableVersion string `json:"available_version"`
-	ArtifactoryFeed  string `json:"artifactory_feed"`
-	ArtifactoryPath  string `json:"artifactory_path"`
-	FunctionPointer  string `json:"function_pointer"`
-	FeedType         string `json:"feed_type"`
-	Matched          bool   `json:"-"`
-}
-
-func (ad ArtifactDefinition) ArtifactoryRequestedVersion() string {
-	if ad.RequestedVersion == "" {
-		return "*"
-	} else if len(strings.Split(ad.RequestedVersion, ".")) < 4 {
-		return ad.RequestedVersion + ".*"
-	}
-	return ad.RequestedVersion
-}
-
-type ArtifactDefinitions []*ArtifactDefinition
-
-func (ad ArtifactDefinitions) ContainsVersion(name string, version string) bool {
-	for _, x := range ad {
-		if x.AvailableVersion == version && x.ArtifactName == name {
-			return true
-		}
-	}
-	return false
-}
-
-func (ad ArtifactDefinitions) Match(artifactID int, optName string, requestedVersion string) *ArtifactDefinition {
-	for _, x := range ad {
-		if x.Name != "" {
-			if x.Name == optName && strings.HasPrefix(x.AvailableVersion, requestedVersion) {
-				return x
-			}
-		} else if x.ID == artifactID && strings.HasPrefix(x.AvailableVersion, requestedVersion) {
-			return x
-		}
-	}
-	return nil
-}
-
-func (ad ArtifactDefinitions) UnMatched() ArtifactDefinitions {
-	var unmatched ArtifactDefinitions
-	for _, x := range ad {
-		if !x.Matched {
-			unmatched = append(unmatched, x)
-		}
-	}
-	return unmatched
-}
-
-type DeploymentPlanOptions struct {
-	Artifacts        ArtifactDefinitions `json:"artifacts"`
-	ForceDeploy      bool                `json:"force_deploy"`
-	User             string              `json:"user"`
-	DryRun           bool                `json:"dry_run"`
-	CallbackURL      string              `json:"callback_url"`
-	Environment      string              `json:"environment"`
-	NamespaceAliases StringList          `json:"namespaces,omitempty"`
-	Messages         []string            `json:"messages,omitempty"`
-	Type             PlanType            `json:"type"`
-	DeploymentIDs    []uuid.UUID         `json:"deployment_ids,omitempty"`
-	Metadata         eve.MetadataField   `json:"metadata"`
-}
-
-type NamespacePlanOptions struct {
-	NamespaceRequest  *eve.NamespaceRequest `json:"namespace"`
-	Artifacts         ArtifactDefinitions   `json:"artifacts"`
-	ArtifactsSupplied bool                  `json:"artifacts_supplied"`
-	ForceDeploy       bool                  `json:"force_deploy"`
-	DryRun            bool                  `json:"dry_run"`
-	CallbackURL       string                `json:"callback_url"`
-	EnvironmentID     int                   `json:"environment_id"`
-	EnvironmentName   string                `json:"environment_name"`
-	EnvironmentAlias  string                `json:"environment_alias"`
-	Type              PlanType              `json:"type"`
-	Metadata          eve.MetadataField     `json:"metadata"`
-}
-
-func (po *DeploymentPlanOptions) Message(format string, a ...interface{}) {
-	po.Messages = append(po.Messages, fmt.Sprintf(format, a...))
-}
-
-func (po DeploymentPlanOptions) HasArtifacts() bool {
-	return len(po.Artifacts) > 0
-}
-
-func (po DeploymentPlanOptions) HasNamespaceAliases() bool {
-	return len(po.NamespaceAliases) > 0
-}
-
-func (po DeploymentPlanOptions) ValidateWithContext(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, &po,
-		validation.Field(&po.Environment, validation.Required),
-		validation.Field(&po.Type, validation.Required, validation.In(DeploymentPlanTypeApplication, DeploymentPlanTypeMigration, DeploymentPlanTypeJob)),
-		validation.Field(&po.User, validation.Required))
 }
 
 type PlanGenerator struct {
@@ -159,7 +35,7 @@ func NewPlanGenerator(r *data.Repo, v VersionQuery, q QWriter) *PlanGenerator {
 	}
 }
 
-func (d *PlanGenerator) QueuePlan(ctx context.Context, options *DeploymentPlanOptions) error {
+func (d *PlanGenerator) QueuePlan(ctx context.Context, options *eve.DeploymentPlanOptions) error {
 	// make sure the environment name is valid
 	env, err := d.repo.EnvironmentByName(ctx, options.Environment)
 	if err != nil {
@@ -195,7 +71,7 @@ func (d *PlanGenerator) QueuePlan(ctx context.Context, options *DeploymentPlanOp
 	}
 
 	for _, ns := range namespaceRequests {
-		nsPlanOptions, marshalErr := json.StructToJson(&NamespacePlanOptions{
+		nsPlanOptions, marshalErr := json.StructToJson(&eve.NamespacePlanOptions{
 			NamespaceRequest:  ns,
 			ArtifactsSupplied: artifactsSupplied,
 			Artifacts:         options.Artifacts,
@@ -226,7 +102,7 @@ func (d *PlanGenerator) QueuePlan(ctx context.Context, options *DeploymentPlanOp
 			ID:      dataDeployment.ID,
 			GroupID: ns.GetQueueGroupID(),
 			ReqID:   middleware.GetReqID(ctx),
-			Command: CommandScheduleDeployment,
+			Command: queue.CommandScheduleDeployment,
 		}
 		if qErr := d.q.Message(ctx, &queueM); qErr != nil {
 			return errors.Wrap(qErr)
@@ -239,20 +115,20 @@ func (d *PlanGenerator) QueuePlan(ctx context.Context, options *DeploymentPlanOp
 	return nil
 }
 
-func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *data.Environment, options *DeploymentPlanOptions, ns eve.NamespaceRequests) error {
+func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *data.Environment, options *eve.DeploymentPlanOptions, ns eve.NamespaceRequests) error {
 	// If services were supplied, we check those against the database to make sure they are valid and pull
 	// required info needed to lookup in Artifactory
-	// It's important to note here that we're matching on the service/database name that's configured in the database which can be different than the artifact name.
+	// It's important to note here that we're matching on the service/database name that's configured in the database which can be different than the artifact name
 	if len(options.Artifacts) > 0 {
 		for _, x := range options.Artifacts {
 			var ra *data.RequestArtifact
 			var err error
 			switch options.Type {
-			case DeploymentPlanTypeApplication:
+			case eve.DeploymentPlanTypeApplication, eve.DeploymentPlanTypeRestart:
 				ra, err = d.repo.RequestServiceArtifactByEnvironment(ctx, x.Name, env.ID)
-			case DeploymentPlanTypeMigration:
+			case eve.DeploymentPlanTypeMigration:
 				ra, err = d.repo.RequestDatabaseArtifactByEnvironment(ctx, x.Name, env.ID)
-			case DeploymentPlanTypeJob:
+			case eve.DeploymentPlanTypeJob:
 				ra, err = d.repo.RequestJobArtifactByEnvironment(ctx, x.Name, env.ID)
 			}
 			if err != nil {
@@ -273,11 +149,11 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 		var dataArtifacts data.RequestArtifacts
 		var err error
 		switch options.Type {
-		case DeploymentPlanTypeApplication:
+		case eve.DeploymentPlanTypeApplication, eve.DeploymentPlanTypeRestart:
 			dataArtifacts, err = d.repo.ServiceArtifacts(ctx, ns.ToIDs())
-		case DeploymentPlanTypeMigration:
+		case eve.DeploymentPlanTypeMigration:
 			dataArtifacts, err = d.repo.DatabaseInstanceArtifacts(ctx, ns.ToIDs())
-		case DeploymentPlanTypeJob:
+		case eve.DeploymentPlanTypeJob:
 			dataArtifacts, err = d.repo.JobArtifacts(ctx, ns.ToIDs())
 		}
 
@@ -285,7 +161,7 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 			return errors.Wrap(err)
 		}
 		for _, x := range dataArtifacts {
-			options.Artifacts = append(options.Artifacts, &ArtifactDefinition{
+			options.Artifacts = append(options.Artifacts, &eve.ArtifactDefinition{
 				ID:               x.ArtifactID,
 				ArtifactName:     x.ArtifactName,
 				RequestedVersion: x.RequestedVersion,
@@ -300,7 +176,7 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 	return nil
 }
 
-func (d *PlanGenerator) validateNamespaces(ctx context.Context, env *data.Environment, options *DeploymentPlanOptions) (eve.NamespaceRequests, error) {
+func (d *PlanGenerator) validateNamespaces(ctx context.Context, env *data.Environment, options *eve.DeploymentPlanOptions) (eve.NamespaceRequests, error) {
 	// lets start with all the namespaces in the Env and filter it down based on additional information passed in.
 	namespacesToDeploy, err := d.repo.NamespacesByEnvironmentID(ctx, env.ID)
 	if err != nil {
@@ -345,9 +221,9 @@ func (d *PlanGenerator) validateNamespaces(ctx context.Context, env *data.Enviro
 	return namespaceRequests, nil
 }
 
-func (d *PlanGenerator) setArtifactoryVersions(ctx context.Context, options *DeploymentPlanOptions) error {
+func (d *PlanGenerator) setArtifactoryVersions(ctx context.Context, options *eve.DeploymentPlanOptions) error {
 	// now we query artifactory for the actual version
-	var artifacts ArtifactDefinitions
+	var artifacts eve.ArtifactDefinitions
 	for _, a := range options.Artifacts {
 		// if you didn't pass a full version, we need to add a wildcard so it work correctly to query artifactory
 		version, err := d.vq.GetLatestVersion(ctx, a.ArtifactoryFeed, a.ArtifactoryPath, a.ArtifactoryRequestedVersion())
