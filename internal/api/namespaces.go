@@ -29,6 +29,41 @@ func (c NamespaceController) Setup(r chi.Router) {
 	r.Post("/namespaces/{namespace}", c.updateNamespace)
 	r.Get("/namespaces/{namespace}/services", c.namespaceServices)
 	r.Get("/namespaces/{namespace}/services/{service}", c.service)
+	r.Get("/namespaces/{namespace}/jobs", c.namespaceJobs)
+	r.Get("/namespaces/{namespace}/jobs/{job}", c.job)
+}
+
+func (c NamespaceController) job(w http.ResponseWriter, r *http.Request) {
+	namespaceID := r.URL.Query().Get("namespace")
+	if namespaceID == "" {
+		namespaceID = chi.URLParam(r, "namespace")
+	}
+
+	if jobID := chi.URLParam(r, "job"); jobID != "" {
+		job, err := c.manager.Job(r.Context(), jobID, namespaceID)
+		if err != nil {
+			render.Respond(w, r, err)
+			return
+		}
+		render.Respond(w, r, job)
+	} else {
+		render.Respond(w, r, errors.NotFoundf("job not specified"))
+		return
+	}
+}
+
+func (c NamespaceController) namespaceJobs(w http.ResponseWriter, r *http.Request) {
+	if namespaceID := chi.URLParam(r, "namespace"); namespaceID != "" {
+		jobs, err := c.manager.JobsByNamespace(r.Context(), namespaceID)
+		if err != nil {
+			render.Respond(w, r, err)
+			return
+		}
+		render.Respond(w, r, jobs)
+	} else {
+		render.Respond(w, r, errors.NotFoundf("namespace not specified"))
+		return
+	}
 }
 
 func (c NamespaceController) namespaces(w http.ResponseWriter, r *http.Request) {

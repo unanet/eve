@@ -12,6 +12,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 
+	"gitlab.unanet.io/devops/eve/pkg/json"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
 )
 
@@ -37,7 +38,7 @@ func TestQ_Message(t *testing.T) {
 	m := queue.M{
 		ID:      uuid.NewV4(),
 		GroupID: "testing",
-		Body:    "blah",
+		Body:    json.Text("{\"blah:\",\"\"}"),
 	}
 	err := q.Message(context.TODO(), &m)
 	require.NoError(t, err)
@@ -46,7 +47,7 @@ func TestQ_Message(t *testing.T) {
 
 func TestQ_Receive(t *testing.T) {
 	q := GetQueue(t)
-	ms, err := q.Receive(context.TODO())
+	ms, err := q.Receive()
 	require.NoError(t, err)
 	for _, x := range ms {
 		fmt.Println(x)
@@ -59,7 +60,7 @@ func TestQ_Delete(t *testing.T) {
 		ID:            uuid.UUID{},
 		ReqID:         "",
 		GroupID:       "",
-		Body:          "",
+		Body:          json.EmptyJSONText,
 		ReceiptHandle: "",
 		MessageID:     "",
 		Command:       "",
