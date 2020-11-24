@@ -133,11 +133,32 @@ func (ds DeployServices) ToDeploy() DeployServices {
 }
 
 // ArtifactDeployResultMap is used to convert the array of deploy artifact results into a map
-type ArtifactDeployResultMap map[DeployArtifactResult]DeployServices
+type ArtifactJobResultMap map[DeployArtifactResult]DeployJobs
 
 // ToResultMap converts the array of results into a map by result
-func (ds DeployServices) ToResultMap() ArtifactDeployResultMap {
-	result := make(ArtifactDeployResultMap)
+func (dj DeployJobs) ToResultMap() ArtifactJobResultMap {
+	result := make(ArtifactJobResultMap)
+
+	for _, job := range dj {
+		switch job.Result {
+		case DeployArtifactResultFailed:
+			result[DeployArtifactResultFailed] = append(result[DeployArtifactResultFailed], job)
+		case DeployArtifactResultSuccess:
+			result[DeployArtifactResultSuccess] = append(result[DeployArtifactResultSuccess], job)
+		case DeployArtifactResultNoop:
+			result[DeployArtifactResultNoop] = append(result[DeployArtifactResultNoop], job)
+		}
+	}
+
+	return result
+}
+
+// ArtifactDeployResultMap is used to convert the array of deploy artifact results into a map
+type ArtifactServiceResultMap map[DeployArtifactResult]DeployServices
+
+// ToResultMap converts the array of results into a map by result
+func (ds DeployServices) ToResultMap() ArtifactServiceResultMap {
+	result := make(ArtifactServiceResultMap)
 
 	for _, svc := range ds {
 		switch svc.Result {
