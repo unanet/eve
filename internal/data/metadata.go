@@ -335,6 +335,43 @@ func (r *Repo) DeleteMetadataServiceMap(ctx context.Context, metadataID int, map
 	return nil
 }
 
+func (r *Repo) JobMetadataMaps(ctx context.Context, jobID int) ([]MetadataJobMap, error) {
+	rows, err := r.db.QueryxContext(ctx, `
+		select description, 
+		       metadata_id, 
+		       environment_id, 
+		       artifact_id, 
+		       namespace_id, 
+		       job_id, 
+		       stacking_order, 
+		       created_at, 
+		       updated_at
+		from metadata_job_map
+		where job_id = $1
+		`, jobID)
+
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	defer rows.Close()
+
+	// Hydrate a slice of the records to the Data Structure (PodAutoscaleMap)
+	var mjms []MetadataJobMap
+	for rows.Next() {
+		if rows.Err() != nil {
+			return nil, errors.Wrap(err)
+		}
+		var mjm MetadataJobMap
+		err = rows.StructScan(&mjm)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+		mjms = append(mjms, mjm)
+	}
+
+	return mjms, nil
+}
+
 func (r *Repo) JobMetadataMapsByMetadataID(ctx context.Context, metadataID int) ([]MetadataJobMap, error) {
 	rows, err := r.db.QueryxContext(ctx, `
 		select description, 

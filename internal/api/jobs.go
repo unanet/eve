@@ -37,34 +37,34 @@ func (c JobController) job(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if jobID := chi.URLParam(r, "job"); jobID != "" {
-		service, err := c.manager.Service(r.Context(), jobID, namespaceID)
+		job, err := c.manager.Job(r.Context(), jobID, namespaceID)
 		if err != nil {
 			render.Respond(w, r, err)
 			return
 		}
-		render.Respond(w, r, service)
+		render.Respond(w, r, job)
 	} else {
-		render.Respond(w, r, errors.NotFoundf("service not specified"))
+		render.Respond(w, r, errors.NotFoundf("job not specified"))
 		return
 	}
 }
 
 func (c JobController) updateJob(w http.ResponseWriter, r *http.Request) {
-	serviceID := chi.URLParam(r, "service")
-	intID, err := strconv.Atoi(serviceID)
+	jobID := chi.URLParam(r, "job")
+	intID, err := strconv.Atoi(jobID)
 	if err != nil {
-		render.Respond(w, r, errors.BadRequest("invalid service in route"))
+		render.Respond(w, r, errors.BadRequest("invalid job in route"))
 		return
 	}
 
-	var service eve.Service
-	if iErr := json.ParseBody(r, &service); iErr != nil {
+	var job eve.Job
+	if iErr := json.ParseBody(r, &job); iErr != nil {
 		render.Respond(w, r, iErr)
 		return
 	}
 
-	service.ID = intID
-	rs, err := c.manager.UpdateService(r.Context(), &service)
+	job.ID = intID
+	rs, err := c.manager.UpdateJob(r.Context(), &job)
 	if err != nil {
 		render.Respond(w, r, err)
 		return
@@ -74,13 +74,13 @@ func (c JobController) updateJob(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c JobController) getJobMetadata(w http.ResponseWriter, r *http.Request) {
-	service := chi.URLParam(r, "service")
-	serviceID, err := strconv.Atoi(service)
+	job := chi.URLParam(r, "job")
+	jobID, err := strconv.Atoi(job)
 	if err != nil {
-		render.Respond(w, r, errors.BadRequest("invalid service route parameter, required int value"))
+		render.Respond(w, r, errors.BadRequest("invalid job route parameter, required int value"))
 		return
 	}
-	result, err := c.manager.ServiceMetadata(r.Context(), serviceID)
+	result, err := c.manager.JobMetadata(r.Context(), jobID)
 	if err != nil {
 		render.Respond(w, r, err)
 		return
@@ -90,13 +90,13 @@ func (c JobController) getJobMetadata(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c JobController) getJobMetadataMaps(w http.ResponseWriter, r *http.Request) {
-	service := chi.URLParam(r, "service")
-	serviceID, err := strconv.Atoi(service)
+	job := chi.URLParam(r, "job")
+	jobID, err := strconv.Atoi(job)
 	if err != nil {
-		render.Respond(w, r, errors.BadRequest("invalid service route parameter, required int value"))
+		render.Respond(w, r, errors.BadRequest("invalid job route parameter, required int value"))
 		return
 	}
-	result, err := c.manager.ServiceMetadataMaps(r.Context(), serviceID)
+	result, err := c.manager.JobMetadataMaps(r.Context(), jobID)
 	if err != nil {
 		render.Respond(w, r, err)
 		return

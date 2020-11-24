@@ -252,6 +252,15 @@ func (m *Manager) DeleteMetadata(ctx context.Context, id int) error {
 	return nil
 }
 
+func (m *Manager) JobMetadataMaps(ctx context.Context, id int) ([]eve.MetadataJobMap, error) {
+	maps, err := m.repo.JobMetadataMaps(ctx, id)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	return fromDataMetadataJobMaps(maps), nil
+}
+
 func (m *Manager) ServiceMetadataMaps(ctx context.Context, id int) ([]eve.MetadataServiceMap, error) {
 	maps, err := m.repo.ServiceMetadata(ctx, id)
 	if err != nil {

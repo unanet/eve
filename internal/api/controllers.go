@@ -21,5 +21,6 @@ func InitializeControllers(
 		NewEnvironmentController(manager),
 		NewNamespaceController(manager),
 		NewServiceController(manager),
+		NewJobController(manager),
 	}, nil
 }
