@@ -80,7 +80,6 @@ func (r *Repo) DeployedJobsByNamespaceID(ctx context.Context, namespaceID int) (
 		       a.run_as as run_as,
 		       j.node_group,
 		       e.id as environment_id,
-		       a.metrics_port,
 		       n.id as namespace_id,
 		       j.success_exit_codes,
 		       j.created_at,
