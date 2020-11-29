@@ -70,24 +70,23 @@ func (r *Repo) UpdateDeployedJobVersion(ctx context.Context, id int, version str
 func (r *Repo) DeployedJobsByNamespaceID(ctx context.Context, namespaceID int) (DeployJobs, error) {
 	rows, err := r.db.QueryxContext(ctx, `
 		select j.id as job_id,
-		   a.service_port,
-		   a.liveliness_probe,
-		   a.readiness_probe, 
-		   e.id as environment_id,
-		   n.id as namespace_id,
-		   a.image_tag,
-		   a.metrics_port,
-		   a.service_account,
-           j.node_group,
-		   j.success_exit_codes,
-           j.name as job_name,
-		   a.run_as as run_as,
-		   j.artifact_id,
-		   a.name as artifact_name, 
-		   j.deployed_version,
-		   COALESCE(j.override_version, n.requested_version) as requested_version,
-		   j.created_at,
-		   j.updated_at
+		       j.name as job_name,
+		       j.artifact_id,
+		       a.name as artifact_name,
+		       n.id as namespace_id,
+		       n.name as namespace_name,
+		       COALESCE(j.override_version, n.requested_version) as requested_version,
+		       j.deployed_version,
+		       a.service_account,
+		       a.image_tag,
+		       a.run_as as run_as,
+		       j.node_group,
+		       a.metrics_port,
+		       e.id as environment_id,
+		       n.id as namespace_id,
+		       j.success_exit_codes,
+		       j.created_at,
+		       j.updated_at
 		from job as j 
 		    left join artifact as a on a.id = j.artifact_id
 			left join namespace n on j.namespace_id = n.id
