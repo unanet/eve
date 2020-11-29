@@ -1,7 +1,7 @@
 stages:
   - test
   - dist
-  - scan
+#  - scan
 
 Test:
   stage: test
@@ -22,12 +22,12 @@ Dist:
     - master
     - dev
 
-Sonar Scan:
-  stage: scan
-  script:
-    - make scan
-  tags:
-    - linux
-  only:
-    - master
-    - dev
+#Sonar Scan:
+#  stage: scan
+#  script:
+#    - make scan
+#  tags:
+#    - linux
+#  only:
+#    - master
+#    - dev
