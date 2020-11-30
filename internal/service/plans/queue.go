@@ -337,7 +337,6 @@ func (dq *Queue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 	}
 
 	if options.DryRun || nsDeploymentPlan.NothingToDeploy() {
-		dq.Logger(ctx).Info("scheduleDeployment NothingToDeploy")
 		err = dq.worker.DeleteMessage(ctx, m)
 		if err != nil {
 			return dq.rollbackError(ctx, m, err)

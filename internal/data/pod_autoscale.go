@@ -113,7 +113,6 @@ func (r *Repo) PodAutoscaleStacked(pams []PodAutoscaleMap) (json.Text, error) {
 }
 
 func (r *Repo) HydrateDeployServicePodAutoscale(ctx context.Context, svc DeployService) (json.Text, error) {
-	log.Logger.Info("hydrate deploy service pod autoscale")
 	// Get all of the matching records from the map table
 	pams, err := r.PodAutoscaleMap(ctx, svc.ServiceID, svc.EnvironmentID, svc.NamespaceID)
 	if err != nil {
