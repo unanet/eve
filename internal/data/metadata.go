@@ -452,7 +452,8 @@ func (r *Repo) JobMetadata(ctx context.Context, jobID int) ([]MetadataJob, error
 			select j.id as job_id, 
 			       environment_id, 
 			       namespace_id, 
-			       artifact_id 
+			       artifact_id,
+			       cluster_id
 			from job j 
 			    left join namespace n on j.namespace_id = n.id 
 			    left join environment e on n.environment_id = e.id
@@ -475,12 +476,16 @@ func (r *Repo) JobMetadata(ctx context.Context, jobID int) ([]MetadataJob, error
 			LEFT JOIN env_data ed on mjm.job_id = $1
 		WHERE
 			(mjm.job_id = $1)
-		OR 
+		OR
+			(mjm.cluster_id = ed.cluster_id AND mjm.artifact_id IS NULL)
+		OR
 		    (mjm.environment_id = ed.environment_id AND mjm.artifact_id IS NULL) 
 		OR
 		    (mjm.namespace_id = ed.namespace_id AND mjm.artifact_id IS NULL)
 		OR
-		    (mjm.artifact_id = ed.artifact_id AND mjm.environment_id IS NULL AND mjm.namespace_id IS NULL)
+		    (mjm.artifact_id = ed.artifact_id AND mjm.environment_id IS NULL AND mjm.namespace_id IS NULL AND mjm.cluster_id IS NULL)
+		OR
+		    (mjm.artifact_id = ed.artifact_id AND mjm.cluster_id = ed.cluster_id)
 		OR
 		    (mjm.artifact_id = ed.artifact_id AND mjm.environment_id = ed.environment_id)
 		OR
@@ -515,7 +520,8 @@ func (r *Repo) ServiceMetadata(ctx context.Context, serviceID int) ([]MetadataSe
 			select s.id as service_id, 
 			       environment_id, 
 			       namespace_id, 
-			       artifact_id 
+			       artifact_id,
+			       cluster_id
 			from service s 
 			    left join namespace n on s.namespace_id = n.id 
 			    left join environment e on n.environment_id = e.id
@@ -538,12 +544,16 @@ func (r *Repo) ServiceMetadata(ctx context.Context, serviceID int) ([]MetadataSe
 			LEFT JOIN env_data ed on ed.service_id = $1
 		WHERE
 			(msm.service_id = $1)
-		OR 
+		OR
+			(msm.cluster_id = ed.cluster_id AND msm.artifact_id IS NULL)
+		OR
 		    (msm.environment_id = ed.environment_id AND msm.artifact_id IS NULL) 
 		OR
 		    (msm.namespace_id = ed.namespace_id AND msm.artifact_id IS NULL)
 		OR
-		    (msm.artifact_id = ed.artifact_id AND msm.environment_id IS NULL AND msm.namespace_id IS NULL)
+		    (msm.artifact_id = ed.artifact_id AND msm.environment_id IS NULL AND msm.namespace_id IS NULL AND msm.cluster_id IS NULL)
+		OR
+		    (msm.artifact_id = ed.artifact_id AND msm.cluster_id = ed.cluster_id)
 		OR
 		    (msm.artifact_id = ed.artifact_id AND msm.environment_id = ed.environment_id)
 		OR
