@@ -82,6 +82,7 @@ func (d *PlanGenerator) QueuePlan(ctx context.Context, options *eve.DeploymentPl
 			EnvironmentName:   env.Name,
 			EnvironmentAlias:  env.Alias,
 			Type:              options.Type,
+			Metadata:          options.Metadata,
 		})
 		if marshalErr != nil {
 			return errors.Wrap(marshalErr)
