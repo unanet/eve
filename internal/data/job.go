@@ -205,7 +205,7 @@ func (r *Repo) JobByID(ctx context.Context, id int) (*Job, error) {
 }
 
 func (r *Repo) JobsByNamespaceID(ctx context.Context, namespaceID int) ([]Job, error) {
-	return r.jobs(ctx, Where("s.namespace_id", namespaceID))
+	return r.jobs(ctx, Where("n.id", namespaceID))
 }
 
 func (r *Repo) JobsByNamespaceName(ctx context.Context, namespaceName string) ([]Job, error) {
