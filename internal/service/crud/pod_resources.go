@@ -200,7 +200,6 @@ func (m *Manager) PodResourcesService(ctx context.Context, serviceID, namespaceI
 	// A service input takes precedence over all other inputs
 	// since a service contains an environment/namespaces we use the environment/namespace from the service
 	if svc != nil {
-		log.Logger.Info("pod resources by service", zap.Any("service", svc))
 		ns, err := m.repo.NamespaceByID(ctx, svc.NamespaceID)
 		if err != nil {
 			return nil, errors.NotFoundf("service namespace not found: %v", svc.NamespaceID)
@@ -223,12 +222,6 @@ func (m *Manager) PodResourcesService(ctx context.Context, serviceID, namespaceI
 }
 
 func (m *Manager) PodResources(ctx context.Context, serviceID string, environmentID string, namespaceID string, artifactID string) (*eve.PodResources, error) {
-	log.Logger.Info("pod resources",
-		zap.String("service", serviceID),
-		zap.String("environment", environmentID),
-		zap.String("namespace", namespaceID),
-		zap.String("artifact", artifactID),
-	)
 	if validParam(serviceID, environmentID, namespaceID, artifactID) == false {
 		return nil, errors.NewRestError(400, fmt.Sprintf("invalid input params serviceID: %s environmentID: %s namespaceID: %s artifact: %s", serviceID, environmentID, namespaceID, artifactID))
 	}
