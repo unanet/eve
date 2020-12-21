@@ -4,15 +4,14 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/service/crud"
 	"gitlab.unanet.io/devops/eve/internal/service/plans"
 	"gitlab.unanet.io/devops/eve/internal/service/releases"
-	"gitlab.unanet.io/devops/eve/pkg/mux"
 )
 
 func InitializeControllers(
 	deploymentPlanGenerator *plans.PlanGenerator,
 	manager *crud.Manager,
 	releaseSvc *releases.ReleaseSvc,
-) ([]mux.EveController, error) {
-	return []mux.EveController{
+) ([]Controller, error) {
+	return []Controller{
 		NewPingController(),
 		NewDeploymentPlanController(deploymentPlanGenerator),
 		NewPodController(manager),
@@ -22,5 +21,7 @@ func InitializeControllers(
 		NewNamespaceController(manager),
 		NewServiceController(manager),
 		NewJobController(manager),
+		NewAnnotationController(manager),
+		NewLabelController(manager),
 	}, nil
 }

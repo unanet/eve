@@ -7,8 +7,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"gitlab.unanet.io/devops/eve/pkg/errors"
-	"gitlab.unanet.io/devops/eve/pkg/mux"
+	"gitlab.unanet.io/devops/go/pkg/errors"
 )
 
 type PingController struct {
@@ -39,6 +38,6 @@ func (c PingController) internalError(w http.ResponseWriter, r *http.Request) {
 func (c PingController) ping(w http.ResponseWriter, r *http.Request) {
 	render.Respond(w, r, render.M{
 		"message": "pong",
-		"version": mux.Version,
+		"version": Version,
 	})
 }

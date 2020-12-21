@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	goErrors "errors"
 
-	"gitlab.unanet.io/devops/eve/pkg/errors"
-	"gitlab.unanet.io/devops/eve/pkg/json"
+	"gitlab.unanet.io/devops/go/pkg/errors"
+	"gitlab.unanet.io/devops/go/pkg/json"
 )
 
 type Artifact struct {

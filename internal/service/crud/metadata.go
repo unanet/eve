@@ -6,10 +6,10 @@ import (
 
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
-	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
-	"gitlab.unanet.io/devops/eve/pkg/json"
-	"gitlab.unanet.io/devops/eve/pkg/mergemap"
+	"gitlab.unanet.io/devops/go/pkg/errors"
+	"gitlab.unanet.io/devops/go/pkg/json"
+	"gitlab.unanet.io/devops/go/pkg/mergemap"
 )
 
 func toDataMetadataServiceMap(m eve.MetadataServiceMap) data.MetadataServiceMap {

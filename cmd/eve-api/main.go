@@ -12,10 +12,9 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/service/releases"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/gitlab"
-	"gitlab.unanet.io/devops/eve/pkg/log"
-	"gitlab.unanet.io/devops/eve/pkg/mux"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
 	"gitlab.unanet.io/devops/eve/pkg/s3"
+	"gitlab.unanet.io/devops/go/pkg/log"
 )
 
 func main() {
@@ -65,7 +64,7 @@ func main() {
 	if err != nil {
 		log.Logger.Panic("Unable to Initialize the Controllers")
 	}
-	apiServer, err := mux.NewApi(controllers, config.MuxConfig)
+	apiServer, err := api.NewApi(controllers, config)
 	if err != nil {
 		log.Logger.Panic("Failed to Create Api App", zap.Error(err))
 	}

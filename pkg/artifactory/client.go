@@ -10,10 +10,10 @@ import (
 	"github.com/dghubble/sling"
 	"go.uber.org/zap"
 
-	"gitlab.unanet.io/devops/eve/pkg/errors"
-	ehttp "gitlab.unanet.io/devops/eve/pkg/http"
-	"gitlab.unanet.io/devops/eve/pkg/json"
-	"gitlab.unanet.io/devops/eve/pkg/log"
+	"gitlab.unanet.io/devops/go/pkg/errors"
+	ehttp "gitlab.unanet.io/devops/go/pkg/http"
+	"gitlab.unanet.io/devops/go/pkg/json"
+	"gitlab.unanet.io/devops/go/pkg/log"
 )
 
 const (

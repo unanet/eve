@@ -6,7 +6,7 @@ import (
 	goErrors "errors"
 	"time"
 
-	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/go/pkg/errors"
 )
 
 type Cluster struct {

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/s3"
+	"gitlab.unanet.io/devops/go/pkg/errors"
 )
 
 type CloudUploader interface {

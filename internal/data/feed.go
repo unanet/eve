@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/go/pkg/errors"
 )
 
 type Feed struct {

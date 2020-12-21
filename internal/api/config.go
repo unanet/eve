@@ -10,8 +10,7 @@ import (
 
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/gitlab"
-	"gitlab.unanet.io/devops/eve/pkg/log"
-	"gitlab.unanet.io/devops/eve/pkg/mux"
+	"gitlab.unanet.io/devops/go/pkg/log"
 )
 
 var (
@@ -23,7 +22,6 @@ var (
 
 type LogConfig = log.Config
 type ArtifactoryConfig = artifactory.Config
-type MuxConfig = mux.Config
 type GitlabConfig = gitlab.Config
 
 type DBConfig struct {
@@ -47,7 +45,6 @@ func (c DBConfig) MigrationConnectionString() string {
 type Config struct {
 	LogConfig
 	ArtifactoryConfig
-	MuxConfig
 	GitlabConfig
 	ApiQUrl                string        `split_words:"true" required:"true"`
 	ApiQWaitTimeSecond     int64         `split_words:"true" default:"20"`
@@ -58,6 +55,9 @@ type Config struct {
 	HttpCallbackTimeout    time.Duration `split_words:"true" default:"8s"`
 	S3Bucket               string        `split_words:"true" required:"true"`
 	AWSRegion              string        `split_words:"true" required:"true"`
+	Port                   int           `split_words:"true" default:"8080"`
+	MetricsPort            int           `split_words:"true" default:"3001"`
+	ServiceName            string        `split_words:"true" default:"eve"`
 }
 
 type FlagConfig struct {
