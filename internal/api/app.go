@@ -1,4 +1,4 @@
-package mux
+package api
 
 import (
 	"context"
@@ -12,9 +12,9 @@ import (
 	"github.com/go-chi/chi"
 	"go.uber.org/zap"
 
-	"gitlab.unanet.io/devops/eve/pkg/log"
-	"gitlab.unanet.io/devops/eve/pkg/metrics"
-	"gitlab.unanet.io/devops/eve/pkg/middleware"
+	"gitlab.unanet.io/devops/go/pkg/log"
+	"gitlab.unanet.io/devops/go/pkg/metrics"
+	"gitlab.unanet.io/devops/go/pkg/middleware"
 )
 
 var (
@@ -23,7 +23,7 @@ var (
 
 type Api struct {
 	r           chi.Router
-	controllers []EveController
+	controllers []Controller
 	server      *http.Server
 	mServer     *http.Server
 	done        chan bool
@@ -32,7 +32,7 @@ type Api struct {
 	onShutdown  []func()
 }
 
-func NewApi(controllers []EveController, c Config) (*Api, error) {
+func NewApi(controllers []Controller, c Config) (*Api, error) {
 	router := chi.NewMux()
 	return &Api{
 		r:           router,

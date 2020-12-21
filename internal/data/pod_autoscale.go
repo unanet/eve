@@ -5,10 +5,10 @@ import (
 	goJSON "encoding/json"
 	"sort"
 
-	"gitlab.unanet.io/devops/eve/pkg/errors"
-	"gitlab.unanet.io/devops/eve/pkg/json"
-	"gitlab.unanet.io/devops/eve/pkg/log"
-	"gitlab.unanet.io/devops/eve/pkg/mergemap"
+	"gitlab.unanet.io/devops/go/pkg/errors"
+	"gitlab.unanet.io/devops/go/pkg/json"
+	"gitlab.unanet.io/devops/go/pkg/log"
+	"gitlab.unanet.io/devops/go/pkg/mergemap"
 )
 
 type PodAutoscaleMap struct {

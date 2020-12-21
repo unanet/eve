@@ -9,9 +9,9 @@ import (
 
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service/crud"
-	"gitlab.unanet.io/devops/eve/pkg/errors"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
+	"gitlab.unanet.io/devops/go/pkg/errors"
 )
 
 type QWriter interface {
@@ -227,6 +227,19 @@ func (dq *Queue) createServicesDeployment(ctx context.Context, deploymentID uuid
 	}
 	services := fromDataServices(dataServices)
 	for _, x := range services {
+
+		annotations, lErr := dq.crud.ServiceAnnotation(ctx, x.ServiceID)
+		if lErr != nil {
+			return nil, errors.Wrap(lErr)
+		}
+		x.Annotations = annotations
+
+		labels, lErr := dq.crud.ServiceLabel(ctx, x.ServiceID)
+		if lErr != nil {
+			return nil, errors.Wrap(lErr)
+		}
+		x.Labels = labels
+
 		metadata, mErr := dq.crud.ServiceMetadata(ctx, x.ServiceID)
 		if mErr != nil {
 			return nil, errors.Wrap(mErr)
@@ -257,6 +270,19 @@ func (dq *Queue) createJobsDeployment(ctx context.Context, deploymentID uuid.UUI
 	}
 	jobs := fromDataJobs(dataJobs)
 	for _, x := range jobs {
+
+		annotations, lErr := dq.crud.JobAnnotation(ctx, x.JobID)
+		if lErr != nil {
+			return nil, errors.Wrap(lErr)
+		}
+		x.Annotations = annotations
+
+		labels, lErr := dq.crud.JobLabel(ctx, x.JobID)
+		if lErr != nil {
+			return nil, errors.Wrap(lErr)
+		}
+		x.Labels = labels
+
 		metadata, mErr := dq.crud.JobMetadata(ctx, x.JobID)
 		if mErr != nil {
 			return nil, errors.Wrap(mErr)

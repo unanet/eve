@@ -6,7 +6,7 @@ import (
 	goErrors "errors"
 	"fmt"
 
-	"gitlab.unanet.io/devops/eve/pkg/errors"
+	"gitlab.unanet.io/devops/go/pkg/errors"
 )
 
 type RequestArtifact struct {

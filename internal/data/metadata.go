@@ -6,8 +6,8 @@ import (
 	goErrors "errors"
 	"time"
 
-	"gitlab.unanet.io/devops/eve/pkg/errors"
-	"gitlab.unanet.io/devops/eve/pkg/json"
+	"gitlab.unanet.io/devops/go/pkg/errors"
+	"gitlab.unanet.io/devops/go/pkg/json"
 )
 
 type Metadata struct {

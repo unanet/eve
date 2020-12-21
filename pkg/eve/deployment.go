@@ -79,6 +79,8 @@ type DeployArtifact struct {
 	AvailableVersion    string               `json:"available_version"`
 	ServiceAccount      string               `json:"service_account"`
 	ImageTag            string               `json:"image_tag"`
+	Labels              MetadataField        `json:"labels"`
+	Annotations         MetadataField        `json:"annotations"`
 	Metadata            MetadataField        `json:"metadata"`
 	ArtifactoryFeed     string               `json:"artifactory_feed"`
 	ArtifactoryPath     string               `json:"artifactory_path"`
