@@ -35,12 +35,6 @@ SELECT ('env:una-stage') as description,
 
 
 INSERT INTO label_service_map(description,label_id,environment_id)
-SELECT ('env:una-stage') as description,
-       (SELECT id from label where description = 'unanet-proxy') as label_id,
-       (SELECT id from environment where name = 'una-stage') as environment_id;
-
-
-INSERT INTO label_service_map(description,label_id,environment_id)
 SELECT ('env:una-prod') as description,
        (SELECT id from label where description = 'unanet-proxy') as label_id,
        (SELECT id from environment where name = 'una-prod') as environment_id;
