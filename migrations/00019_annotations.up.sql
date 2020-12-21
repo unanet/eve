@@ -19,9 +19,9 @@ alter table annotation
 
 INSERT INTO annotation(description, data)
 VALUES
-('applinks','{"proxy.unanet.io/paths":"/.well-known/apple-app-site-association,/.well-known/assetlinks.json", "proxy.unanet.io/exact":"true"}'),
-('unanet','{"proxy.unanet.io/paths":"unanet"}'),
-('unanet-analytics','{"proxy.unanet.io/paths":"analytics,analytics-api"}');
+('art:applinks','{"proxy.unanet.io/paths":"/.well-known/apple-app-site-association,/.well-known/assetlinks.json", "proxy.unanet.io/exact":"true"}'),
+('art:unanet','{"proxy.unanet.io/paths":"unanet"}'),
+('art:unanet-analytics','{"proxy.unanet.io/paths":"analytics,analytics-api"}');
 
 
 
