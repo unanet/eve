@@ -251,7 +251,7 @@ func (c AnnotationController) getJobAnnotationMapsByAnnotationID(w http.Response
 		render.Respond(w, r, errors.BadRequest("invalid annotation route parameter, required int value"))
 		return
 	}
-	result, err := c.manager.ServiceAnnotationMapsByAnnotationID(r.Context(), annotationID)
+	result, err := c.manager.JobAnnotationMapsByAnnotationID(r.Context(), annotationID)
 	if err != nil {
 		render.Respond(w, r, err)
 		return

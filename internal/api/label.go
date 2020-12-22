@@ -251,7 +251,7 @@ func (c LabelController) getJobLabelMapsByLabelID(w http.ResponseWriter, r *http
 		render.Respond(w, r, errors.BadRequest("invalid label route parameter, required int value"))
 		return
 	}
-	result, err := c.manager.ServiceLabelMapsByLabelID(r.Context(), labelID)
+	result, err := c.manager.JobLabelMapsByLabelID(r.Context(), labelID)
 	if err != nil {
 		render.Respond(w, r, err)
 		return
