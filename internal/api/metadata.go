@@ -251,7 +251,7 @@ func (c MetadataController) getJobMetadataMapsByMetadataID(w http.ResponseWriter
 		render.Respond(w, r, errors.BadRequest("invalid metadata route parameter, required int value"))
 		return
 	}
-	result, err := c.manager.ServiceMetadataMapsByMetadataID(r.Context(), metadataID)
+	result, err := c.manager.JobMetadataMapsByMetadataID(r.Context(), metadataID)
 	if err != nil {
 		render.Respond(w, r, err)
 		return
