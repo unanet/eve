@@ -77,6 +77,7 @@ type DeployArtifact struct {
 	RequestedVersion    string               `json:"requested_version"`
 	DeployedVersion     string               `json:"deployed_version"`
 	AvailableVersion    string               `json:"available_version"`
+	NamespaceVersion    string               `json:"namespace_version"`
 	ServiceAccount      string               `json:"service_account"`
 	ImageTag            string               `json:"image_tag"`
 	Labels              MetadataField        `json:"labels"`

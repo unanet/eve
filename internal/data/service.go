@@ -18,6 +18,7 @@ type DeployService struct {
 	ArtifactID       int            `db:"artifact_id"`
 	ArtifactName     string         `db:"artifact_name"`
 	RequestedVersion string         `db:"requested_version"`
+	NamespaceVersion string         `db:"namespace_version"`
 	DeployedVersion  sql.NullString `db:"deployed_version"`
 	ServicePort      int            `db:"service_port"`
 	MetricsPort      int            `db:"metrics_port"`
@@ -99,6 +100,7 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		   a.name as artifact_name, 
 		   s.deployed_version,
 		   COALESCE(s.override_version, n.requested_version) as requested_version,
+		   n.requested_version as namespace_version,
 		   s.created_at,
 		   s.updated_at
 		from service as s 
