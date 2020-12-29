@@ -107,7 +107,7 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 	fromRepo := fmt.Sprintf("%s-local", fromFeed.Name)
 	toRepo := fmt.Sprintf("%s-local", toFeed.Name)
 
-	resp, err := svc.artifactoryClient.MoveArtifact(ctx, fromRepo, fromPath, toRepo, toPath, false)
+	resp, err := svc.artifactoryClient.CopyArtifact(ctx, fromRepo, fromPath, toRepo, toPath, false)
 	if err != nil {
 		if _, ok := err.(artifactory.NotFoundError); ok {
 			return success, errors.NotFound(fmt.Sprintf("artifact not found: %s", err.Error()))
