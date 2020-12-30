@@ -473,7 +473,7 @@ func (r *Repo) JobMetadata(ctx context.Context, jobID int) ([]MetadataJob, error
 		       m.updated_at
 		FROM metadata_job_map mjm 
 		    LEFT JOIN metadata m ON mjm.metadata_id = m.id 
-			LEFT JOIN env_data ed on mjm.job_id = $1
+			LEFT JOIN env_data ed on ed.job_id = $1
 		WHERE
 			(mjm.job_id = $1)
 		OR
