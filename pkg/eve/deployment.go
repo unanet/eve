@@ -77,7 +77,6 @@ type DeployArtifact struct {
 	RequestedVersion    string               `json:"requested_version"`
 	DeployedVersion     string               `json:"deployed_version"`
 	AvailableVersion    string               `json:"available_version"`
-	NamespaceVersion    string               `json:"namespace_version"`
 	ServiceAccount      string               `json:"service_account"`
 	ImageTag            string               `json:"image_tag"`
 	Labels              MetadataField        `json:"labels"`
@@ -238,11 +237,12 @@ func (dj DeployJobs) ToDeploy() DeployJobs {
 }
 
 type NamespaceRequest struct {
-	ID          int    `json:"id"`
-	Alias       string `json:"alias"`
-	Name        string `json:"name"`
-	ClusterID   int    `json:"cluster_id"`
-	ClusterName string `json:"cluster_name"`
+	ID               int    `json:"id"`
+	Alias            string `json:"alias"`
+	Name             string `json:"name"`
+	ClusterID        int    `json:"cluster_id"`
+	ClusterName      string `json:"cluster_name"`
+	NamespaceVersion string `json:"namespace_version"`
 }
 
 func (ns *NamespaceRequest) GetQueueGroupID() string {

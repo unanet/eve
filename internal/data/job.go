@@ -18,7 +18,6 @@ type DeployJob struct {
 	ArtifactName     string         `db:"artifact_name"`
 	RequestedVersion string         `db:"requested_version"`
 	DeployedVersion  sql.NullString `db:"deployed_version"`
-	NamespaceVersion string         `db:"namespace_version"`
 	ServiceAccount   string         `db:"service_account"`
 	ImageTag         string         `db:"image_tag"`
 	RunAs            int            `db:"run_as"`
@@ -75,7 +74,6 @@ func (r *Repo) DeployedJobsByNamespaceID(ctx context.Context, namespaceID int) (
 		       j.artifact_id,
 		       a.name as artifact_name,
 		       COALESCE(j.override_version, n.requested_version) as requested_version,
-		       n.requested_version as namespace_version,
 		       j.deployed_version,
 		       a.service_account,
 		       a.image_tag,

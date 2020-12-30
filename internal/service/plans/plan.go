@@ -212,10 +212,11 @@ func (d *PlanGenerator) validateNamespaces(ctx context.Context, env *data.Enviro
 	var namespaceRequests eve.NamespaceRequests
 	for _, x := range namespacesToDeploy {
 		namespaceRequests = append(namespaceRequests, &eve.NamespaceRequest{
-			ID:        x.ID,
-			Name:      x.Name,
-			Alias:     x.Alias,
-			ClusterID: x.ClusterID,
+			ID:               x.ID,
+			Name:             x.Name,
+			Alias:            x.Alias,
+			ClusterID:        x.ClusterID,
+			NamespaceVersion: x.RequestedVersion,
 		})
 	}
 
