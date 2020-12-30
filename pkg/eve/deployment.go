@@ -237,12 +237,12 @@ func (dj DeployJobs) ToDeploy() DeployJobs {
 }
 
 type NamespaceRequest struct {
-	ID               int    `json:"id"`
-	Alias            string `json:"alias"`
-	Name             string `json:"name"`
-	ClusterID        int    `json:"cluster_id"`
-	ClusterName      string `json:"cluster_name"`
-	NamespaceVersion string `json:"namespace_version"`
+	ID          int    `json:"id"`
+	Alias       string `json:"alias"`
+	Name        string `json:"name"`
+	ClusterID   int    `json:"cluster_id"`
+	ClusterName string `json:"cluster_name"`
+	Version     string `json:"version"`
 }
 
 func (ns *NamespaceRequest) GetQueueGroupID() string {
