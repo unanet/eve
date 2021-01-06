@@ -58,3 +58,21 @@ func NotFoundErrorf(format string, a ...interface{}) NotFoundError {
 		message: fmt.Sprintf(format, a...),
 	}
 }
+
+type InvalidRequestError struct {
+	message string
+}
+
+func (e InvalidRequestError) Error() string {
+	return e.message
+}
+
+func (e InvalidRequestError) IsEveError() bool {
+	return true
+}
+
+func InvalidRequestErrorf(format string, a ...interface{}) InvalidRequestError {
+	return InvalidRequestError{
+		message: fmt.Sprintf(format, a...),
+	}
+}
