@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	goerrors "github.com/pkg/errors"
+	"gitlab.unanet.io/devops/go/pkg/errors"
+	"gitlab.unanet.io/devops/go/pkg/log"
 	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
@@ -13,8 +16,6 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/eve/pkg/gitlab"
-	"gitlab.unanet.io/devops/go/pkg/errors"
-	"gitlab.unanet.io/devops/go/pkg/log"
 )
 
 type ReleaseSvc struct {
@@ -90,12 +91,17 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 		return success, err
 	}
 
-	log.Logger.Warn("release artifact version", zap.String("version", artifactVersion))
-
 	toFeed, err := svc.toFeed(ctx, release, artifact, fromFeed)
 	if err != nil {
-		return success, errors.Wrap(err)
+		return success, goerrors.Wrapf(err, "failed to get the artifact destination (to) feed")
 	}
+
+	log.Logger.Info("release artifact",
+		zap.String("artifact", artifact.Name),
+		zap.String("version", artifactVersion),
+		zap.String("from_feed", fromFeed.Name),
+		zap.String("to_feed", toFeed.Name),
+	)
 
 	fromPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, evalArtifactImageTag(artifact, artifactVersion))
 	toPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, evalArtifactImageTag(artifact, artifactVersion))
@@ -112,7 +118,10 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 		if _, ok := err.(artifactory.NotFoundError); ok {
 			return success, errors.NotFound(fmt.Sprintf("artifact not found: %s", err.Error()))
 		}
-		return success, errors.Wrap(err)
+		if _, ok := err.(artifactory.InvalidRequestError); ok {
+			return success, errors.BadRequest(fmt.Sprintf("invalid artifact request: %s", err.Error()))
+		}
+		return success, goerrors.Wrapf(err, "failed to move the artifact from: %s to: %s", fromPath, toPath)
 	}
 
 	success.Artifact = artifact.Name

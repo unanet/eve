@@ -99,7 +99,10 @@ func (c *Client) MoveArtifact(ctx context.Context, srcRepo, srcPath, destRepo, d
 		return nil, NotFoundErrorf("the artifact was not found; source_repo: %s source_path: %s dest_repo: %s dest_path: %s", srcRepo, srcPath, destRepo, destPath)
 	case http.StatusServiceUnavailable:
 		return nil, ServiceUnavailableErrorf("Artifactory returned a 503 and appears to be unavailable")
+	case http.StatusBadRequest:
+		return nil, InvalidRequestErrorf("invalid move artifact request: %s", failure.ToString())
 	default:
+		log.Logger.Error("unknown artifactory response", zap.String("status", resp.Status), zap.Int("status_code", resp.StatusCode))
 		return nil, failure
 	}
 }
