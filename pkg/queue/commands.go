@@ -4,6 +4,7 @@ package queue
 const (
 	CommandScheduleDeployment string = "api-schedule-deployment"
 	CommandUpdateDeployment   string = "api-update-deployment"
+	CommandCallbackMessage    string = "api-callback-message"
 )
 
 // Scheduler Queue Commands

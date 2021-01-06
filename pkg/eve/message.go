@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	uuid "github.com/satori/go.uuid"
 	"gitlab.unanet.io/devops/eve/pkg/s3"
 	"gitlab.unanet.io/devops/go/pkg/errors"
 )
@@ -15,6 +16,13 @@ type CloudUploader interface {
 
 type CloudDownloader interface {
 	Download(ctx context.Context, location *s3.Location) ([]byte, error)
+}
+
+type DeploymentCallbackMessage struct {
+	DeploymentID uuid.UUID            `json:"deployment_id"`
+	Status       DeploymentPlanStatus `json:"status"`
+	Type         PlanType             `json:"type"`
+	Messages     []string             `json:"messages"`
 }
 
 func UnMarshalNSDeploymentFromS3LocationBody(ctx context.Context, cd CloudDownloader, b []byte) (*NSDeploymentPlan, error) {

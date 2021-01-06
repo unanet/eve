@@ -65,6 +65,7 @@ const (
 	DeploymentPlanStatusDryrun   DeploymentPlanStatus = "dryrun"
 	DeploymentPlanStatusErrors   DeploymentPlanStatus = "errors"
 	DeploymentPlanStatusComplete DeploymentPlanStatus = "complete"
+	DeploymentPlanStatusMessage  DeploymentPlanStatus = "message"
 )
 
 func (dps DeploymentPlanStatus) String() string {
@@ -276,7 +277,7 @@ type NSDeploymentPlan struct {
 	CallbackURL       string               `json:"callback_url"`
 	Status            DeploymentPlanStatus `json:"status"`
 	MetadataOverrides MetadataField        `json:"metadata_overrides"`
-	Type              PlanType
+	Type              PlanType             `json:"type"`
 }
 
 // DeploymentPlanType is a helper method to know what type of deployment plan (application,job,migration,restart)
