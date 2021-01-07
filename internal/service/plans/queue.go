@@ -485,6 +485,13 @@ func (dq *Queue) updateDeployment(ctx context.Context, m *queue.M) error {
 }
 
 func (dq *Queue) callbackMessage(ctx context.Context, m *queue.M) error {
+	defer func() {
+		err := dq.worker.DeleteMessage(ctx, m)
+		if err != nil {
+			dq.Logger(ctx).Error("sqs message removal failed", zap.Error(err))
+		}
+	}()
+
 	var dcm eve.DeploymentCallbackMessage
 	err := json.Unmarshal(m.Body, &dcm)
 	if err != nil {
@@ -494,12 +501,12 @@ func (dq *Queue) callbackMessage(ctx context.Context, m *queue.M) error {
 	// curl -D '{ "messages": []}' http://eve-sch.eve:3000/callback?deployment_id=
 	d, err := dq.repo.DeploymentByID(ctx, dcm.DeploymentID)
 	if err != nil {
-		dq.Logger(ctx).Warn("an error occurred trying to get the deployment from the db", zap.String("id", d.ID.String()), zap.Error(err))
+		dq.Logger(ctx).Warn("an error occurred trying to get the deployment from the db", zap.String("id", d.ID.String()), zap.Error(errors.Wrap(err)))
 		return nil
 	}
 
 	if d.State == data.DeploymentStateCompleted {
-		dq.Logger(ctx).Warn("callback came in for a deployment that's already completed, skipping...", zap.String("id", d.ID.String()))
+		dq.Logger(ctx).Warn("message callback came in for a deployment that's already completed, skipping...", zap.String("id", d.ID.String()))
 		return nil
 	}
 	var options eve.NamespacePlanOptions
@@ -508,19 +515,15 @@ func (dq *Queue) callbackMessage(ctx context.Context, m *queue.M) error {
 		return errors.Wrap(err)
 	}
 
+	dcm.Type = options.Type
+	dcm.Status = eve.DeploymentPlanStatusMessage
 	if len(options.CallbackURL) > 0 {
 		cErr := dq.callback.Post(ctx, options.CallbackURL, dcm)
 		if cErr != nil {
 			dq.Logger(ctx).Warn("callback failed", zap.String("callback_url", options.CallbackURL), zap.Error(cErr))
 		}
 	} else {
-		dq.Logger(ctx).Warn("")
+		dq.Logger(ctx).Warn("message callback came in for a deployment without a registered callback, skipping...", zap.String("id", d.ID.String()))
 	}
-
-	err = dq.worker.DeleteMessage(ctx, m)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
 	return nil
 }
