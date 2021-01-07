@@ -25,6 +25,10 @@ type DeploymentCallbackMessage struct {
 	Messages     []string             `json:"messages"`
 }
 
+type CallbackMessage struct {
+	Messages []string `json:"messages"`
+}
+
 func UnMarshalNSDeploymentFromS3LocationBody(ctx context.Context, cd CloudDownloader, b []byte) (*NSDeploymentPlan, error) {
 	var location s3.Location
 	err := json.Unmarshal(b, &location)

@@ -492,16 +492,16 @@ func (dq *Queue) callbackMessage(ctx context.Context, m *queue.M) error {
 		}
 	}()
 
-	var dcm eve.DeploymentCallbackMessage
-	err := json.Unmarshal(m.Body, &dcm)
+	var cm eve.CallbackMessage
+	err := json.Unmarshal(m.Body, &cm)
 	if err != nil {
 		return errors.Wrap(err)
 	}
 
 	// curl -D '{ "messages": []}' http://eve-sch.eve:3000/callback?deployment_id=
-	d, err := dq.repo.DeploymentByID(ctx, dcm.DeploymentID)
+	d, err := dq.repo.DeploymentByID(ctx, m.ID)
 	if err != nil {
-		dq.Logger(ctx).Warn("an error occurred trying to get the deployment from the db", zap.String("id", d.ID.String()), zap.Error(errors.Wrap(err)))
+		dq.Logger(ctx).Warn("an error occurred trying to get the deployment from the db", zap.String("id", m.ID.String()), zap.Error(errors.Wrap(err)))
 		return nil
 	}
 
@@ -515,8 +515,13 @@ func (dq *Queue) callbackMessage(ctx context.Context, m *queue.M) error {
 		return errors.Wrap(err)
 	}
 
-	dcm.Type = options.Type
-	dcm.Status = eve.DeploymentPlanStatusMessage
+	dcm := eve.DeploymentCallbackMessage{
+		DeploymentID: m.ID,
+		Status:       eve.DeploymentPlanStatusMessage,
+		Type:         options.Type,
+		Messages:     cm.Messages,
+	}
+
 	if len(options.CallbackURL) > 0 {
 		cErr := dq.callback.Post(ctx, options.CallbackURL, dcm)
 		if cErr != nil {
