@@ -9,8 +9,8 @@ import (
 
 	"github.com/dghubble/sling"
 
-	"gitlab.unanet.io/devops/go/pkg/json"
 	ehttp "gitlab.unanet.io/devops/go/pkg/http"
+	"gitlab.unanet.io/devops/go/pkg/json"
 )
 
 const (
@@ -37,11 +37,11 @@ func NewClient(config Config) *Client {
 		config.GitlabBaseUrl += "/"
 	}
 
-	sling := sling.New().Base(config.GitlabBaseUrl).Client(httpClient).
+	s := sling.New().Base(config.GitlabBaseUrl).Client(httpClient).
 		Add("PRIVATE-TOKEN", config.GitlabApiKey).
 		Add("User-Agent", userAgent).
 		ResponseDecoder(json.NewJsonDecoder())
-	return &Client{sling: sling}
+	return &Client{sling: s}
 }
 
 func (c *Client) TagCommit(ctx context.Context, options TagOptions) (*Tag, error) {
@@ -60,4 +60,69 @@ func (c *Client) TagCommit(ctx context.Context, options TagOptions) (*Tag, error
 	} else {
 		return nil, failure
 	}
+}
+
+func (c *Client) GetTag(ctx context.Context, options TagOptions) (*Tag, error) {
+	var success Tag
+	var failure ErrorResponse
+	r, err := c.sling.New().Get(fmt.Sprintf("v4/projects/%d/repository/tags/%s", options.ProjectID, options.TagName)).Request()
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.sling.Do(r.WithContext(ctx), &success, &failure)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case resp.StatusCode < 300:
+		return &success, nil
+	}
+
+	return nil, failure
+}
+
+func (c *Client) GetRelease(ctx context.Context, options TagOptions) (*Release, error) {
+	var success Release
+	var failure ErrorResponse
+	r, err := c.sling.New().Get(fmt.Sprintf("v4/projects/%d/releases/%s", options.ProjectID, options.TagName)).Request()
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.sling.Do(r.WithContext(ctx), &success, &failure)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case resp.StatusCode < 300:
+		return &success, nil
+	}
+
+	return nil, failure
+}
+
+func (c *Client) CreateRelease(ctx context.Context, options TagOptions) (*Release, error) {
+	var success Release
+	var failure ErrorResponse
+
+	r, err := c.sling.New().
+		Post(fmt.Sprintf("v4/projects/%d/releases/%s", options.ProjectID, options.TagName)).
+		QueryStruct(Release{Name: options.TagName, TagName: options.TagName}).
+		Request()
+
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.sling.Do(r.WithContext(ctx), &success, &failure)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case resp.StatusCode < 300:
+		return &success, nil
+	}
+
+	return nil, failure
 }
