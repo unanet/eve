@@ -146,6 +146,10 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 		fullVersion := artifactProps.Property("version")
 		releaseVersion := parseVersion(fullVersion)
 
+		if releaseVersion == "v" || releaseVersion == "" {
+			return success, errors.BadRequestf("invalid version: %v", releaseVersion)
+		}
+
 		log.Logger.Info("artifact release to prod",
 			zap.String("branch", gitBranch),
 			zap.String("sha", gitSHA),
