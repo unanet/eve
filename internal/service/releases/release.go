@@ -63,6 +63,79 @@ func evalArtifactImageTag(a *data.Artifact, availableVersion string) string {
 	return imageTag
 }
 
+type artifactReleaseInfo struct {
+	GitBranch, GitSHA, BuildVersion, ReleaseVersion string
+	FromPath, ToPath                                string
+	FromRepo, ToRepo                                string
+	FromFeed, ToFeed                                *data.Feed
+	Artifact                                        *data.Artifact
+	ProjectID                                       int
+}
+
+func (svc *ReleaseSvc) releaseInfo(ctx context.Context, release eve.Release) (*artifactReleaseInfo, error) {
+	artifact, err := svc.repo.ArtifactByName(ctx, release.Artifact)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	fromFeed, err := svc.repo.FeedByAliasAndType(ctx, release.FromFeed, artifact.FeedType)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	toFeed, err := svc.toFeed(ctx, release, artifact, fromFeed)
+	if err != nil {
+		return nil, goerrors.Wrapf(err, "failed to get the artifact destination (to) feed")
+	}
+
+	artifactVersion, err := svc.artifactoryClient.GetLatestVersion(ctx, fromFeed.Name, path(artifact.ProviderGroup, artifact.Name), version(release.Version))
+	if err != nil {
+		if _, ok := err.(artifactory.NotFoundError); ok {
+			return nil, errors.NotFound(fmt.Sprintf("artifact not found in artifactory: %s/%s/%s:%s", fromFeed.Name, path(artifact.ProviderGroup, artifact.Name), artifact.Name, version(release.Version)))
+		}
+		return nil, goerrors.Wrapf(err, "failed to get the latest artifact version")
+	}
+
+	fromPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, evalArtifactImageTag(artifact, artifactVersion))
+	toPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, evalArtifactImageTag(artifact, artifactVersion))
+
+	fromRepo := fmt.Sprintf("%s-local", fromFeed.Name)
+	toRepo := fmt.Sprintf("%s-local", toFeed.Name)
+
+	artifactProps, perr := svc.artifactoryClient.GetArtifactProperties(ctx, fromRepo, fromPath)
+	if perr != nil {
+		if _, ok := err.(artifactory.NotFoundError); ok {
+			return nil, errors.NotFound(fmt.Sprintf("artifact not found: %s", perr.Error()))
+		}
+		return nil, errors.Wrap(perr)
+	}
+
+	projectID, cErr := strconv.Atoi(artifactProps.Property("gitlab-build-properties.project-id"))
+	if cErr != nil {
+		return nil, errors.Wrap(cErr)
+	}
+
+	relInfo := artifactReleaseInfo{
+		GitBranch:      artifactProps.Property("gitlab-build-properties.git-branch"),
+		GitSHA:         artifactProps.Property("gitlab-build-properties.git-sha"),
+		BuildVersion:   artifactProps.Property("version"),
+		ReleaseVersion: parseVersion(artifactProps.Property("version")),
+		FromPath:       fromPath,
+		ToPath:         toPath,
+		FromRepo:       fromRepo,
+		ToRepo:         toRepo,
+		ToFeed:         toFeed,
+		FromFeed:       fromFeed,
+		Artifact:       artifact,
+		ProjectID:      projectID,
+	}
+
+	log.Logger.Info("release artifact info", zap.Any("release_info", relInfo))
+
+	return &relInfo, nil
+
+}
+
 func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Release, error) {
 	success := eve.Release{}
 	if release.FromFeed == release.ToFeed {
@@ -70,50 +143,35 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 	}
 
 	if strings.ToLower(release.FromFeed) == "int" && strings.ToLower(release.ToFeed) == "qa" {
-		return success, errors.BadRequest("int and qa share the same feed so nothing to promote")
+		return success, errors.BadRequest("int and qa share the same feed so nothing to release")
 	}
 
-	artifact, err := svc.repo.ArtifactByName(ctx, release.Artifact)
+	relInfo, err := svc.releaseInfo(ctx, release)
 	if err != nil {
-		return success, service.CheckForNotFoundError(err)
+		return success, goerrors.Wrapf(err, "failed to get the release info")
 	}
 
-	fromFeed, err := svc.repo.FeedByAliasAndType(ctx, release.FromFeed, artifact.FeedType)
-	if err != nil {
-		return success, service.CheckForNotFoundError(err)
+	if relInfo.ReleaseVersion == "v" || relInfo.ReleaseVersion == "" {
+		return success, errors.BadRequestf("invalid version: %v", relInfo.ReleaseVersion)
 	}
 
-	artifactVersion, err := svc.artifactoryClient.GetLatestVersion(ctx, fromFeed.Name, path(artifact.ProviderGroup, artifact.Name), version(release.Version))
-	if err != nil {
-		if _, ok := err.(artifactory.NotFoundError); ok {
-			return success, errors.NotFound(fmt.Sprintf("artifact not found in artifactory: %s/%s/%s:%s", fromFeed.Name, path(artifact.ProviderGroup, artifact.Name), artifact.Name, version(release.Version)))
-		}
-		return success, goerrors.Wrapf(err, "failed to get the latest artifact version")
+	gitlabTagOpts := gitlab.TagOptions{
+		ProjectID: relInfo.ProjectID,
+		TagName:   relInfo.ReleaseVersion,
+		GitHash:   relInfo.GitSHA,
 	}
 
-	toFeed, err := svc.toFeed(ctx, release, artifact, fromFeed)
-	if err != nil {
-		return success, goerrors.Wrapf(err, "failed to get the artifact destination (to) feed")
+	// Check if tag already exists
+	tag, _ := svc.gitlabClient.GetTag(ctx, gitlabTagOpts)
+	if tag != nil && tag.Name != "" {
+		return success, errors.BadRequestf("the version: %v has already been tagged", tag.Name)
 	}
 
-	log.Logger.Info("release artifact",
-		zap.String("artifact", artifact.Name),
-		zap.String("version", artifactVersion),
-		zap.String("from_feed", fromFeed.Name),
-		zap.String("to_feed", toFeed.Name),
-	)
+	// Delete the destination first
+	// Cant move/copy to a location that already exists
+	_, _ = svc.artifactoryClient.DeleteArtifact(ctx, relInfo.ToRepo, relInfo.ToPath)
 
-	fromPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, evalArtifactImageTag(artifact, artifactVersion))
-	toPath := artifactRepoPath(artifact.ProviderGroup, artifact.Name, evalArtifactImageTag(artifact, artifactVersion))
-
-	// HACK: Delete the destination first
-	// Artifactory fails when copy/move an artifact to a location that already exists
-	_, _ = svc.artifactoryClient.DeleteArtifact(ctx, fmt.Sprintf("%s-local", toFeed.Name), toPath)
-
-	fromRepo := fmt.Sprintf("%s-local", fromFeed.Name)
-	toRepo := fmt.Sprintf("%s-local", toFeed.Name)
-
-	resp, err := svc.artifactoryClient.CopyArtifact(ctx, fromRepo, fromPath, toRepo, toPath, false)
+	resp, err := svc.artifactoryClient.CopyArtifact(ctx, relInfo.FromRepo, relInfo.FromPath, relInfo.ToRepo, relInfo.ToPath, false)
 	if err != nil {
 		if _, ok := err.(artifactory.NotFoundError); ok {
 			return success, errors.NotFound(fmt.Sprintf("artifact not found: %s", err.Error()))
@@ -121,73 +179,24 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 		if _, ok := err.(artifactory.InvalidRequestError); ok {
 			return success, errors.BadRequest(fmt.Sprintf("invalid artifact request: %s", err.Error()))
 		}
-		return success, goerrors.Wrapf(err, "failed to move the artifact from: %s to: %s", fromPath, toPath)
+		return success, goerrors.Wrapf(err, "failed to move the artifact from: %s to: %s", relInfo.FromPath, relInfo.ToPath)
 	}
 
-	success.Artifact = artifact.Name
-	success.Version = artifactVersion
-	success.ToFeed = toFeed.Alias
-	success.FromFeed = fromFeed.Alias
-	success.Message = resp.ToString()
-
 	// If we are releasing to prod we tag the commit in GitLab
-	if strings.ToLower(toFeed.Alias) == "prod" {
-		artifactProps, perr := svc.artifactoryClient.GetArtifactProperties(ctx, toRepo, toPath)
-		if perr != nil {
-			if _, ok := err.(artifactory.NotFoundError); ok {
-				return success, errors.NotFound(fmt.Sprintf("artifact not found: %s", perr.Error()))
-			}
-			return success, errors.Wrap(perr)
-		}
-
-		gitBranch := artifactProps.Property("gitlab-build-properties.git-branch")
-		gitSHA := artifactProps.Property("gitlab-build-properties.git-sha")
-		gitProjectID := artifactProps.Property("gitlab-build-properties.project-id")
-		fullVersion := artifactProps.Property("version")
-		releaseVersion := parseVersion(fullVersion)
-
-		if releaseVersion == "v" || releaseVersion == "" {
-			return success, errors.BadRequestf("invalid version: %v", releaseVersion)
-		}
-
-		log.Logger.Info("artifact release to prod",
-			zap.String("branch", gitBranch),
-			zap.String("sha", gitSHA),
-			zap.String("project", gitProjectID),
-			zap.String("full_version", fullVersion),
-			zap.String("release_version", fullVersion),
-		)
-
-		projectID, cErr := strconv.Atoi(gitProjectID)
-		if cErr != nil {
-			return success, errors.Wrap(cErr)
-		}
-
-		tOpts := gitlab.TagOptions{
-			ProjectID: projectID,
-			TagName:   releaseVersion,
-			GitHash:   gitSHA,
-		}
-
-		tag, _ := svc.gitlabClient.GetTag(ctx, tOpts)
-		if tag != nil && tag.Name != "" {
-			return success, errors.BadRequestf("the version: %v has already been tagged", releaseVersion)
-		}
-
-		_, gErr := svc.gitlabClient.TagCommit(ctx, tOpts)
+	if strings.ToLower(relInfo.ToFeed.Alias) == "prod" {
+		_, gErr := svc.gitlabClient.TagCommit(ctx, gitlabTagOpts)
 		if gErr != nil {
 			return success, goerrors.Wrapf(gErr, "failed to tag the gitlab commit")
 		}
-
-		log.Logger.Info("artifact released",
-			zap.String("branch", gitBranch),
-			zap.String("sha", gitSHA),
-			zap.String("project", gitProjectID),
-			zap.String("full_version", fullVersion),
-			zap.String("release_version", fullVersion),
-		)
 	}
 
+	success.Artifact = relInfo.Artifact.Name
+	success.Version = relInfo.ReleaseVersion
+	success.ToFeed = relInfo.ToFeed.Alias
+	success.FromFeed = relInfo.FromFeed.Alias
+	success.Message = resp.ToString()
+
+	log.Logger.Info("artifact released", zap.Any("result", success))
 	return success, nil
 }
 
