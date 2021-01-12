@@ -111,7 +111,7 @@ func (c *Client) CreateRelease(ctx context.Context, options TagOptions) (*Releas
 	var failure ErrorResponse
 
 	r, err := c.sling.New().
-		Post(fmt.Sprintf("v4/projects/%d/releases/%s", options.ProjectID, options.TagName)).
+		Post(fmt.Sprintf("v4/projects/%d/releases", options.ProjectID)).
 		QueryStruct(Release{Name: options.TagName, TagName: options.TagName}).
 		Request()
 
