@@ -85,7 +85,11 @@ func (c *Client) GetTag(ctx context.Context, options TagOptions) (*Tag, error) {
 func (c *Client) GetRelease(ctx context.Context, options TagOptions) (*Release, error) {
 	var success Release
 	var failure ErrorResponse
-	r, err := c.sling.New().Get(fmt.Sprintf("v4/projects/%d/releases/%s", options.ProjectID, options.TagName)).Request()
+
+	r, err := c.sling.New().
+		Get(fmt.Sprintf("v4/projects/%d/releases/%s", options.ProjectID, options.TagName)).
+		Request()
+
 	if err != nil {
 		return nil, err
 	}

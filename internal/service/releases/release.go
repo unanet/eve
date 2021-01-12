@@ -88,7 +88,7 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 		if _, ok := err.(artifactory.NotFoundError); ok {
 			return success, errors.NotFound(fmt.Sprintf("artifact not found in artifactory: %s/%s/%s:%s", fromFeed.Name, path(artifact.ProviderGroup, artifact.Name), artifact.Name, version(release.Version)))
 		}
-		return success, err
+		return success, goerrors.Wrapf(err, "failed to get the latest artifact version")
 	}
 
 	toFeed, err := svc.toFeed(ctx, release, artifact, fromFeed)
@@ -143,25 +143,72 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 		gitBranch := artifactProps.Property("gitlab-build-properties.git-branch")
 		gitSHA := artifactProps.Property("gitlab-build-properties.git-sha")
 		gitProjectID := artifactProps.Property("gitlab-build-properties.project-id")
-		v := artifactProps.Property("version")
-		log.Logger.Info("release properties", zap.String("branch", gitBranch), zap.String("sha", gitSHA), zap.String("project", gitProjectID), zap.String("version", v))
+		fullVersion := artifactProps.Property("version")
+		releaseVersion := parseVersion(fullVersion)
+
+		log.Logger.Info("artifact release to prod",
+			zap.String("branch", gitBranch),
+			zap.String("sha", gitSHA),
+			zap.String("project", gitProjectID),
+			zap.String("full_version", fullVersion),
+			zap.String("release_version", fullVersion),
+		)
 
 		projectID, cErr := strconv.Atoi(gitProjectID)
 		if cErr != nil {
 			return success, errors.Wrap(cErr)
 		}
 
-		_, gErr := svc.gitlabClient.TagCommit(ctx, gitlab.TagOptions{
+		tOpts := gitlab.TagOptions{
 			ProjectID: projectID,
-			TagName:   v,
+			TagName:   releaseVersion,
 			GitHash:   gitSHA,
-		})
+		}
+
+		tag, _ := svc.gitlabClient.GetTag(ctx, tOpts)
+		if tag != nil && tag.Name != "" {
+			return success, errors.BadRequestf("the version: %v has already been tagged", releaseVersion)
+		}
+
+		_, gErr := svc.gitlabClient.TagCommit(ctx, tOpts)
 		if gErr != nil {
 			return success, errors.Wrap(gErr)
 		}
+
+		rel, _ := svc.gitlabClient.GetRelease(ctx, tOpts)
+		if rel != nil && rel.Name != "" {
+			return success, errors.BadRequestf("the version: %v has already been released", releaseVersion)
+		}
+
+		_, rErr := svc.gitlabClient.CreateRelease(ctx, tOpts)
+		if rErr != nil {
+			return success, errors.Wrap(rErr)
+		}
+		log.Logger.Info("artifact released",
+			zap.String("branch", gitBranch),
+			zap.String("sha", gitSHA),
+			zap.String("project", gitProjectID),
+			zap.String("full_version", fullVersion),
+			zap.String("release_version", fullVersion),
+		)
 	}
 
 	return success, nil
+}
+
+func parseVersion(fullVersion string) string {
+	v := ""
+	vParts := strings.Split(fullVersion, ".")
+	switch len(vParts) {
+	case 1, 2, 3:
+		v = fullVersion
+	default:
+		v = strings.Join(vParts[0:3], ".")
+	}
+	if strings.HasPrefix(fullVersion, "v") {
+		return v
+	}
+	return fmt.Sprintf("v%s", v)
 }
 
 func (svc *ReleaseSvc) toFeed(ctx context.Context, release eve.Release, artifact *data.Artifact, fromFeed *data.Feed) (*data.Feed, error) {
