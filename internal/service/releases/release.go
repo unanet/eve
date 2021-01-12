@@ -179,16 +179,6 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 			return success, goerrors.Wrapf(gErr, "failed to tag the gitlab commit")
 		}
 
-		// rel, _ := svc.gitlabClient.GetRelease(ctx, tOpts)
-		// if rel != nil && rel.Name != "" {
-		// 	return success, errors.BadRequestf("the version: %v has already been released", releaseVersion)
-		// }
-
-		// _, rErr := svc.gitlabClient.CreateRelease(ctx, tOpts)
-		// if rErr != nil {
-		// 	log.Logger.Warn("failed to create release", zap.Error(rErr))
-		// 	return success, goerrors.Wrapf(rErr, "failed to create gitlab release")
-		// }
 		log.Logger.Info("artifact released",
 			zap.String("branch", gitBranch),
 			zap.String("sha", gitSHA),
