@@ -49,9 +49,15 @@ docker-helm-exec = docker run --rm --user ${DOCKER_UID}:${DOCKER_UID} \
 	-w /src \
 	alpine/helm	
 
-.PHONY: build dist test
+check-tag = !(git rev-parse -q --verify "refs/tags/v${PATCH_VERSION}" > /dev/null 2>&1) || \
+	(echo "the version: ${PATCH_VERSION} has been released already" && exit 1)
 
-build:
+.PHONY: build dist test check_version
+
+check_version:
+	@$(check-tag)
+
+build: check_version
 	docker pull ${BUILD_IMAGE}
 	docker pull unanet-docker.jfrog.io/alpine-base
 	mkdir -p bin
