@@ -85,7 +85,7 @@ func (r *Repo) UpsertMergeLabel(ctx context.Context, l *Label) error {
 	INSERT INTO label(description, data, created_at, updated_at)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (description)
-		DO UPDATE SET value = label.value || $2, updated_at = $4
+		DO UPDATE SET data = label.data || $2, updated_at = $4
 		RETURNING id, value, created_at
 	`, l.Description, l.Data, l.CreatedAt, l.UpdatedAt).
 		StructScan(l)
@@ -110,10 +110,10 @@ func (r *Repo) UpsertLabel(ctx context.Context, l *Label) error {
 
 	err := r.db.QueryRowxContext(ctx, `
 	
-	INSERT INTO label(description, value, created_at, updated_at)
+	INSERT INTO label(description, data, created_at, updated_at)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (description)
-		DO UPDATE SET value = $2, updated_at = $4
+		DO UPDATE SET data = $2, updated_at = $4
 		RETURNING id, created_at
 	
 	`, l.Description, l.Data, l.CreatedAt, l.UpdatedAt).
