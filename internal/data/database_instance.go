@@ -23,7 +23,7 @@ type DatabaseInstance struct {
 	ServiceAccount   string         `db:"service_account"`
 	ImageTag         string         `db:"image_tag"`
 	RunAs            int            `db:"run_as"`
-	Metadata         json.Text      `db:"metadata"`
+	Metadata         json.Object    `db:"metadata"`
 	DatabaseName     string         `db:"database_name"`
 }
 
@@ -83,7 +83,7 @@ func (r *Repo) DeployedDatabaseInstancesByNamespaceID(ctx context.Context, names
 }
 
 func (r *Repo) DatabaseInstanceArtifacts(ctx context.Context, namespaceIDs []int) (RequestArtifacts, error) {
-	esql, args, err := sqlx.In(`
+	s, args, err := sqlx.In(`
 			select distinct
 			 	a.id as artifact_id,
 				a.name as artifact_name,
@@ -104,8 +104,8 @@ func (r *Repo) DatabaseInstanceArtifacts(ctx context.Context, namespaceIDs []int
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-	esql = r.db.Rebind(esql)
-	rows, err := r.db.QueryxContext(ctx, esql, args...)
+	s = r.db.Rebind(s)
+	rows, err := r.db.QueryxContext(ctx, s, args...)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}

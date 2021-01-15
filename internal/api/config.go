@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
+	"gitlab.unanet.io/devops/go/pkg/log"
 	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/gitlab"
-	"gitlab.unanet.io/devops/go/pkg/log"
 )
 
 var (

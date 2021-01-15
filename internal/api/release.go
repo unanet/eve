@@ -5,10 +5,10 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"gitlab.unanet.io/devops/go/pkg/json"
 
 	"gitlab.unanet.io/devops/eve/internal/service/releases"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
-	"gitlab.unanet.io/devops/go/pkg/json"
 )
 
 type ReleaseController struct {

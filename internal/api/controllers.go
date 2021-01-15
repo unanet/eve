@@ -13,7 +13,7 @@ func InitializeControllers(
 ) ([]Controller, error) {
 	return []Controller{
 		NewPingController(),
-		NewDeploymentPlanController(deploymentPlanGenerator),
+		NewDeploymentPlansController(deploymentPlanGenerator),
 		NewPodController(manager),
 		NewReleaseController(releaseSvc),
 		NewMetadataController(manager),

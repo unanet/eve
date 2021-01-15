@@ -5,15 +5,14 @@ import (
 	"encoding/json"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
-	"go.uber.org/zap"
-
 	"github.com/robfig/cron/v3"
+	uuid "github.com/satori/go.uuid"
+	"gitlab.unanet.io/devops/go/pkg/errors"
+	"gitlab.unanet.io/devops/go/pkg/log"
+	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
-	"gitlab.unanet.io/devops/go/pkg/errors"
-	"gitlab.unanet.io/devops/go/pkg/log"
 )
 
 type DeploymentCronRepo interface {

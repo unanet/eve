@@ -24,7 +24,7 @@ const (
 type DeploymentCronJob struct {
 	ID          uuid.UUID           `db:"id"`
 	Description string              `db:"description"`
-	PlanOptions json.Text           `db:"plan_options"`
+	PlanOptions json.Object         `db:"plan_options"`
 	Schedule    string              `db:"schedule"`
 	LastRun     sql.NullTime        `db:"last_run"`
 	State       DeploymentCronState `db:"state"`
@@ -109,9 +109,9 @@ func (r *Repo) ScheduleDeploymentCronJobs(ctx context.Context, schedule func(con
 	}
 
 	for _, x := range jobs {
-		ids, err := schedule(ctx, x)
-		if err != nil {
-			return errors.WrapTx(tx, err)
+		ids, e := schedule(ctx, x)
+		if e != nil {
+			return errors.WrapTx(tx, e)
 		}
 		if ids == nil || len(ids) == 0 {
 			continue

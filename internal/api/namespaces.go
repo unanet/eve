@@ -6,11 +6,11 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"gitlab.unanet.io/devops/go/pkg/errors"
+	"gitlab.unanet.io/devops/go/pkg/json"
 
 	"gitlab.unanet.io/devops/eve/internal/service/crud"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
-	"gitlab.unanet.io/devops/go/pkg/errors"
-	"gitlab.unanet.io/devops/go/pkg/json"
 )
 
 type NamespaceController struct {
@@ -120,8 +120,8 @@ func (c NamespaceController) updateNamespace(w http.ResponseWriter, r *http.Requ
 	}
 
 	var namespace eve.Namespace
-	if err := json.ParseBody(r, &namespace); err != nil {
-		render.Respond(w, r, err)
+	if e := json.ParseBody(r, &namespace); e != nil {
+		render.Respond(w, r, e)
 		return
 	}
 

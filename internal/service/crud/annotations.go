@@ -75,7 +75,7 @@ func toDataAnnotation(m eve.Annotation) data.Annotation {
 	return data.Annotation{
 		ID:          m.ID,
 		Description: m.Description,
-		Data:        json.FromMap(m.Data),
+		Data:        json.FromMapOrEmpty(m.Data),
 	}
 }
 
@@ -83,7 +83,7 @@ func fromDataAnnotation(m data.Annotation) eve.Annotation {
 	return eve.Annotation{
 		ID:          m.ID,
 		Description: m.Description,
-		Data:        m.Data.AsMap(),
+		Data:        m.Data.AsMapOrEmpty(),
 		CreatedAt:   m.CreatedAt.Time,
 		UpdatedAt:   m.UpdatedAt.Time,
 	}
@@ -101,7 +101,7 @@ func fromDataAnnotationServiceToAnnotation(m data.AnnotationService) eve.Annotat
 	return eve.Annotation{
 		ID:          m.AnnotationID,
 		Description: m.AnnotationDescription,
-		Data:        m.Data.AsMap(),
+		Data:        m.Data.AsMapOrEmpty(),
 		CreatedAt:   m.CreatedAt.Time,
 		UpdatedAt:   m.UpdatedAt.Time,
 	}
@@ -212,7 +212,7 @@ func (m Manager) UpsertMergeAnnotation(ctx context.Context, annotation *eve.Anno
 	annotation.UpdatedAt = dataAnnotation.UpdatedAt.Time
 	annotation.CreatedAt = dataAnnotation.CreatedAt.Time
 	annotation.ID = dataAnnotation.ID
-	annotation.Data = dataAnnotation.Data.AsMap()
+	annotation.Data = dataAnnotation.Data.AsMapOrEmpty()
 	return nil
 }
 
@@ -337,7 +337,7 @@ func (m *Manager) ServiceAnnotation(ctx context.Context, id int) (eve.MetadataFi
 
 	var collectedMetadata []eve.MetadataField
 	for _, x := range metadata {
-		collectedMetadata = append(collectedMetadata, x.Data.AsMap())
+		collectedMetadata = append(collectedMetadata, x.Data.AsMapOrEmpty())
 	}
 
 	return m.mergeMetadata(collectedMetadata), nil
@@ -351,7 +351,7 @@ func (m *Manager) JobAnnotation(ctx context.Context, id int) (eve.MetadataField,
 
 	var collectedMetadata []eve.MetadataField
 	for _, x := range metadata {
-		collectedMetadata = append(collectedMetadata, x.Data.AsMap())
+		collectedMetadata = append(collectedMetadata, x.Data.AsMapOrEmpty())
 	}
 
 	return m.mergeMetadata(collectedMetadata), nil

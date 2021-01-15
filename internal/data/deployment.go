@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	goErrors "errors"
 	"time"
 
 	uuid "github.com/satori/go.uuid"
@@ -26,8 +27,8 @@ type Deployment struct {
 	MessageID     sql.NullString  `db:"message_id"`
 	ReceiptHandle sql.NullString  `db:"receipt_handle"`
 	ReqID         string          `db:"req_id"`
-	PlanOptions   json.Text       `db:"plan_options"`
-	PlanLocation  json.Text       `db:"plan_location"`
+	PlanOptions   json.Object     `db:"plan_options"`
+	PlanLocation  json.Object     `db:"plan_location"`
 	State         DeploymentState `db:"state"`
 	User          string          `db:"user"`
 	CreatedAt     sql.NullTime    `db:"created_at"`
@@ -51,7 +52,7 @@ func (r *Repo) UpdateDeploymentMessageID(ctx context.Context, id uuid.UUID, mess
 	return nil
 }
 
-func (r *Repo) UpdateDeploymentPlanLocation(ctx context.Context, id uuid.UUID, location json.Text) error {
+func (r *Repo) UpdateDeploymentPlanLocation(ctx context.Context, id uuid.UUID, location json.Object) error {
 	result, err := r.db.ExecContext(ctx, "update deployment set plan_location = $1, state = $2, updated_at = $3 where id = $4",
 		location, DeploymentStateScheduled, time.Now().UTC(), id)
 	if err != nil {
@@ -91,6 +92,9 @@ func (r *Repo) DeploymentByID(ctx context.Context, id uuid.UUID) (*Deployment, e
 	row := r.db.QueryRowxContext(ctx, "select * from deployment where id = $1", id)
 	err := row.StructScan(&deployment)
 	if err != nil {
+		if goErrors.Is(err, sql.ErrNoRows) {
+			return nil, NotFoundErrorf("deployment with id: %s not found", id.String())
+		}
 		return nil, errors.Wrap(err)
 	}
 

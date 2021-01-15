@@ -5,27 +5,27 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"gitlab.unanet.io/devops/go/pkg/json"
 
 	"gitlab.unanet.io/devops/eve/internal/service/plans"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
-	"gitlab.unanet.io/devops/go/pkg/json"
 )
 
-type DeploymentsController struct {
+type DeploymentPlansController struct {
 	planGenerator *plans.PlanGenerator
 }
 
-func NewDeploymentPlanController(planGenerator *plans.PlanGenerator) *DeploymentsController {
-	return &DeploymentsController{
+func NewDeploymentPlansController(planGenerator *plans.PlanGenerator) *DeploymentPlansController {
+	return &DeploymentPlansController{
 		planGenerator: planGenerator,
 	}
 }
 
-func (c DeploymentsController) Setup(r chi.Router) {
+func (c DeploymentPlansController) Setup(r chi.Router) {
 	r.Post("/deployment-plans", c.createDeploymentPlan)
 }
 
-func (c DeploymentsController) createDeploymentPlan(w http.ResponseWriter, r *http.Request) {
+func (c DeploymentPlansController) createDeploymentPlan(w http.ResponseWriter, r *http.Request) {
 	var options eve.DeploymentPlanOptions
 	if err := json.ParseBody(r, &options); err != nil {
 		render.Respond(w, r, err)

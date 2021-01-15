@@ -19,7 +19,7 @@ type Namespace struct {
 	RequestedVersion   string       `db:"requested_version"`
 	ExplicitDeployOnly bool         `db:"explicit_deploy_only"`
 	ClusterID          int          `db:"cluster_id"`
-	Metadata           json.Text    `db:"metadata"`
+	Metadata           json.Object  `db:"metadata"`
 	CreatedAt          sql.NullTime `db:"created_at"`
 	UpdatedAt          sql.NullTime `db:"updated_at"`
 }

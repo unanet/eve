@@ -15,14 +15,14 @@ type Artifact struct {
 	FeedType        string         `db:"feed_type"`
 	ProviderGroup   string         `db:"provider_group"`
 	FunctionPointer sql.NullString `db:"function_pointer"`
-	Metadata        json.Text      `db:"metadata"`
+	Metadata        json.Object    `db:"metadata"`
 	ImageTag        string         `db:"image_tag"`
 	ServicePort     int            `db:"service_port"`
 	MetricsPort     int            `db:"metrics_port"`
 	ServiceAccount  string         `db:"service_account"`
 	RunAs           int            `db:"run_as"`
-	LivelinessProbe json.Text      `db:"liveliness_probe"`
-	ReadinessProbe  json.Text      `db:"readiness_probe"`
+	LivelinessProbe json.Object    `db:"liveliness_probe"`
+	ReadinessProbe  json.Object    `db:"readiness_probe"`
 }
 
 type Artifacts []Artifact

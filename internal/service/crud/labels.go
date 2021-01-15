@@ -4,11 +4,12 @@ import (
 	"context"
 	"strconv"
 
+	"gitlab.unanet.io/devops/go/pkg/errors"
+	"gitlab.unanet.io/devops/go/pkg/json"
+
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
-	"gitlab.unanet.io/devops/go/pkg/errors"
-	"gitlab.unanet.io/devops/go/pkg/json"
 )
 
 func toDataLabelServiceMap(m eve.LabelServiceMap) data.LabelServiceMap {
@@ -75,7 +76,7 @@ func toDataLabel(m eve.Label) data.Label {
 	return data.Label{
 		ID:          m.ID,
 		Description: m.Description,
-		Data:        json.FromMap(m.Data),
+		Data:        json.FromMapOrEmpty(m.Data),
 	}
 }
 
@@ -83,7 +84,7 @@ func fromDataLabel(m data.Label) eve.Label {
 	return eve.Label{
 		ID:          m.ID,
 		Description: m.Description,
-		Data:        m.Data.AsMap(),
+		Data:        m.Data.AsMapOrEmpty(),
 		CreatedAt:   m.CreatedAt.Time,
 		UpdatedAt:   m.UpdatedAt.Time,
 	}
@@ -101,7 +102,7 @@ func fromDataLabelServiceToLabel(m data.LabelService) eve.Label {
 	return eve.Label{
 		ID:          m.LabelID,
 		Description: m.LabelDescription,
-		Data:        m.Data.AsMap(),
+		Data:        m.Data.AsMapOrEmpty(),
 		CreatedAt:   m.CreatedAt.Time,
 		UpdatedAt:   m.UpdatedAt.Time,
 	}
@@ -212,7 +213,7 @@ func (m Manager) UpsertMergeLabel(ctx context.Context, label *eve.Label) error {
 	label.UpdatedAt = dataLabel.UpdatedAt.Time
 	label.CreatedAt = dataLabel.CreatedAt.Time
 	label.ID = dataLabel.ID
-	label.Data = dataLabel.Data.AsMap()
+	label.Data = dataLabel.Data.AsMapOrEmpty()
 	return nil
 }
 
@@ -337,7 +338,7 @@ func (m *Manager) ServiceLabel(ctx context.Context, id int) (eve.MetadataField, 
 
 	var collectedMetadata []eve.MetadataField
 	for _, x := range metadata {
-		collectedMetadata = append(collectedMetadata, x.Data.AsMap())
+		collectedMetadata = append(collectedMetadata, x.Data.AsMapOrEmpty())
 	}
 
 	return m.mergeMetadata(collectedMetadata), nil
@@ -351,7 +352,7 @@ func (m *Manager) JobLabel(ctx context.Context, id int) (eve.MetadataField, erro
 
 	var collectedMetadata []eve.MetadataField
 	for _, x := range metadata {
-		collectedMetadata = append(collectedMetadata, x.Data.AsMap())
+		collectedMetadata = append(collectedMetadata, x.Data.AsMapOrEmpty())
 	}
 
 	return m.mergeMetadata(collectedMetadata), nil

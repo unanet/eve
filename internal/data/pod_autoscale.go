@@ -12,13 +12,13 @@ import (
 )
 
 type PodAutoscaleMap struct {
-	ServiceID                  *int      `db:"service_id"`
-	EnvironmentID              *int      `db:"environment_id"`
-	NamespaceID                *int      `db:"namespace_id"`
-	Data                       json.Text `db:"data"`
-	StackingOrder              int       `db:"stacking_order"`
-	PodAutoscaleDescription    string    `db:"pa_description"`
-	PodAutoscaleMapDescription string    `db:"pam_description"`
+	ServiceID                  *int        `db:"service_id"`
+	EnvironmentID              *int        `db:"environment_id"`
+	NamespaceID                *int        `db:"namespace_id"`
+	Data                       json.Object `db:"data"`
+	StackingOrder              int         `db:"stacking_order"`
+	PodAutoscaleDescription    string      `db:"pa_description"`
+	PodAutoscaleMapDescription string      `db:"pam_description"`
 }
 
 type PodAutoscaleByStackingOrder []PodAutoscaleMap
@@ -79,10 +79,10 @@ func (r *Repo) EnvironmentPodAutoscaleMap(ctx context.Context, environmentID int
 	return r.PodAutoscaleMap(ctx, 0, environmentID, 0)
 }
 
-func (r *Repo) PodAutoscaleStacked(pams []PodAutoscaleMap) (json.Text, error) {
+func (r *Repo) PodAutoscaleStacked(pams []PodAutoscaleMap) (json.Object, error) {
 	// Guard against no values set in the DB
 	if len(pams) == 0 {
-		return json.EmptyJSONText, nil
+		return json.EmptyJSONObject, nil
 	}
 
 	// Explicitly Sort the slice based on stacking Order
@@ -109,10 +109,10 @@ func (r *Repo) PodAutoscaleStacked(pams []PodAutoscaleMap) (json.Text, error) {
 		targetAutoScaleSettings = mergemap.Merge(targetAutoScaleSettings, dataMap)
 	}
 	// Serialize the final struct back to a Byte Slice (JSON.Text) and return to the caller
-	return json.StructToJson(targetAutoScaleSettings)
+	return json.StructToJsonObject(targetAutoScaleSettings)
 }
 
-func (r *Repo) HydrateDeployServicePodAutoscale(ctx context.Context, svc DeployService) (json.Text, error) {
+func (r *Repo) HydrateDeployServicePodAutoscale(ctx context.Context, svc DeployService) (json.Object, error) {
 	// Get all of the matching records from the map table
 	pams, err := r.PodAutoscaleMap(ctx, svc.ServiceID, svc.EnvironmentID, svc.NamespaceID)
 	if err != nil {

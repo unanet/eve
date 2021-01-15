@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 
 	uuid "github.com/satori/go.uuid"
+	"gitlab.unanet.io/devops/go/pkg/errors"
 	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service/crud"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
-	"gitlab.unanet.io/devops/go/pkg/errors"
 )
 
 type QWriter interface {
@@ -76,7 +76,7 @@ func fromDataDatabaseInstance(s data.DatabaseInstance) *eve.DeployMigration {
 			DeployedVersion:  s.DeployedVersion.String,
 			ServiceAccount:   s.ServiceAccount,
 			ImageTag:         s.ImageTag,
-			Metadata:         s.Metadata.AsMap(),
+			Metadata:         s.Metadata.AsMapOrEmpty(),
 			Result:           eve.DeployArtifactResultNoop,
 			RunAs:            s.RunAs,
 		},

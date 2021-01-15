@@ -29,10 +29,10 @@ type DeployService struct {
 	Count            int            `db:"count"`
 	EnvironmentID    int            `db:"environment_id"`
 	NamespaceID      int            `db:"namespace_id"`
-	LivelinessProbe  json.Text      `db:"liveliness_probe"`
-	ReadinessProbe   json.Text      `db:"readiness_probe"`
-	PodResource      json.Text      `db:"pod_resource"`
-	Autoscaling      json.Text      `db:"autoscaling"`
+	LivelinessProbe  json.Object    `db:"liveliness_probe"`
+	ReadinessProbe   json.Object    `db:"readiness_probe"`
+	PodResource      json.Object    `db:"pod_resource"`
+	Autoscaling      json.Object    `db:"autoscaling"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
 	SuccessExitCodes string         `db:"success_exit_codes"`

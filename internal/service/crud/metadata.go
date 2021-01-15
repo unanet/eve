@@ -4,12 +4,13 @@ import (
 	"context"
 	"strconv"
 
-	"gitlab.unanet.io/devops/eve/internal/data"
-	"gitlab.unanet.io/devops/eve/internal/service"
-	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/go/pkg/errors"
 	"gitlab.unanet.io/devops/go/pkg/json"
 	"gitlab.unanet.io/devops/go/pkg/mergemap"
+
+	"gitlab.unanet.io/devops/eve/internal/data"
+	"gitlab.unanet.io/devops/eve/internal/service"
+	"gitlab.unanet.io/devops/eve/pkg/eve"
 )
 
 func toDataMetadataServiceMap(m eve.MetadataServiceMap) data.MetadataServiceMap {
@@ -76,7 +77,7 @@ func toDataMetadata(m eve.Metadata) data.Metadata {
 	return data.Metadata{
 		ID:          m.ID,
 		Description: m.Description,
-		Value:       json.FromMap(m.Value),
+		Value:       json.FromMapOrEmpty(m.Value),
 	}
 }
 
@@ -84,7 +85,7 @@ func fromDataMetadata(m data.Metadata) eve.Metadata {
 	return eve.Metadata{
 		ID:          m.ID,
 		Description: m.Description,
-		Value:       m.Value.AsMap(),
+		Value:       m.Value.AsMapOrEmpty(),
 		CreatedAt:   m.CreatedAt.Time,
 		UpdatedAt:   m.UpdatedAt.Time,
 	}
@@ -102,7 +103,7 @@ func fromDataMetadataServiceToMetadata(m data.MetadataService) eve.Metadata {
 	return eve.Metadata{
 		ID:          m.MetadataID,
 		Description: m.MetadataDescription,
-		Value:       m.Metadata.AsMap(),
+		Value:       m.Metadata.AsMapOrEmpty(),
 		CreatedAt:   m.CreatedAt.Time,
 		UpdatedAt:   m.UpdatedAt.Time,
 	}
@@ -213,7 +214,7 @@ func (m Manager) UpsertMergeMetadata(ctx context.Context, metadata *eve.Metadata
 	metadata.UpdatedAt = dataMetadata.UpdatedAt.Time
 	metadata.CreatedAt = dataMetadata.CreatedAt.Time
 	metadata.ID = dataMetadata.ID
-	metadata.Value = dataMetadata.Value.AsMap()
+	metadata.Value = dataMetadata.Value.AsMapOrEmpty()
 	return nil
 }
 
@@ -338,7 +339,7 @@ func (m *Manager) ServiceMetadata(ctx context.Context, id int) (eve.MetadataFiel
 
 	var collectedMetadata []eve.MetadataField
 	for _, x := range metadata {
-		collectedMetadata = append(collectedMetadata, x.Metadata.AsMap())
+		collectedMetadata = append(collectedMetadata, x.Metadata.AsMapOrEmpty())
 	}
 
 	return m.mergeMetadata(collectedMetadata), nil
@@ -352,7 +353,7 @@ func (m *Manager) JobMetadata(ctx context.Context, id int) (eve.MetadataField, e
 
 	var collectedMetadata []eve.MetadataField
 	for _, x := range metadata {
-		collectedMetadata = append(collectedMetadata, x.Metadata.AsMap())
+		collectedMetadata = append(collectedMetadata, x.Metadata.AsMapOrEmpty())
 	}
 
 	return m.mergeMetadata(collectedMetadata), nil

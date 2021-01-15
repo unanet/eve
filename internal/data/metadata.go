@@ -13,7 +13,7 @@ import (
 type Metadata struct {
 	ID           int          `db:"id"`
 	Description  string       `db:"description"`
-	Value        json.Text    `db:"value"`
+	Value        json.Object  `db:"value"`
 	MigratedFrom int          `db:"migrated_from"`
 	CreatedAt    sql.NullTime `db:"created_at"`
 	UpdatedAt    sql.NullTime `db:"updated_at"`
@@ -45,7 +45,7 @@ type MetadataJobMap struct {
 
 type MetadataService struct {
 	MetadataID          int           `db:"metadata_id"`
-	Metadata            json.Text     `db:"metadata"`
+	Metadata            json.Object   `db:"metadata"`
 	MetadataDescription string        `db:"metadata_description"`
 	MapDescription      string        `db:"map_description"`
 	MapEnvironmentID    sql.NullInt32 `db:"map_environment_id"`
@@ -59,7 +59,7 @@ type MetadataService struct {
 
 type MetadataJob struct {
 	MetadataID          int           `db:"metadata_id"`
-	Metadata            json.Text     `db:"metadata"`
+	Metadata            json.Object   `db:"metadata"`
 	MetadataDescription string        `db:"metadata_description"`
 	MapDescription      string        `db:"map_description"`
 	MapEnvironmentId    sql.NullInt32 `db:"map_environment_id"`

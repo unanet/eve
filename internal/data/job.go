@@ -139,7 +139,7 @@ func (r *Repo) JobByName(ctx context.Context, name string, namespace string) (*J
 }
 
 func (r *Repo) JobArtifacts(ctx context.Context, namespaceIDs []int) (RequestArtifacts, error) {
-	esql, args, err := sqlx.In(`
+	s, args, err := sqlx.In(`
 		select distinct j.artifact_id, 
 		                a.function_pointer as function_pointer,
 		                a.name as artifact_name, 
@@ -157,8 +157,8 @@ func (r *Repo) JobArtifacts(ctx context.Context, namespaceIDs []int) (RequestArt
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-	esql = r.db.Rebind(esql)
-	rows, err := r.db.QueryxContext(ctx, esql, args...)
+	s = r.db.Rebind(s)
+	rows, err := r.db.QueryxContext(ctx, s, args...)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
@@ -213,7 +213,7 @@ func (r *Repo) JobsByNamespaceName(ctx context.Context, namespaceName string) ([
 }
 
 func (r *Repo) jobs(ctx context.Context, whereArgs ...WhereArg) ([]Job, error) {
-	esql, args := CheckWhereArgs(`
+	s, args := CheckWhereArgs(`
 		select j.id, 
 		       j.namespace_id, 
 		       j.artifact_id, 
@@ -229,7 +229,7 @@ func (r *Repo) jobs(ctx context.Context, whereArgs ...WhereArg) ([]Job, error) {
 		    left join namespace n on j.namespace_id = n.id
 			left join artifact a on j.artifact_id = a.id
 		`, whereArgs)
-	rows, err := r.db.QueryxContext(ctx, esql+"order by j.name", args...)
+	rows, err := r.db.QueryxContext(ctx, s+"order by j.name", args...)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}

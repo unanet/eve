@@ -11,14 +11,14 @@ import (
 )
 
 type PodResourcesMap struct {
-	ArtifactID                 *int      `db:"artifact_id"`
-	ServiceID                  *int      `db:"service_id"`
-	EnvironmentID              *int      `db:"environment_id"`
-	NamespaceID                *int      `db:"namespace_id"`
-	Data                       json.Text `db:"data"`
-	StackingOrder              int       `db:"stacking_order"`
-	PodResourcesDescription    string    `db:"pr_description"`
-	PodResourcesMapDescription string    `db:"prm_description"`
+	ArtifactID                 *int        `db:"artifact_id"`
+	ServiceID                  *int        `db:"service_id"`
+	EnvironmentID              *int        `db:"environment_id"`
+	NamespaceID                *int        `db:"namespace_id"`
+	Data                       json.Object `db:"data"`
+	StackingOrder              int         `db:"stacking_order"`
+	PodResourcesDescription    string      `db:"pr_description"`
+	PodResourcesMapDescription string      `db:"prm_description"`
 }
 
 type PodResourcesByStackingOrder []PodResourcesMap
@@ -90,10 +90,10 @@ func (r *Repo) PodResourcesMap(ctx context.Context, serviceID, environmentID, na
 	return prms, nil
 }
 
-func (r *Repo) PodResourcesStacked(prms []PodResourcesMap) (json.Text, error) {
+func (r *Repo) PodResourcesStacked(prms []PodResourcesMap) (json.Object, error) {
 	// Guard against no values set in the DB
 	if len(prms) == 0 {
-		return json.EmptyJSONText, nil
+		return json.EmptyJSONObject, nil
 	}
 	// Explicitly Sort the slice based on stacking Order (this is done on ORDER BY, but I want to be explicit about it)
 	sort.Sort(PodResourcesByStackingOrder(prms))
@@ -113,10 +113,10 @@ func (r *Repo) PodResourcesStacked(prms []PodResourcesMap) (json.Text, error) {
 		targetPodResourceSettings = mergemap.Merge(targetPodResourceSettings, dataMap)
 	}
 	// Serialize the final struct back to a Byte Slice (JSON.Text) and return to the caller
-	return json.StructToJson(targetPodResourceSettings)
+	return json.StructToJsonObject(targetPodResourceSettings)
 }
 
-func (r *Repo) HydrateDeployServicePodResource(ctx context.Context, svc DeployService) (json.Text, error) {
+func (r *Repo) HydrateDeployServicePodResource(ctx context.Context, svc DeployService) (json.Object, error) {
 	// Get all of the matching records from the map table
 	prms, err := r.PodResourcesMap(ctx, svc.ServiceID, svc.EnvironmentID, svc.NamespaceID, svc.ArtifactID)
 	if err != nil {

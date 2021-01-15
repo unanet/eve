@@ -13,7 +13,7 @@ import (
 type Annotation struct {
 	ID          int          `db:"id"`
 	Description string       `db:"description"`
-	Data        json.Text    `db:"data"`
+	Data        json.Object  `db:"data"`
 	CreatedAt   sql.NullTime `db:"created_at"`
 	UpdatedAt   sql.NullTime `db:"updated_at"`
 }
@@ -44,7 +44,7 @@ type AnnotationJobMap struct {
 
 type AnnotationService struct {
 	AnnotationID          int           `db:"annotation_id"`
-	Data                  json.Text     `db:"data"`
+	Data                  json.Object   `db:"data"`
 	AnnotationDescription string        `db:"annotation_description"`
 	MapDescription        string        `db:"map_description"`
 	MapEnvironmentID      sql.NullInt32 `db:"map_environment_id"`
@@ -58,7 +58,7 @@ type AnnotationService struct {
 
 type AnnotationJob struct {
 	AnnotationID          int           `db:"annotation_id"`
-	Data                  json.Text     `db:"data"`
+	Data                  json.Object   `db:"data"`
 	AnnotationDescription string        `db:"annotation_description"`
 	MapDescription        string        `db:"map_description"`
 	MapEnvironmentID      sql.NullInt32 `db:"map_environment_id"`

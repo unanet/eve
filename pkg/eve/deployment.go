@@ -3,9 +3,11 @@ package eve
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	uuid "github.com/satori/go.uuid"
 
+	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
 )
 
@@ -23,6 +25,28 @@ func (t PlanType) Command() string {
 		return queue.CommandRestartNamespace
 	default:
 		return queue.CommandDeployNamespace
+	}
+}
+
+type DeploymentState string
+
+const (
+	DeploymentStateQueued    DeploymentState = "queued"
+	DeploymentStateScheduled DeploymentState = "scheduled"
+	DeploymentStateCompleted DeploymentState = "completed"
+	DeploymentStateUnknown   DeploymentState = "unknown"
+)
+
+func ParseDeploymentState(value data.DeploymentState) DeploymentState {
+	switch value {
+	case data.DeploymentStateQueued:
+		return DeploymentStateQueued
+	case data.DeploymentStateScheduled:
+		return DeploymentStateScheduled
+	case data.DeploymentStateCompleted:
+		return DeploymentStateCompleted
+	default:
+		return DeploymentStateUnknown
 	}
 }
 
@@ -338,4 +362,26 @@ func (ns *NSDeploymentPlan) Failed() bool {
 
 func (ns *NSDeploymentPlan) Message(format string, a ...interface{}) {
 	ns.Messages = append(ns.Messages, fmt.Sprintf(format, a...))
+}
+
+func ToDeployment(d data.Deployment) Deployment {
+	return Deployment{
+		ID:            d.ID,
+		EnvironmentID: d.EnvironmentID,
+		NamespaceID:   d.NamespaceID,
+		User:          d.User,
+		State:         ParseDeploymentState(d.State),
+		CreatedAt:     d.CreatedAt.Time,
+		UpdatedAt:     d.UpdatedAt.Time,
+	}
+}
+
+type Deployment struct {
+	ID            uuid.UUID       `json:"id"`
+	EnvironmentID int             `json:"environment_id"`
+	NamespaceID   int             `json:"namespace_id"`
+	User          string          `json:"user"`
+	State         DeploymentState `json:"state"`
+	CreatedAt     time.Time       `json:"created_at"`
+	UpdatedAt     time.Time       `json:"updated_at"`
 }

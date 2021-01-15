@@ -4,10 +4,11 @@ import (
 	"context"
 	"strconv"
 
+	"gitlab.unanet.io/devops/go/pkg/errors"
+
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
-	"gitlab.unanet.io/devops/go/pkg/errors"
 )
 
 func fromDataEnvironment(environment data.Environment) eve.Environment {

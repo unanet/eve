@@ -59,7 +59,7 @@ type M struct {
 	ID            uuid.UUID
 	ReqID         string
 	GroupID       string
-	Body          json.Text
+	Body          json.Object
 	ReceiptHandle string
 	MessageID     string
 	Command       string
@@ -144,7 +144,7 @@ func (q *Q) Receive() ([]*M, error) {
 			GroupID:       *x.Attributes[sqs.MessageSystemAttributeNameMessageGroupId],
 			ReqID:         *x.MessageAttributes[MessageAttributeReqID].StringValue,
 			Command:       *x.MessageAttributes[MessageAttributeCommand].StringValue,
-			Body:          json.Text(*x.Body),
+			Body:          json.Object(*x.Body),
 			ReceiptHandle: *x.ReceiptHandle,
 			MessageID:     *x.MessageId,
 		}
