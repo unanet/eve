@@ -63,6 +63,7 @@ type M struct {
 	ReceiptHandle string
 	MessageID     string
 	Command       string
+	DedupeID      string
 }
 
 func (q *Q) logWith(m *M) *zap.Logger {
@@ -94,6 +95,10 @@ func (q *Q) Message(ctx context.Context, m *M) error {
 		},
 		MessageGroupId: aws.String(m.GroupID),
 		QueueUrl:       &q.c.QueueURL,
+	}
+
+	if len(m.DedupeID) > 0 {
+		awsM.MessageDeduplicationId = aws.String(m.DedupeID)
 	}
 
 	q.logWith(m).Info("preparing to send message to queue", zap.String("queue", *awsM.QueueUrl))

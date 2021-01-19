@@ -1,17 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="eve" uuid="6f2e6c3b-c363-4574-bb2e-d5641d878743">
+    <data-source source="LOCAL" name="devops-prod" uuid="b99ee65f-61f6-4e84-a698-c101b22d5e91">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://devops-prod-db.unanet.io:5432/eve</jdbc-url>
-    </data-source>
-    <data-source source="LOCAL" name="eve-dev" uuid="08286f13-c1fd-48fd-a2db-f70d24111198">
-      <driver-ref>postgresql</driver-ref>
-      <synchronize>true</synchronize>
-      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://devops-prod-db.unanet.io:5432/eve_dev</jdbc-url>
+      <jdbc-url>jdbc:postgresql://devops-prod-rds-us-east-2.cluster-cg83jqzndof0.us-east-2.rds.amazonaws.com/eve</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>
 </project>
