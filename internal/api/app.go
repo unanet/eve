@@ -109,9 +109,6 @@ func (a *Api) Start(onShutdown ...func()) {
 
 func (a *Api) setup() {
 	middleware.SetupMiddleware(a.r, 60*time.Second)
-	for _, c := range a.controllers {
-		c.Setup(a.r)
-	}
 	// Basic CORS
 	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
 	a.r.Use(cors.Handler(cors.Options{
@@ -121,4 +118,7 @@ func (a *Api) setup() {
 		AllowCredentials: true,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
+	for _, c := range a.controllers {
+		c.Setup(a.r)
+	}
 }
