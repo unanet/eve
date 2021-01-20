@@ -104,6 +104,11 @@ func (worker *Worker) getQueue(qUrl string) *Q {
 
 func (worker *Worker) Message(ctx context.Context, qUrl string, m *M) error {
 	q := worker.getQueue(qUrl)
+	reqID := log.GetReqID(ctx)
+	if len(reqID) == 0 {
+		reqID = log.GetNextRequestID()
+	}
+	m.ReqID = reqID
 	return q.Message(ctx, m)
 }
 
