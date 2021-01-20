@@ -102,7 +102,6 @@ func (d *PlanGenerator) QueuePlan(ctx context.Context, options *eve.DeploymentPl
 		queueM := queue.M{
 			ID:      dataDeployment.ID,
 			GroupID: ns.GetQueueGroupID(),
-			ReqID:   log.GetReqID(ctx),
 			Command: queue.CommandScheduleDeployment,
 		}
 		if qErr := d.q.Message(ctx, &queueM); qErr != nil {

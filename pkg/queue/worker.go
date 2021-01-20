@@ -86,6 +86,7 @@ func (worker *Worker) Stop() {
 }
 
 func (worker *Worker) DeleteMessage(ctx context.Context, m *M) error {
+	m.ReqID = log.GetReqID(ctx)
 	return worker.q.Delete(ctx, m)
 }
 
@@ -104,11 +105,7 @@ func (worker *Worker) getQueue(qUrl string) *Q {
 
 func (worker *Worker) Message(ctx context.Context, qUrl string, m *M) error {
 	q := worker.getQueue(qUrl)
-	reqID := log.GetReqID(ctx)
-	if len(reqID) == 0 {
-		reqID = log.GetNextRequestID()
-	}
-	m.ReqID = reqID
+	m.ReqID = log.GetReqID(ctx)
 	return q.Message(ctx, m)
 }
 
@@ -129,18 +126,8 @@ func (worker *Worker) run(h Handler, messages []*M) {
 	wg.Wait()
 }
 
-func GetReqID(ctx context.Context) string {
-	if ctx == nil {
-		return ""
-	}
-	if reqID, ok := ctx.Value(RequestIDKey).(string); ok {
-		return reqID
-	}
-	return ""
-}
-
 func GetLogger(ctx context.Context) *zap.Logger {
-	reqID := GetReqID(ctx)
+	reqID := log.GetReqID(ctx)
 	if len(reqID) > 0 {
 		return log.Logger.With(zap.String("req_id", reqID))
 	} else {

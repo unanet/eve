@@ -379,7 +379,6 @@ func (dq *Queue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 
 	err = dq.worker.Message(ctx, nsDeploymentPlan.SchQueueUrl, &queue.M{
 		ID:      deployment.ID,
-		ReqID:   queue.GetReqID(ctx),
 		GroupID: nsDeploymentPlan.Namespace.GetQueueGroupID(),
 		Body:    mBody,
 		Command: nsDeploymentPlan.Type.Command(),
@@ -469,7 +468,6 @@ func (dq *Queue) updateDeployment(ctx context.Context, m *queue.M) error {
 	// Still Delete the Message that triggers this updateDeployment (like an error that returns not found or already deleted)
 	err = dq.worker.DeleteMessage(ctx, &queue.M{
 		ID:            deployment.ID,
-		ReqID:         queue.GetReqID(ctx),
 		ReceiptHandle: deployment.ReceiptHandle.String,
 	})
 	if err != nil {
