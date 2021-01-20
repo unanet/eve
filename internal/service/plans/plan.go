@@ -9,7 +9,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gitlab.unanet.io/devops/go/pkg/errors"
 	"gitlab.unanet.io/devops/go/pkg/json"
-	"gitlab.unanet.io/devops/go/pkg/middleware"
+	"gitlab.unanet.io/devops/go/pkg/log"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
@@ -90,7 +90,7 @@ func (d *PlanGenerator) QueuePlan(ctx context.Context, options *eve.DeploymentPl
 		dataDeployment := data.Deployment{
 			EnvironmentID: env.ID,
 			NamespaceID:   ns.ID,
-			ReqID:         middleware.GetReqID(ctx),
+			ReqID:         log.GetReqID(ctx),
 			PlanOptions:   nsPlanOptions,
 			User:          options.User,
 		}
@@ -102,7 +102,7 @@ func (d *PlanGenerator) QueuePlan(ctx context.Context, options *eve.DeploymentPl
 		queueM := queue.M{
 			ID:      dataDeployment.ID,
 			GroupID: ns.GetQueueGroupID(),
-			ReqID:   middleware.GetReqID(ctx),
+			ReqID:   log.GetReqID(ctx),
 			Command: queue.CommandScheduleDeployment,
 		}
 		if qErr := d.q.Message(ctx, &queueM); qErr != nil {
