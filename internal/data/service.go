@@ -124,7 +124,6 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 
 	// This is where we are setting the Dynamic Configuration
 	// Autoscale,Pod Resource, and soon to be Metadata...
-	// TODO: Add HydrateDeployServiceMetadata method to use new stacking map table
 	for i := 0; i <= len(services)-1; i++ {
 		services[i].Autoscaling, err = r.HydrateDeployServicePodAutoscale(ctx, services[i])
 		if err != nil {

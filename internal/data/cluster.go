@@ -34,3 +34,34 @@ func (r *Repo) ClusterByID(ctx context.Context, id int) (*Cluster, error) {
 
 	return &cluster, nil
 }
+
+func (r *Repo) ClustersByProvider(ctx context.Context, provider string) (Artifacts, error) {
+
+	rows, err := r.db.QueryxContext(ctx, `
+		select c.id,
+		       c.name,
+		       c.sch_queue_url,
+		       c.provider_group,
+		       c.created_at,
+		       c.updated_at
+		       from cluster c where provider_group = $1`, provider)
+
+	if err != nil {
+		if goErrors.Is(err, sql.ErrNoRows) {
+			return nil, NotFoundErrorf("artifacts with provider: %v, not found", provider)
+		}
+		return nil, errors.Wrap(err)
+	}
+	var artifacts []Artifact
+
+	for rows.Next() {
+		var artifact Artifact
+		err = rows.StructScan(&artifact)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+		artifacts = append(artifacts, artifact)
+	}
+
+	return artifacts, nil
+}

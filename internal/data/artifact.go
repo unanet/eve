@@ -55,3 +55,41 @@ func (r *Repo) ArtifactByID(ctx context.Context, id int) (*Artifact, error) {
 
 	return &artifact, nil
 }
+
+func (r *Repo) ArtifactsByProvider(ctx context.Context, provider string) (Artifacts, error) {
+
+	rows, err := r.db.QueryxContext(ctx, `
+		select a.id,
+		       a.name,
+		       a.feed_type,
+		       a.provider_group,
+		       a.function_pointer,
+		       a.metadata,
+		       a.image_tag,
+		       a.service_port,
+		       a.metrics_port,
+		       a.service_account,
+		       a.run_as,
+		       a.liveliness_probe,
+		       a.readiness_probe
+		       from artifact a where provider_group = $1`, provider)
+
+	if err != nil {
+		if goErrors.Is(err, sql.ErrNoRows) {
+			return nil, NotFoundErrorf("artifacts with provider: %v, not found", provider)
+		}
+		return nil, errors.Wrap(err)
+	}
+	var artifacts []Artifact
+
+	for rows.Next() {
+		var artifact Artifact
+		err = rows.StructScan(&artifact)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+		artifacts = append(artifacts, artifact)
+	}
+
+	return artifacts, nil
+}
