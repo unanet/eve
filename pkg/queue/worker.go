@@ -11,12 +11,6 @@ import (
 	"gitlab.unanet.io/devops/go/pkg/log"
 )
 
-type ctxKeyRequestID int
-
-const (
-	RequestIDKey ctxKeyRequestID = 0
-)
-
 // HandlerFunc is used to define the Handler that is run on for each message
 type HandlerFunc func(ctx context.Context, msg *M) error
 
@@ -64,13 +58,14 @@ func (worker *Worker) Start(h Handler) {
 	for {
 		select {
 		case <-worker.ctx.Done():
-			worker.log.Info("Queue worker stopped")
+			worker.log.Info("queue worker stopped")
 			close(worker.done)
 			return
 		default:
-			m, err := worker.q.Receive()
+			ctx := context.Background()
+			m, err := worker.q.Receive(ctx)
 			if err != nil {
-				worker.log.Panic("Error receiving message from queue", zap.Error(err))
+				worker.log.Panic("error receiving message from queue", zap.Error(err))
 			}
 			if len(m) == 0 {
 				continue
@@ -86,7 +81,6 @@ func (worker *Worker) Stop() {
 }
 
 func (worker *Worker) DeleteMessage(ctx context.Context, m *M) error {
-	m.ReqID = log.GetReqID(ctx)
 	return worker.q.Delete(ctx, m)
 }
 
@@ -105,23 +99,22 @@ func (worker *Worker) getQueue(qUrl string) *Q {
 
 func (worker *Worker) Message(ctx context.Context, qUrl string, m *M) error {
 	q := worker.getQueue(qUrl)
-	m.ReqID = log.GetReqID(ctx)
 	return q.Message(ctx, m)
 }
 
-func (worker *Worker) run(h Handler, messages []*M) {
-	numMessages := len(messages)
+func (worker *Worker) run(h Handler, mCtx []*mContext) {
+	numMessages := len(mCtx)
 	var wg sync.WaitGroup
 	wg.Add(numMessages)
-	for i := range messages {
-		go func(m *M) {
-			ctx, cancel := context.WithTimeout(context.WithValue(context.Background(), RequestIDKey, m.ReqID), worker.timeout)
+	for _, mc := range mCtx {
+		go func(m *mContext) {
+			ctx, cancel := context.WithTimeout(m.ctx, worker.timeout)
 			defer cancel()
 			defer wg.Done()
-			if err := h.HandleMessage(ctx, m); err != nil {
-				worker.log.Error("Error handling message", zap.Error(err))
+			if err := h.HandleMessage(ctx, &m.M); err != nil {
+				worker.log.Error("error handling message", zap.Error(err))
 			}
-		}(messages[i])
+		}(mc)
 	}
 	wg.Wait()
 }

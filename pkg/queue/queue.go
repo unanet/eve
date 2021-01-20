@@ -57,7 +57,6 @@ func NewQ(sess *session.Session, config Config) *Q {
 
 type M struct {
 	ID            uuid.UUID
-	ReqID         string
 	GroupID       string
 	Body          json.Object
 	ReceiptHandle string
@@ -66,12 +65,14 @@ type M struct {
 	DedupeID      string
 }
 
-func (q *Q) logWith(m *M) *zap.Logger {
+type mContext struct {
+	M
+	ctx context.Context
+}
+
+func (q *Q) logWith(ctx context.Context) *zap.Logger {
 	return q.log.With(
-		zap.String("message_id", m.ID.String()),
-		zap.String("req_id", m.ReqID),
-		zap.String("group_id", m.GroupID),
-		zap.String("command", m.Command))
+		zap.String("req_id", log.GetReqID(ctx)))
 }
 
 func (q *Q) Message(ctx context.Context, m *M) error {
@@ -82,7 +83,7 @@ func (q *Q) Message(ctx context.Context, m *M) error {
 		MessageAttributes: map[string]*sqs.MessageAttributeValue{
 			MessageAttributeReqID: {
 				DataType:    aws.String("String"),
-				StringValue: aws.String(m.ReqID),
+				StringValue: aws.String(log.GetReqID(ctx)),
 			},
 			MessageAttributeCommand: {
 				DataType:    aws.String("String"),
@@ -101,7 +102,7 @@ func (q *Q) Message(ctx context.Context, m *M) error {
 		awsM.MessageDeduplicationId = aws.String(m.DedupeID)
 	}
 
-	q.logWith(m).Info("preparing to send message to queue", zap.String("queue", *awsM.QueueUrl))
+	q.logWith(ctx).Info("preparing to send message to queue", zap.String("queue", *awsM.QueueUrl))
 
 	if len(m.Body) > 0 {
 		awsM.MessageBody = aws.String(m.Body.String())
@@ -115,12 +116,12 @@ func (q *Q) Message(ctx context.Context, m *M) error {
 		return errors.Wrap(err)
 	}
 	elapsed := time.Since(now)
-	q.logWith(m).Info("AWS SQS message sent", zap.Float64("elapsed_ms", float64(elapsed.Nanoseconds())/1000000.0))
+	q.logWith(ctx).Info("AWS SQS message sent", zap.Float64("elapsed_ms", float64(elapsed.Nanoseconds())/1000000.0))
 	m.MessageID = *result.MessageId
 	return nil
 }
 
-func (q *Q) Receive() ([]*M, error) {
+func (q *Q) Receive(ctx context.Context) ([]*mContext, error) {
 	awsM := sqs.ReceiveMessageInput{
 		AttributeNames: []*string{
 			aws.String(sqs.MessageSystemAttributeNameMessageGroupId),
@@ -141,20 +142,23 @@ func (q *Q) Receive() ([]*M, error) {
 		return nil, errors.Wrap(err)
 	}
 
-	var returnMs []*M
+	var returnMs []*mContext
 	for _, x := range result.Messages {
 		id := uuid.FromStringOrNil(*x.MessageAttributes[MessageAttributeID].StringValue)
 		m := M{
 			ID:            id,
 			GroupID:       *x.Attributes[sqs.MessageSystemAttributeNameMessageGroupId],
-			ReqID:         *x.MessageAttributes[MessageAttributeReqID].StringValue,
 			Command:       *x.MessageAttributes[MessageAttributeCommand].StringValue,
 			Body:          json.Object(*x.Body),
 			ReceiptHandle: *x.ReceiptHandle,
 			MessageID:     *x.MessageId,
 		}
-		returnMs = append(returnMs, &m)
-		q.logWith(&m).Info("AWS SQS message received")
+		mctx := context.WithValue(ctx, log.RequestIDKey, *x.MessageAttributes[MessageAttributeReqID].StringValue)
+		returnMs = append(returnMs, &mContext{
+			M:   m,
+			ctx: mctx,
+		})
+		q.logWith(mctx).Info("AWS SQS message received")
 	}
 
 	return returnMs, nil
@@ -170,6 +174,6 @@ func (q *Q) Delete(ctx context.Context, m *M) error {
 		return errors.Wrap(err)
 	}
 	elapsed := time.Since(now)
-	q.logWith(m).Info("AWS SQS message deleted", zap.Float64("elapsed_ms", float64(elapsed.Nanoseconds())/1000000.0))
+	q.logWith(ctx).Info("AWS SQS message deleted", zap.Float64("elapsed_ms", float64(elapsed.Nanoseconds())/1000000.0))
 	return nil
 }

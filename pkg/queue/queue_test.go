@@ -12,8 +12,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.unanet.io/devops/go/pkg/json"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
+	"gitlab.unanet.io/devops/go/pkg/json"
 )
 
 const (
