@@ -2,6 +2,8 @@ module gitlab.unanet.io/devops/eve
 
 go 1.15
 
+//replace gitlab.unanet.io/devops/go => ../../devops/go
+
 //replace (
 //	github.com/Sirupsen/logrus v1.7.0 => github.com/sirupsen/logrus v1.7.0
 //	github.com/docker/docker v1.13.2-0.20170601211448-f5ec1e2936dc => github.com/docker/engine v17.12.0-ce-rc1.0.20180718150940-a3ef7e9a9bda+incompatible
@@ -22,6 +24,6 @@ require (
 	github.com/robfig/cron/v3 v3.0.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.4.0
-	gitlab.unanet.io/devops/go v1.0.4
+	gitlab.unanet.io/devops/go v1.0.6
 	go.uber.org/zap v1.16.0
 )
