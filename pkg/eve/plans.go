@@ -116,7 +116,6 @@ func (po DeploymentPlanOptions) ValidateWithContext(ctx context.Context) error {
 			validation.Required,
 			validation.In(
 				DeploymentPlanTypeApplication,
-				DeploymentPlanTypeMigration,
 				DeploymentPlanTypeJob,
 				DeploymentPlanTypeRestart,
 			),

@@ -126,8 +126,6 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 			switch options.Type {
 			case eve.DeploymentPlanTypeApplication, eve.DeploymentPlanTypeRestart:
 				ra, err = d.repo.RequestServiceArtifactByEnvironment(ctx, x.Name, env.ID)
-			case eve.DeploymentPlanTypeMigration:
-				ra, err = d.repo.RequestDatabaseArtifactByEnvironment(ctx, x.Name, env.ID)
 			case eve.DeploymentPlanTypeJob:
 				ra, err = d.repo.RequestJobArtifactByEnvironment(ctx, x.Name, env.ID)
 			}
@@ -151,8 +149,6 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 		switch options.Type {
 		case eve.DeploymentPlanTypeApplication, eve.DeploymentPlanTypeRestart:
 			dataArtifacts, err = d.repo.ServiceArtifacts(ctx, ns.ToIDs())
-		case eve.DeploymentPlanTypeMigration:
-			dataArtifacts, err = d.repo.DatabaseInstanceArtifacts(ctx, ns.ToIDs())
 		case eve.DeploymentPlanTypeJob:
 			dataArtifacts, err = d.repo.JobArtifacts(ctx, ns.ToIDs())
 		}

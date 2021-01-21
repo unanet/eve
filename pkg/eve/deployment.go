@@ -52,7 +52,6 @@ func ParseDeploymentState(value data.DeploymentState) DeploymentState {
 
 const (
 	DeploymentPlanTypeApplication PlanType = "application"
-	DeploymentPlanTypeMigration   PlanType = "migration"
 	DeploymentPlanTypeJob         PlanType = "job"
 	DeploymentPlanTypeRestart     PlanType = "restart"
 )
@@ -112,7 +111,7 @@ type DeployArtifact struct {
 	ArtifactFnPtr       string               `json:"artifact_fn"`
 	ArtifactoryFeedType string               `json:"artifactory_feed_type"`
 	Result              DeployArtifactResult `json:"result"`
-	ExitCode            int                  `json:"exit_code""`
+	ExitCode            int                  `json:"exit_code"`
 	RunAs               int                  `json:"run_as"`
 	Deploy              bool                 `json:"-"`
 }
@@ -201,46 +200,6 @@ func (ds DeployServices) ToResultMap() ArtifactServiceResultMap {
 	return result
 }
 
-// ArtifactMigrationResultMap is used to convert the array of migration artifact results into a map
-type ArtifactMigrationResultMap map[DeployArtifactResult]DeployMigrations
-
-// ToResultMap converts the array of results into a map by result
-func (dm DeployMigrations) ToResultMap() ArtifactMigrationResultMap {
-	result := make(ArtifactMigrationResultMap)
-
-	for _, mig := range dm {
-		switch mig.Result {
-		case DeployArtifactResultFailed:
-			result[DeployArtifactResultFailed] = append(result[DeployArtifactResultFailed], mig)
-		case DeployArtifactResultSuccess:
-			result[DeployArtifactResultSuccess] = append(result[DeployArtifactResultSuccess], mig)
-		case DeployArtifactResultNoop:
-			result[DeployArtifactResultNoop] = append(result[DeployArtifactResultNoop], mig)
-		}
-	}
-
-	return result
-}
-
-// DeployMigration contains the deployment migration data
-type DeployMigration struct {
-	*DeployArtifact
-	DatabaseID   int    `json:"database_id"`
-	DatabaseName string `json:"database_name"`
-}
-
-type DeployMigrations []*DeployMigration
-
-func (ds DeployMigrations) ToDeploy() DeployMigrations {
-	var list DeployMigrations
-	for _, x := range ds {
-		if x.Deploy {
-			list = append(list, x)
-		}
-	}
-	return list
-}
-
 type DeployJob struct {
 	*DeployArtifact
 	JobID            int    `json:"job_id"`
@@ -294,7 +253,6 @@ type NSDeploymentPlan struct {
 	EnvironmentName   string               `json:"environment_name"`
 	EnvironmentAlias  string               `json:"environment_alias"`
 	Services          DeployServices       `json:"services,omitempty"`
-	Migrations        DeployMigrations     `json:"migrations,omitempty"`
 	Jobs              DeployJobs           `json:"jobs,omitempty"`
 	Messages          []string             `json:"messages,omitempty"`
 	SchQueueUrl       string               `json:"-"`
@@ -310,7 +268,7 @@ func (ns *NSDeploymentPlan) DeploymentPlanType() string {
 }
 
 func (ns *NSDeploymentPlan) NothingToDeploy() bool {
-	if len(ns.Services) == 0 && len(ns.Migrations) == 0 && len(ns.Jobs) == 0 {
+	if len(ns.Services) == 0 && len(ns.Jobs) == 0 {
 		return true
 	}
 	return false
@@ -318,12 +276,6 @@ func (ns *NSDeploymentPlan) NothingToDeploy() bool {
 
 func (ns *NSDeploymentPlan) NoopExist() bool {
 	for _, x := range ns.Services {
-		if x.Result == DeployArtifactResultNoop {
-			return true
-		}
-	}
-
-	for _, x := range ns.Migrations {
 		if x.Result == DeployArtifactResultNoop {
 			return true
 		}
@@ -340,12 +292,6 @@ func (ns *NSDeploymentPlan) NoopExist() bool {
 
 func (ns *NSDeploymentPlan) Failed() bool {
 	for _, x := range ns.Services {
-		if x.Result == DeployArtifactResultFailed {
-			return true
-		}
-	}
-
-	for _, x := range ns.Migrations {
 		if x.Result == DeployArtifactResultFailed {
 			return true
 		}
