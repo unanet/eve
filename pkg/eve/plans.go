@@ -36,6 +36,8 @@ type ArtifactDefinition struct {
 func (ad ArtifactDefinition) ArtifactoryRequestedVersion() string {
 	if ad.RequestedVersion == "latest" {
 		return "*"
+	} else if ad.RequestedVersion == "" {
+		return "*"
 	} else if len(strings.Split(ad.RequestedVersion, ".")) < 4 {
 		return ad.RequestedVersion + ".*"
 	}
