@@ -78,6 +78,7 @@ func (dc *DeploymentCron) scheduler(ctx context.Context, job *data.DeploymentCro
 }
 
 func (dc *DeploymentCron) run(ctx context.Context) error {
+
 	err := dc.repo.ScheduleDeploymentCronJobs(ctx, dc.scheduler)
 	if err != nil {
 		return errors.Wrap(err)
@@ -99,7 +100,7 @@ func (dc *DeploymentCron) start() {
 			close(dc.done)
 			return
 		default:
-			ctx, _ := context.WithTimeout(context.Background(), dc.timeout)
+			ctx, _ := context.WithTimeout(context.WithValue(context.Background(), log.RequestIDKey, log.GetNextRequestID()), dc.timeout)
 			err := dc.run(ctx)
 			if err != nil {
 				dc.log.Error("an error occurred in the deployment cron scheduler", zap.Error(err))
