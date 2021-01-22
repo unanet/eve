@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"gitlab.unanet.io/devops/go/pkg/errors"
-	"gitlab.unanet.io/devops/go/pkg/json"
 )
 
 type Namespace struct {
@@ -19,7 +18,6 @@ type Namespace struct {
 	RequestedVersion   string       `db:"requested_version"`
 	ExplicitDeployOnly bool         `db:"explicit_deploy_only"`
 	ClusterID          int          `db:"cluster_id"`
-	Metadata           json.Object  `db:"metadata"`
 	CreatedAt          sql.NullTime `db:"created_at"`
 	UpdatedAt          sql.NullTime `db:"updated_at"`
 }
@@ -146,13 +144,11 @@ func (r *Repo) UpdateNamespace(ctx context.Context, namespace *Namespace) error 
 		update namespace set 
 			requested_version = $1,
 			explicit_deploy_only = $2,
-			metadata = $3,
 			updated_at = $4
 		where id = $5
 	`,
 		namespace.RequestedVersion,
 		namespace.ExplicitDeployOnly,
-		namespace.Metadata,
 		namespace.UpdatedAt,
 		namespace.ID)
 	if err != nil {

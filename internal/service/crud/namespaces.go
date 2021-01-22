@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"gitlab.unanet.io/devops/go/pkg/errors"
-	"gitlab.unanet.io/devops/go/pkg/json"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
@@ -22,7 +21,6 @@ func fromDataNamespace(namespace data.Namespace) eve.Namespace {
 		RequestedVersion:   namespace.RequestedVersion,
 		ExplicitDeployOnly: namespace.ExplicitDeployOnly,
 		ClusterID:          namespace.ClusterID,
-		Metadata:           namespace.Metadata.AsMapOrEmpty(),
 		CreatedAt:          namespace.CreatedAt.Time,
 		UpdatedAt:          namespace.UpdatedAt.Time,
 	}
@@ -100,6 +98,5 @@ func toDataNamespace(namespace eve.Namespace) data.Namespace {
 		RequestedVersion:   namespace.RequestedVersion,
 		ExplicitDeployOnly: namespace.ExplicitDeployOnly,
 		ClusterID:          namespace.ClusterID,
-		Metadata:           json.FromMapOrEmpty(namespace.Metadata),
 	}
 }
