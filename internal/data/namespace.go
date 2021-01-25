@@ -144,8 +144,8 @@ func (r *Repo) UpdateNamespace(ctx context.Context, namespace *Namespace) error 
 		update namespace set 
 			requested_version = $1,
 			explicit_deploy_only = $2,
-			updated_at = $4
-		where id = $5
+			updated_at = $3
+		where id = $4
 	`,
 		namespace.RequestedVersion,
 		namespace.ExplicitDeployOnly,
