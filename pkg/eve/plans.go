@@ -56,12 +56,17 @@ func (ad ArtifactDefinitions) ContainsVersion(name string, version string) bool 
 }
 
 func (ad ArtifactDefinitions) Match(artifactID int, optName string, requestedVersion string) *ArtifactDefinition {
+	versionMatch := requestedVersion
+	if requestedVersion == "latest" {
+		versionMatch = ""
+	}
+
 	for _, x := range ad {
 		if x.Name != "" {
-			if x.Name == optName && strings.HasPrefix(x.AvailableVersion, requestedVersion) {
+			if x.Name == optName && strings.HasPrefix(x.AvailableVersion, versionMatch) {
 				return x
 			}
-		} else if x.ID == artifactID && strings.HasPrefix(x.AvailableVersion, requestedVersion) {
+		} else if x.ID == artifactID && strings.HasPrefix(x.AvailableVersion, versionMatch) {
 			return x
 		}
 	}
