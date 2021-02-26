@@ -1,0 +1,1 @@
+ALTER TYPE provider_group ADD VALUE 'connect' AFTER 'cosential';
