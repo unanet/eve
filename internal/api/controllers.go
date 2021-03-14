@@ -24,5 +24,6 @@ func InitializeControllers(
 		NewJobController(manager),
 		NewAnnotationController(manager),
 		NewLabelController(manager),
+		NewDefinitionController(manager),
 	}, nil
 }

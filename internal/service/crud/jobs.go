@@ -21,7 +21,6 @@ func fromDataJob(job data.Job) eve.Job {
 		CreatedAt:       job.CreatedAt.Time,
 		UpdatedAt:       job.UpdatedAt.Time,
 		Name:            job.Name,
-		NodeGroup:       job.NodeGroup,
 	}
 }
 
@@ -41,7 +40,6 @@ func toDataJob(j eve.Job) data.Job {
 		ArtifactID:    j.ArtifactID,
 		ArtifactName:  j.ArtifactName,
 		Name:          j.Name,
-		NodeGroup:     j.NodeGroup,
 	}
 
 	if j.OverrideVersion != "" {

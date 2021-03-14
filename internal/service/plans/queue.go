@@ -3,7 +3,6 @@ package plans
 import (
 	"context"
 	"encoding/json"
-
 	uuid "github.com/satori/go.uuid"
 	"gitlab.unanet.io/devops/go/pkg/errors"
 	"go.uber.org/zap"
@@ -40,8 +39,8 @@ func fromDataService(s data.DeployService) *eve.DeployService {
 		Count:            s.Count,
 		LivelinessProbe:  s.LivelinessProbe,
 		ReadinessProbe:   s.ReadinessProbe,
-		NodeGroup:        s.NodeGroup,
 		SuccessExitCodes: s.SuccessExitCodes,
+		//DefinitionData:   s.Definition,
 		DeployArtifact: &eve.DeployArtifact{
 			ArtifactID:       s.ArtifactID,
 			ArtifactName:     s.ArtifactName,
@@ -69,7 +68,6 @@ func fromDataJob(j data.DeployJob) *eve.DeployJob {
 	return &eve.DeployJob{
 		JobID:            j.JobID,
 		JobName:          j.JobName,
-		NodeGroup:        j.NodeGroup,
 		SuccessExitCodes: j.SuccessExitCodes,
 		DeployArtifact: &eve.DeployArtifact{
 			ArtifactID:       j.ArtifactID,
@@ -202,9 +200,9 @@ func (dq *Queue) createServicesDeployment(ctx context.Context, deploymentID uuid
 	services := fromDataServices(dataServices)
 	for _, x := range services {
 
-		annotations, lErr := dq.crud.ServiceAnnotation(ctx, x.ServiceID)
-		if lErr != nil {
-			return nil, errors.Wrap(lErr)
+		annotations, aErr := dq.crud.ServiceAnnotation(ctx, x.ServiceID)
+		if aErr != nil {
+			return nil, errors.Wrap(aErr)
 		}
 		x.Annotations = annotations
 
@@ -219,6 +217,17 @@ func (dq *Queue) createServicesDeployment(ctx context.Context, deploymentID uuid
 			return nil, errors.Wrap(mErr)
 		}
 		x.Metadata = metadata
+
+		definitions, dErr := dq.crud.ServiceDefinitionData(ctx, x.ServiceID)
+		if dErr != nil {
+			return nil, errors.Wrap(dErr)
+		}
+
+		defBytes, _ := json.Marshal(definitions)
+
+		x.Definition = defBytes
+		x.DefinitionSpec = definitions
+
 		dq.matchArtifact(x.DeployArtifact, x.ServiceName, options, nSDeploymentPlan.Message)
 	}
 	// Trap the restart command, since we don't care about matching a service (we just want to restart whatever version is currently deployed)
@@ -262,6 +271,18 @@ func (dq *Queue) createJobsDeployment(ctx context.Context, deploymentID uuid.UUI
 			return nil, errors.Wrap(mErr)
 		}
 		x.Metadata = metadata
+
+		definition, dErr := dq.crud.JobDefinitionData(ctx, x.JobID)
+		if dErr != nil {
+			return nil, errors.Wrap(dErr)
+		}
+
+		defBytes, _ := json.Marshal(definition)
+
+		x.Definition = defBytes
+		x.DefinitionSpec = definition
+
+
 		dq.matchArtifact(x.DeployArtifact, x.JobName, options, nSDeploymentPlan.Message)
 	}
 	if options.ArtifactsSupplied {
@@ -461,7 +482,7 @@ func (dq *Queue) callbackMessage(ctx context.Context, m *queue.M) error {
 	if len(options.CallbackURL) > 0 {
 		cErr := dq.callback.Post(ctx, options.CallbackURL, dcm)
 		if cErr != nil {
-			dq.Logger(ctx).Warn("callback failed", zap.String("callback_url", options.CallbackURL), zap.Error(cErr))
+			dq.Logger(ctx).Warn("callback failed", zap.String("callback_url", options.CallbackURL), zap.Error(cErr), zap.String("id", d.ID.String()))
 		}
 	} else {
 		dq.Logger(ctx).Warn("message callback came in for a deployment without a registered callback, skipping...", zap.String("id", d.ID.String()))

@@ -314,7 +314,6 @@ func (r *Repo) JobLabelMaps(ctx context.Context, jobID int) ([]LabelJobMap, erro
 	}
 	defer rows.Close()
 
-	// Hydrate a slice of the records to the Data Structure (PodAutoscaleMap)
 	var labelJobMaps []LabelJobMap
 	for rows.Next() {
 		if rows.Err() != nil {
@@ -351,7 +350,6 @@ func (r *Repo) JobLabelMapsByLabelID(ctx context.Context, labelID int) ([]LabelJ
 	}
 	defer rows.Close()
 
-	// Hydrate a slice of the records to the Data Structure (PodAutoscaleMap)
 	var labelJobMaps []LabelJobMap
 	for rows.Next() {
 		if rows.Err() != nil {

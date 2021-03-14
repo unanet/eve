@@ -281,7 +281,6 @@ func (r *Repo) JobAnnotationMaps(ctx context.Context, jobID int) ([]AnnotationJo
 	}
 	defer rows.Close()
 
-	// Hydrate a slice of the records to the Data Structure (PodAutoscaleMap)
 	var annotationJobMaps []AnnotationJobMap
 	for rows.Next() {
 		if rows.Err() != nil {
@@ -318,7 +317,6 @@ func (r *Repo) JobAnnotationMapsByAnnotationID(ctx context.Context, annotationID
 	}
 	defer rows.Close()
 
-	// Hydrate a slice of the records to the Data Structure (PodAutoscaleMap)
 	var annotationJobMaps []AnnotationJobMap
 	for rows.Next() {
 		if rows.Err() != nil {

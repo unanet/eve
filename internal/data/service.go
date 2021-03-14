@@ -25,10 +25,10 @@ type DeployService struct {
 	ImageTag         string         `db:"image_tag"`
 	RunAs            int            `db:"run_as"`
 	StickySessions   bool           `db:"sticky_sessions"`
-	NodeGroup        string         `db:"node_group"`
 	Count            int            `db:"count"`
 	EnvironmentID    int            `db:"environment_id"`
 	NamespaceID      int            `db:"namespace_id"`
+	Definition       json.Object    `db:"definition"`
 	LivelinessProbe  json.Object    `db:"liveliness_probe"`
 	ReadinessProbe   json.Object    `db:"readiness_probe"`
 	PodResource      json.Object    `db:"pod_resource"`
@@ -52,7 +52,6 @@ type Service struct {
 	UpdatedAt       sql.NullTime   `db:"updated_at"`
 	Name            string         `db:"name"`
 	StickySessions  bool           `db:"sticky_sessions"`
-	NodeGroup       string         `db:"node_group"`
 	Count           int            `db:"count"`
 }
 
@@ -90,7 +89,6 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 		   a.metrics_port,
 		   a.service_account,
 		   s.sticky_sessions,
-           s.node_group,
 		   s.success_exit_codes,
 		   s.count,
            s.name as service_name,
@@ -187,7 +185,6 @@ func (r *Repo) ServiceByName(ctx context.Context, name string, namespace string)
 		       s.count,
 		       s.created_at,
 		       s.updated_at,
-		       s.node_group,
 		       n.name as namespace_name, 
 		       a.name as artifact_name
 		from service s 
@@ -219,7 +216,6 @@ func (r *Repo) ServiceByID(ctx context.Context, id int) (*Service, error) {
 		       s.count,
 		       s.created_at,
 		       s.updated_at,
-		       s.node_group,
 		       n.name as namespace_name, 
 		       a.name as artifact_name
 		from service s 
@@ -256,8 +252,7 @@ func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) ([]Service, 
 		       s.created_at, 
 		       s.updated_at, 
 		       s.name, 
-		       s.sticky_sessions, 
-               s.node_group,
+		       s.sticky_sessions,
 		       s.count,
 		       n.name as namespace_name,
 		       a.name as artifact_name
