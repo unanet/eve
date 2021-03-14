@@ -64,7 +64,6 @@ func (r *Repo) ArtifactsByProvider(ctx context.Context, provider string) (Artifa
 		       a.feed_type,
 		       a.provider_group,
 		       a.function_pointer,
-		       a.metadata,
 		       a.image_tag,
 		       a.service_port,
 		       a.metrics_port,

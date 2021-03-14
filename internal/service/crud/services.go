@@ -22,7 +22,6 @@ func fromDataService(service data.Service) eve.Service {
 		UpdatedAt:       service.UpdatedAt.Time,
 		Name:            service.Name,
 		StickySessions:  service.StickySessions,
-		NodeGroup:       service.NodeGroup,
 		Count:           service.Count,
 	}
 }
@@ -44,7 +43,6 @@ func toDataService(service eve.Service) data.Service {
 		ArtifactName:   service.ArtifactName,
 		Name:           service.Name,
 		StickySessions: service.StickySessions,
-		NodeGroup:      service.NodeGroup,
 		Count:          service.Count,
 	}
 

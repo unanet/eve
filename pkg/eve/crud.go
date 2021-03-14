@@ -38,7 +38,6 @@ type Service struct {
 	UpdatedAt       time.Time `json:"updated_at"`
 	Name            string    `json:"name"`
 	StickySessions  bool      `json:"sticky_sessions"`
-	NodeGroup       string    `json:"node_group"`
 	Count           int       `json:"count"`
 }
 
@@ -53,5 +52,4 @@ type Job struct {
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 	Name            string    `json:"name"`
-	NodeGroup       string    `json:"node_group"`
 }

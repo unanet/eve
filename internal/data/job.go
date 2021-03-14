@@ -21,7 +21,6 @@ type DeployJob struct {
 	ServiceAccount   string         `db:"service_account"`
 	ImageTag         string         `db:"image_tag"`
 	RunAs            int            `db:"run_as"`
-	NodeGroup        string         `db:"node_group"`
 	EnvironmentID    int            `db:"environment_id"`
 	NamespaceID      int            `db:"namespace_id"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
@@ -42,7 +41,6 @@ type Job struct {
 	CreatedAt       sql.NullTime   `db:"created_at"`
 	UpdatedAt       sql.NullTime   `db:"updated_at"`
 	Name            string         `db:"name"`
-	NodeGroup       string         `db:"node_group"`
 }
 
 func (r *Repo) UpdateDeployedJobVersion(ctx context.Context, id int, version string) error {
@@ -78,7 +76,6 @@ func (r *Repo) DeployedJobsByNamespaceID(ctx context.Context, namespaceID int) (
 		       a.service_account,
 		       a.image_tag,
 		       a.run_as as run_as,
-		       j.node_group,
 		       e.id as environment_id,
 		       n.id as namespace_id,
 		       j.success_exit_codes,
@@ -119,7 +116,6 @@ func (r *Repo) JobByName(ctx context.Context, name string, namespace string) (*J
 		       j.override_version,
 		       j.created_at,
 		       j.updated_at,
-		       j.node_group,
 		       n.name as namespace_name, 
 		       a.name as artifact_name
 		from job j 
@@ -185,7 +181,6 @@ func (r *Repo) JobByID(ctx context.Context, id int) (*Job, error) {
 		       j.override_version,
 		       j.created_at,
 		       j.updated_at,
-		       j.node_group,
 		       n.name as namespace_name, 
 		       a.name as artifact_name
 		from job j 
@@ -221,8 +216,7 @@ func (r *Repo) jobs(ctx context.Context, whereArgs ...WhereArg) ([]Job, error) {
 		       j.deployed_version, 
 		       j.created_at, 
 		       j.updated_at, 
-		       j.name, 
-               j.node_group,
+		       j.name,
 		       n.name as namespace_name,
 		       a.name as artifact_name
 		from job j 
@@ -257,9 +251,8 @@ func (r *Repo) UpdateJob(ctx context.Context, job *Job) error {
 			artifact_id = $3,
 		   	override_version = $4,
 		    deployed_version = $5,
-		    updated_at = $6,
-		    node_group = $7
-		where id = $8
+		    updated_at = $6
+		where id = $7
 	`,
 		job.Name,
 		job.NamespaceID,
@@ -267,7 +260,6 @@ func (r *Repo) UpdateJob(ctx context.Context, job *Job) error {
 		job.OverrideVersion,
 		job.DeployedVersion,
 		job.UpdatedAt,
-		job.NodeGroup,
 		job.ID)
 	if err != nil {
 		return errors.Wrap(err)

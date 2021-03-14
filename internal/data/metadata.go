@@ -355,7 +355,6 @@ func (r *Repo) JobMetadataMaps(ctx context.Context, jobID int) ([]MetadataJobMap
 	}
 	defer rows.Close()
 
-	// Hydrate a slice of the records to the Data Structure (PodAutoscaleMap)
 	var mjms []MetadataJobMap
 	for rows.Next() {
 		if rows.Err() != nil {
@@ -392,7 +391,6 @@ func (r *Repo) JobMetadataMapsByMetadataID(ctx context.Context, metadataID int) 
 	}
 	defer rows.Close()
 
-	// Hydrate a slice of the records to the Data Structure (PodAutoscaleMap)
 	var mjms []MetadataJobMap
 	for rows.Next() {
 		if rows.Err() != nil {
@@ -429,7 +427,6 @@ func (r *Repo) ServiceMetadataMapsByMetadataID(ctx context.Context, metadataID i
 	}
 	defer rows.Close()
 
-	// Hydrate a slice of the records to the Data Structure (PodAutoscaleMap)
 	var msms []MetadataServiceMap
 	for rows.Next() {
 		if rows.Err() != nil {

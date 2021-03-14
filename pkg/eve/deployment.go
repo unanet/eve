@@ -96,16 +96,18 @@ func (dps DeploymentPlanStatus) String() string {
 }
 
 type DeployArtifact struct {
-	ArtifactID          int                  `json:"artifact_id"`
-	ArtifactName        string               `json:"artifact_name"`
-	RequestedVersion    string               `json:"requested_version"`
-	DeployedVersion     string               `json:"deployed_version"`
-	AvailableVersion    string               `json:"available_version"`
-	ServiceAccount      string               `json:"service_account"`
-	ImageTag            string               `json:"image_tag"`
-	Labels              MetadataField        `json:"labels"`
-	Annotations         MetadataField        `json:"annotations"`
-	Metadata            MetadataField        `json:"metadata"`
+	ArtifactID       int           `json:"artifact_id"`
+	ArtifactName     string        `json:"artifact_name"`
+	RequestedVersion string        `json:"requested_version"`
+	DeployedVersion  string        `json:"deployed_version"`
+	AvailableVersion string        `json:"available_version"`
+	ServiceAccount   string        `json:"service_account"`
+	ImageTag         string        `json:"image_tag"`
+	Labels           MetadataField `json:"labels"`
+	Annotations      MetadataField `json:"annotations"`
+	Metadata         MetadataField `json:"metadata"`
+	//Definition          MetadataField        `json:"definition"`
+	DefinitionSpec      MetadataField        `json:"definition_spec"`
 	ArtifactoryFeed     string               `json:"artifactory_feed"`
 	ArtifactoryPath     string               `json:"artifactory_path"`
 	ArtifactFnPtr       string               `json:"artifact_fn"`
@@ -132,13 +134,14 @@ func (da DeployArtifact) EvalImageTag() string {
 
 type DeployService struct {
 	*DeployArtifact
-	ServiceID        int    `json:"service_id"`
-	ServicePort      int    `json:"service_port"`
-	MetricsPort      int    `json:"metrics_port"`
-	ServiceName      string `json:"service_name"`
-	StickySessions   bool   `json:"sticky_sessions"`
-	NodeGroup        string `json:"node_group"`
-	Count            int    `json:"count"`
+	ServiceID      int    `json:"service_id"`
+	ServicePort    int    `json:"service_port"`
+	MetricsPort    int    `json:"metrics_port"`
+	ServiceName    string `json:"service_name"`
+	StickySessions bool   `json:"sticky_sessions"`
+	Count          int    `json:"count"`
+	//DefinitionData   []byte `json:"definition"`
+	Definition       []byte `json:"definition"`
 	LivelinessProbe  []byte `json:"liveliness_probe"`
 	ReadinessProbe   []byte `json:"readiness_probe"`
 	Autoscaling      []byte `json:"autoscaling"`
@@ -204,8 +207,8 @@ type DeployJob struct {
 	*DeployArtifact
 	JobID            int    `json:"job_id"`
 	JobName          string `json:"job_name"`
-	NodeGroup        string `json:"node_group"`
 	SuccessExitCodes string `json:"success_exit_codes"`
+	Definition       []byte	`json:"definition"`
 }
 
 type DeployJobs []*DeployJob

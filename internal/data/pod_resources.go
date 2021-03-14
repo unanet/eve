@@ -76,7 +76,6 @@ func (r *Repo) PodResourcesMap(ctx context.Context, serviceID, environmentID, na
 	}
 	defer rows.Close()
 
-	// Hydrate a slice of the records to the Data Structure (PodAutoscaleMap)
 	var prms []PodResourcesMap
 	for rows.Next() {
 		var prm PodResourcesMap
