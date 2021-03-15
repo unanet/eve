@@ -28,7 +28,6 @@ type ArtifactDefinition struct {
 	AvailableVersion string `json:"available_version"`
 	ArtifactoryFeed  string `json:"artifactory_feed"`
 	ArtifactoryPath  string `json:"artifactory_path"`
-	FunctionPointer  string `json:"function_pointer"`
 	FeedType         string `json:"feed_type"`
 	Matched          bool   `json:"-"`
 }

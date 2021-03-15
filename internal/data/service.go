@@ -139,7 +139,6 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 func (r *Repo) ServiceArtifacts(ctx context.Context, namespaceIDs []int) (RequestArtifacts, error) {
 	esql, args, err := sqlx.In(`
 		select distinct s.artifact_id, 
-		                a.function_pointer as function_pointer,
 		                a.name as artifact_name, 
 		                a.provider_group as provider_group,
 		                a.feed_type as feed_type,

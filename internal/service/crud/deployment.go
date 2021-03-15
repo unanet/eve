@@ -11,12 +11,12 @@ import (
 )
 
 func (m *Manager) Deployment(ctx context.Context, id string) (*eve.Deployment, error) {
-	uuid, err := uuid.FromString(id)
+	uID, err := uuid.FromString(id)
 	if err != nil {
 		return nil, errors.NewRestError(400, "invalid deployment id")
 	}
 
-	d, err := m.repo.DeploymentByID(ctx, uuid)
+	d, err := m.repo.DeploymentByID(ctx, uID)
 	if err != nil {
 		return nil, service.CheckForNotFoundError(err)
 	}

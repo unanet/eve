@@ -15,7 +15,6 @@ type RequestArtifact struct {
 	ProviderGroup    string         `db:"provider_group"`
 	FeedName         string         `db:"feed_name"`
 	FeedType         string         `db:"feed_type"`
-	FunctionPointer  sql.NullString `db:"function_pointer"`
 	RequestedVersion string         `db:"requested_version"`
 }
 
@@ -31,7 +30,6 @@ func (r *Repo) RequestServiceArtifactByEnvironment(ctx context.Context, serviceN
 	row := r.db.QueryRowxContext(ctx, `
 		select a.id as artifact_id,
 		       a.name as artifact_name,
-		       a.function_pointer as function_pointer,
 		       a.feed_type as feed_type,
 		       a.provider_group as provider_group,
 		       f.name as feed_name
@@ -60,7 +58,6 @@ func (r *Repo) RequestJobArtifactByEnvironment(ctx context.Context, jobName stri
 	row := r.db.QueryRowxContext(ctx, `
 		select a.id as artifact_id,
 		       a.name as artifact_name,
-		       a.function_pointer as function_pointer,
 		       a.feed_type as feed_type,
 		       a.provider_group as provider_group,
 		       f.name as feed_name

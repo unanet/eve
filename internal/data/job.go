@@ -137,7 +137,6 @@ func (r *Repo) JobByName(ctx context.Context, name string, namespace string) (*J
 func (r *Repo) JobArtifacts(ctx context.Context, namespaceIDs []int) (RequestArtifacts, error) {
 	s, args, err := sqlx.In(`
 		select distinct j.artifact_id, 
-		                a.function_pointer as function_pointer,
 		                a.name as artifact_name, 
 		                a.provider_group as provider_group,
 		                a.feed_type as feed_type,

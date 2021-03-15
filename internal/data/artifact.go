@@ -14,7 +14,6 @@ type Artifact struct {
 	Name            string         `db:"name"`
 	FeedType        string         `db:"feed_type"`
 	ProviderGroup   string         `db:"provider_group"`
-	FunctionPointer sql.NullString `db:"function_pointer"`
 	ImageTag        string         `db:"image_tag"`
 	ServicePort     int            `db:"service_port"`
 	MetricsPort     int            `db:"metrics_port"`
@@ -63,7 +62,6 @@ func (r *Repo) ArtifactsByProvider(ctx context.Context, provider string) (Artifa
 		       a.name,
 		       a.feed_type,
 		       a.provider_group,
-		       a.function_pointer,
 		       a.image_tag,
 		       a.service_port,
 		       a.metrics_port,

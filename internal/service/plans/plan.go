@@ -139,7 +139,6 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 			x.ArtifactName = ra.ArtifactName
 			x.ArtifactoryFeed = ra.FeedName
 			x.ArtifactoryPath = ra.Path()
-			x.FunctionPointer = ra.FunctionPointer.String
 			x.FeedType = ra.FeedType
 		}
 	} else {
@@ -163,7 +162,6 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 				RequestedVersion: x.RequestedVersion,
 				ArtifactoryFeed:  x.FeedName,
 				ArtifactoryPath:  x.Path(),
-				FunctionPointer:  x.FunctionPointer.String,
 				FeedType:         x.FeedType,
 			})
 		}

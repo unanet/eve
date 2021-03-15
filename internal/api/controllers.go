@@ -22,8 +22,6 @@ func InitializeControllers(
 		NewNamespaceController(manager),
 		NewServiceController(manager),
 		NewJobController(manager),
-		NewAnnotationController(manager),
-		NewLabelController(manager),
 		NewDefinitionController(manager),
 	}, nil
 }
