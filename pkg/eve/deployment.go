@@ -110,7 +110,6 @@ type DeployArtifact struct {
 	DefinitionSpec      MetadataField        `json:"definition_spec"`
 	ArtifactoryFeed     string               `json:"artifactory_feed"`
 	ArtifactoryPath     string               `json:"artifactory_path"`
-	ArtifactFnPtr       string               `json:"artifact_fn"`
 	ArtifactoryFeedType string               `json:"artifactory_feed_type"`
 	Result              DeployArtifactResult `json:"result"`
 	ExitCode            int                  `json:"exit_code"`

@@ -368,17 +368,6 @@ func (m *Manager) ServiceDefinitionData(ctx context.Context, id int) (eve.Metada
 	return m.mergeDefinitionData(definitionSpecs)
 }
 
-// eve.DefinitionSpec: map[string]map[string]interface{}
-// Def Specs: []eve.DefinitionSpec
-// Def Spec: eve.DefinitionSpec
-// Def Data: map[string]interface{}
-//
-// Example: defSpec1["appsv1.Deployment"] = '{"spec": {"template": {"spec": {"nodeSelector": {"node-group": "shared"}}}}}'
-// Example: defSpec2["appsv1.Deployment"] = '{"spec": {"template": {"spec": {"containers": [{"livenessProbe": {"httpGet": {"path": "/analytics-api/Api.asmx", "port": 8080}, "periodSeconds": 10, "initialDelaySeconds": 30}}]}}}}'
-// Example: defSpec3["appsv1.Deployment"] = '{"spec": {"template": {"spec": {"containers": [{"readinessProbe": {"httpGet": {"path": "/analytics-api/Api.asmx", "port": 8080 }, "periodSeconds": 10, "initialDelaySeconds": 45}}]}}}}'
-// Example: defSpec4["v2beta2.HorizontalPodAutoscaler"] = '{"spec": {"minReplicas":2, "maxReplicas": 10}'
-//
-// Example: defSpecs = []eve.DefinitionSpec{defSpec1,defSpec2,defSpec3,defSpec4}
 type result struct {
 	defs map[string]interface{}
 }

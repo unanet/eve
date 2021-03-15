@@ -153,7 +153,6 @@ func (dq *Queue) matchArtifact(a *eve.DeployArtifact, optName string, options ev
 	a.AvailableVersion = match.AvailableVersion
 	a.ArtifactoryPath = match.ArtifactoryPath
 	a.ArtifactoryFeed = match.ArtifactoryFeed
-	a.ArtifactFnPtr = match.FunctionPointer
 	a.ArtifactoryFeedType = match.FeedType
 	if a.AvailableVersion == "" || (a.DeployedVersion == a.AvailableVersion && !options.ForceDeploy) {
 		return
@@ -254,12 +253,14 @@ func (dq *Queue) createJobsDeployment(ctx context.Context, deploymentID uuid.UUI
 	jobs := fromDataJobs(dataJobs)
 	for _, x := range jobs {
 
+		// TODO: Remove once Annotations are Migrated to Definitions
 		annotations, lErr := dq.crud.JobAnnotation(ctx, x.JobID)
 		if lErr != nil {
 			return nil, errors.Wrap(lErr)
 		}
 		x.Annotations = annotations
 
+		// TODO: Remove once Labels are Migrated to Definitions
 		labels, lErr := dq.crud.JobLabel(ctx, x.JobID)
 		if lErr != nil {
 			return nil, errors.Wrap(lErr)

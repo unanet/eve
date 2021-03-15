@@ -98,24 +98,6 @@ func fromDataLabelList(labels []data.Label) []eve.Label {
 	return list
 }
 
-func fromDataLabelServiceToLabel(m data.LabelService) eve.Label {
-	return eve.Label{
-		ID:          m.LabelID,
-		Description: m.LabelDescription,
-		Data:        m.Data.AsMapOrEmpty(),
-		CreatedAt:   m.CreatedAt.Time,
-		UpdatedAt:   m.UpdatedAt.Time,
-	}
-}
-
-func fromDataLabelServiceListToLabelList(m []data.LabelService) []eve.Label {
-	var list []eve.Label
-	for _, x := range m {
-		list = append(list, fromDataLabelServiceToLabel(x))
-	}
-	return list
-}
-
 func fromDataLabelServiceMaps(m []data.LabelServiceMap) []eve.LabelServiceMap {
 	var list []eve.LabelServiceMap
 	for _, x := range m {

@@ -97,24 +97,6 @@ func fromDataAnnotationList(annotations []data.Annotation) []eve.Annotation {
 	return list
 }
 
-func fromDataAnnotationServiceToAnnotation(m data.AnnotationService) eve.Annotation {
-	return eve.Annotation{
-		ID:          m.AnnotationID,
-		Description: m.AnnotationDescription,
-		Data:        m.Data.AsMapOrEmpty(),
-		CreatedAt:   m.CreatedAt.Time,
-		UpdatedAt:   m.UpdatedAt.Time,
-	}
-}
-
-func fromDataAnnotationServiceListToAnnotationList(m []data.AnnotationService) []eve.Annotation {
-	var list []eve.Annotation
-	for _, x := range m {
-		list = append(list, fromDataAnnotationServiceToAnnotation(x))
-	}
-	return list
-}
-
 func fromDataAnnotationServiceMaps(m []data.AnnotationServiceMap) []eve.AnnotationServiceMap {
 	var list []eve.AnnotationServiceMap
 	for _, x := range m {
