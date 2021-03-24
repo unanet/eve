@@ -3,20 +3,143 @@ package eve
 import (
 	"context"
 	"errors"
+	"fmt"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"strconv"
+	"strings"
 	"time"
 )
 
-type DefinitionType string
 
-const (
-	TDeployment DefinitionType = "appsv1.Deployment"
-	TJob        DefinitionType = "batchv1.Job"
-	TAutoScale  DefinitionType = "v2beta2.HorizontalPodAutoscaler"
-)
 
-type DefinitionSpec map[string]map[string]interface{}
+// TODO: Remove these after the migration and once Defaults are applied to every service/job
+func DefaultServiceResourceDef() DefinitionResult {
+	return DefinitionResult{
+		Class:   "",
+		Version: "v1",
+		Kind:    "Service",
+		Order:   "main",
+		Data: map[string]interface{}{
+			"spec": map[string]interface{}{},
+		},
+	}
+}
 
+
+func DefaultDeploymentResourceDef() DefinitionResult {
+	return DefinitionResult{
+		Class:   "apps",
+		Version: "v1",
+		Kind:    "Deployment",
+		Order:   "main",
+		Data: map[string]interface{}{
+			"spec": map[string]interface{}{},
+		},
+	}
+}
+
+
+func DefaultJobResourceDef() DefinitionResult {
+	return DefinitionResult{
+		Class:   "batch",
+		Version: "v1",
+		Kind:    "Job",
+		Order:   "main",
+		Data:    make(map[string]interface{}),
+	}
+}
+
+
+type DefinitionResults []DefinitionResult
+
+func (drs DefinitionResults) CRDs(order string) []DefinitionResult {
+	var result = make([]DefinitionResult, 0)
+	for _, dr := range drs {
+		if dr.Order == order {
+			result = append(result, dr)
+		}
+	}
+	return result
+}
+
+type DefinitionResult struct {
+	Class   string                 `json:"class"`
+	Version string                 `json:"version"`
+	Kind    string                 `json:"kind"`
+	Order   string                 `json:"order"`
+	Data    map[string]interface{} `json:"data"`
+}
+
+func (dr *DefinitionResult) Annotations(eveDeployment DeploymentSpec) (map[string]interface{}, []string) {
+	// Defaults
+	result := eveDeployment.GetAnnotations()
+	var keys = []string{"spec", "template", "metadata", "annotations"}
+
+	// Overrides
+	switch strings.ToLower(dr.Kind) {
+	case "service":
+		keys = []string{"metadata", "annotations"}
+	case "deployment":
+		// If the service has a metrics port we will set up scrape label here
+		// TODO: remove after migration from eve service to definition
+		if eveDeployment.GetMetricsPort() != 0 {
+			result["prometheus.io/scrape"] = "true"
+			result["prometheus.io/port"] = strconv.Itoa(eveDeployment.GetMetricsPort())
+		}
+	}
+
+	return result, keys
+}
+
+func (dr *DefinitionResult) Labels(eveDeployment DeploymentSpec) (map[string]interface{}, []string) {
+	// Defaults
+	result := eveDeployment.GetLabels()
+	var keys = []string{"spec", "template", "metadata", "labels"}
+
+	// Overrides
+	switch strings.ToLower(dr.Kind) {
+	case "service":
+		keys = []string{"metadata", "labels"}
+	case "deployment":
+		result["app"] = eveDeployment.GetName()
+		result["version"] = eveDeployment.GetArtifact().AvailableVersion
+		result["nuance"] = eveDeployment.GetNuance()
+
+		// If the service has a metrics port we will set up scrape label here
+		// TODO: remove after migration from eve service to definition
+		if eveDeployment.GetMetricsPort() > 0 {
+			result["metrics"] = "enabled"
+		}
+	case "job":
+		result["job"] = eveDeployment.GetName()
+		result["version"] = eveDeployment.GetArtifact().AvailableVersion
+	}
+
+	return result, keys
+}
+
+func (dr *DefinitionResult) APIVersion() string {
+	if strings.ToLower(dr.Kind) == "service"{
+		return dr.Version
+	}
+	if dr.Class == "" {
+		return dr.Version
+	}
+	return fmt.Sprintf("%s/%s", dr.Class, dr.Version)
+}
+
+// main.apps.v1.Deployment
+// This is used to merge the data from slice to map in the service
+func (dr *DefinitionResult) Key() string {
+	return fmt.Sprintf("%s.%s.%s.%s", dr.Order, dr.Class, dr.Version, dr.Kind)
+}
+
+func (dr *DefinitionResult) Resource() string {
+	if strings.HasSuffix(dr.Kind, "s") {
+		return strings.ToLower(dr.Kind)
+	}
+	return strings.ToLower(fmt.Sprintf("%ss", dr.Kind))
+}
 
 type Definition struct {
 	ID               int           `json:"id"`

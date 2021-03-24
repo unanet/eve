@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	uuid "github.com/satori/go.uuid"
-	"gitlab.unanet.io/devops/go/pkg/errors"
-	"go.uber.org/zap"
-
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service/crud"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
+	"gitlab.unanet.io/devops/go/pkg/errors"
+	"go.uber.org/zap"
+	"strconv"
+	"time"
 )
 
 type QWriter interface {
@@ -40,7 +41,6 @@ func fromDataService(s data.DeployService) *eve.DeployService {
 		LivelinessProbe:  s.LivelinessProbe,
 		ReadinessProbe:   s.ReadinessProbe,
 		SuccessExitCodes: s.SuccessExitCodes,
-		//DefinitionData:   s.Definition,
 		DeployArtifact: &eve.DeployArtifact{
 			ArtifactID:       s.ArtifactID,
 			ArtifactName:     s.ArtifactName,
@@ -53,6 +53,7 @@ func fromDataService(s data.DeployService) *eve.DeployService {
 		},
 		Autoscaling: s.Autoscaling,
 		PodResource: s.PodResource,
+		Nuance:      strconv.Itoa(int(time.Now().Unix())),
 	}
 }
 
@@ -69,6 +70,7 @@ func fromDataJob(j data.DeployJob) *eve.DeployJob {
 		JobID:            j.JobID,
 		JobName:          j.JobName,
 		SuccessExitCodes: j.SuccessExitCodes,
+		Nuance:      strconv.Itoa(int(time.Now().Unix())),
 		DeployArtifact: &eve.DeployArtifact{
 			ArtifactID:       j.ArtifactID,
 			ArtifactName:     j.ArtifactName,
@@ -199,33 +201,35 @@ func (dq *Queue) createServicesDeployment(ctx context.Context, deploymentID uuid
 	services := fromDataServices(dataServices)
 	for _, x := range services {
 
-		annotations, aErr := dq.crud.ServiceAnnotation(ctx, x.ServiceID)
-		if aErr != nil {
-			return nil, errors.Wrap(aErr)
+		annotations, err := dq.crud.ServiceAnnotation(ctx, x.ServiceID)
+		if err != nil {
+			return nil, errors.Wrap(err)
 		}
 		x.Annotations = annotations
 
-		labels, lErr := dq.crud.ServiceLabel(ctx, x.ServiceID)
-		if lErr != nil {
-			return nil, errors.Wrap(lErr)
+		labels, err := dq.crud.ServiceLabel(ctx, x.ServiceID)
+		if err != nil {
+			return nil, errors.Wrap(err)
 		}
 		x.Labels = labels
 
-		metadata, mErr := dq.crud.ServiceMetadata(ctx, x.ServiceID)
-		if mErr != nil {
-			return nil, errors.Wrap(mErr)
+		metadata, err := dq.crud.ServiceMetadata(ctx, x.ServiceID)
+		if err != nil {
+			return nil, errors.Wrap(err)
 		}
 		x.Metadata = metadata
 
-		definitions, dErr := dq.crud.ServiceDefinitionData(ctx, x.ServiceID)
-		if dErr != nil {
-			return nil, errors.Wrap(dErr)
+		definitions, err := dq.crud.ServiceDefinitionResults(ctx, x.ServiceID)
+		if err != nil {
+			return nil, errors.Wrap(err)
 		}
 
-		defBytes, _ := json.Marshal(definitions)
+		defBytes, err := json.Marshal(definitions)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
 
 		x.Definition = defBytes
-		x.DefinitionSpec = definitions
 
 		dq.matchArtifact(x.DeployArtifact, x.ServiceName, options, nSDeploymentPlan.Message)
 	}
@@ -273,7 +277,7 @@ func (dq *Queue) createJobsDeployment(ctx context.Context, deploymentID uuid.UUI
 		}
 		x.Metadata = metadata
 
-		definition, dErr := dq.crud.JobDefinitionData(ctx, x.JobID)
+		definition, dErr := dq.crud.JobDefinitionResults(ctx, x.JobID)
 		if dErr != nil {
 			return nil, errors.Wrap(dErr)
 		}
@@ -281,8 +285,6 @@ func (dq *Queue) createJobsDeployment(ctx context.Context, deploymentID uuid.UUI
 		defBytes, _ := json.Marshal(definition)
 
 		x.Definition = defBytes
-		x.DefinitionSpec = definition
-
 
 		dq.matchArtifact(x.DeployArtifact, x.JobName, options, nSDeploymentPlan.Message)
 	}

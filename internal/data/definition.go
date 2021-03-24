@@ -47,16 +47,20 @@ type DefinitionJobMap struct {
 type DefinitionService struct {
 	DefinitionID          int           `db:"definition_id"`
 	DefinitionTypeID      int           `db:"definition_type_id"`
+	StackingOrder         int           `db:"stacking_order"`
 	DefinitionType        string        `db:"definition_type"`
-	Data                  json.Object   `db:"data"`
+	DefinitionVersion     string        `db:"definition_version"`
+	DefinitionClass       string        `db:"definition_class"`
+	DefinitionKind        string        `db:"definition_kind"`
+	DefinitionOrder       string        `db:"definition_order"`
 	DefinitionDescription string        `db:"definition_description"`
 	MapDescription        string        `db:"map_description"`
+	Data                  json.Object   `db:"data"`
 	MapEnvironmentID      sql.NullInt32 `db:"map_environment_id"`
 	MapArtifactID         sql.NullInt32 `db:"map_artifact_id"`
 	MapNamespaceID        sql.NullInt32 `db:"map_namespace_id"`
 	MapServiceID          sql.NullInt32 `db:"map_service_id"`
 	MapClusterID          sql.NullInt32 `db:"map_cluster_id"`
-	StackingOrder         int           `db:"stacking_order"`
 	CreatedAt             sql.NullTime  `db:"created_at"`
 	UpdatedAt             sql.NullTime  `db:"updated_at"`
 }
@@ -64,16 +68,20 @@ type DefinitionService struct {
 type DefinitionJob struct {
 	DefinitionID          int           `db:"definition_id"`
 	DefinitionTypeID      int           `db:"definition_type_id"`
+	StackingOrder         int           `db:"stacking_order"`
 	DefinitionType        string        `db:"definition_type"`
-	Data                  json.Object   `db:"data"`
+	DefinitionVersion     string        `db:"definition_version"`
+	DefinitionClass       string        `db:"definition_class"`
+	DefinitionKind        string        `db:"definition_kind"`
+	DefinitionOrder       string        `db:"definition_order"`
 	DefinitionDescription string        `db:"definition_description"`
 	MapDescription        string        `db:"map_description"`
+	Data                  json.Object   `db:"data"`
 	MapEnvironmentId      sql.NullInt32 `db:"map_environment_id"`
 	MapArtifactId         sql.NullInt32 `db:"map_artifact_id"`
 	MapNamespaceId        sql.NullInt32 `db:"map_namespace_id"`
 	MapJobId              sql.NullInt32 `db:"map_job_id"`
 	MapClusterID          sql.NullInt32 `db:"map_cluster_id"`
-	StackingOrder         int           `db:"stacking_order"`
 	CreatedAt             sql.NullTime  `db:"created_at"`
 	UpdatedAt             sql.NullTime  `db:"updated_at"`
 }
@@ -473,6 +481,10 @@ func (r *Repo) JobDefinition(ctx context.Context, jobID int) ([]DefinitionJob, e
 		SELECT d.id as definition_id,
   			   dt.name as definition_type,
 		       dt.id as definition_type_id,
+		       dt.class as definition_class,
+		       dt.definition_order as definition_order,
+		       dt.kind as definition_kind,
+		       dt.version as definition_version,
 		       d.data as data,
 		       d.description as definition_description,
 		       djm.description as map_description,
@@ -545,6 +557,10 @@ func (r *Repo) ServiceDefinition(ctx context.Context, serviceID int) ([]Definiti
 		SELECT d.id as definition_id,
 		       dt.name as definition_type,
 		       dt.id as definition_type_id,
+		       dt.class as definition_class,
+		       dt.definition_order as definition_order,
+		       dt.kind as definition_kind,
+		       dt.version as definition_version,
 		       d.data as data,
 		       d.description as definition_description,
 		       dsm.description as map_description,
