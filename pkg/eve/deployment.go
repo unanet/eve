@@ -137,6 +137,7 @@ type DeploymentSpec interface {
 	GetLiveness() []byte
 	GetAutoscale() []byte
 	GetResources() []byte
+	GetStickySessions() bool
 	GetServicePort() int
 	GetMetricsPort() int
 	GetExitCode() int
@@ -169,6 +170,9 @@ type DeployService struct {
 	Nuance           string `json:"nuance"`
 }
 
+func (ds *DeployService) GetStickySessions() bool {
+	return ds.StickySessions
+}
 func (ds *DeployService) GetNuance() string {
 	return ds.Nuance
 }
@@ -334,6 +338,9 @@ func (dj *DeployJob) GetAutoscale() []byte {
 }
 func (dj *DeployJob) GetResources() []byte {
 	return nil
+}
+func (dj *DeployJob) GetStickySessions() bool {
+	return false
 }
 func (dj *DeployJob) GetArtifact() *DeployArtifact {
 	return dj.DeployArtifact
