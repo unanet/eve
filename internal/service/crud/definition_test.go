@@ -17,29 +17,21 @@ const (
 
 func dummySpecData(spec string) map[string]interface{} {
 	jsonMap := make(map[string]interface{})
-	//AdefSpec := make(map[string]map[string]interface{})
 	err := json.Unmarshal([]byte(spec), &jsonMap)
 	if err != nil {
 		panic(err)
 	}
-	//AdefSpec["appsv1.Deployment"] = jsonMapA
 	return jsonMap
 }
 
-func addDummyDefSpec(t string, d map[string]interface{}) map[string]map[string]interface{} {
-	defSpec := make(map[string]map[string]interface{})
-	defSpec[t] = d
-	return defSpec
-}
+func dummyDefSpec() []eve.DefinitionResult {
+	var defSpecs = make([]eve.DefinitionResult, 0)
 
-func dummyDefSpec() []eve.DefinitionSpec {
-	var defSpecs = make([]eve.DefinitionSpec, 0)
-
-	defSpecs = append(defSpecs, addDummyDefSpec("appsv1.Deployment", dummySpecData(defSpecA)))
-	defSpecs = append(defSpecs, addDummyDefSpec("appsv1.Deployment", dummySpecData(defSpecB)))
-	defSpecs = append(defSpecs, addDummyDefSpec("batchv1.Job", dummySpecData(defSpecC)))
-	defSpecs = append(defSpecs, addDummyDefSpec("appsv1.Deployment", dummySpecData(defSpecD)))
-	defSpecs = append(defSpecs, addDummyDefSpec("v2beta2.HorizontalPodAutoscaler", dummySpecData(defSpecE)))
+	defSpecs = append(defSpecs, eve.DefinitionResult{Class: "apps", Version: "v1", Kind: "Deployment", Order: "main", Data: dummySpecData(defSpecA)})
+	defSpecs = append(defSpecs, eve.DefinitionResult{Class: "apps", Version: "v1", Kind: "Deployment", Order: "main", Data: dummySpecData(defSpecB)})
+	defSpecs = append(defSpecs, eve.DefinitionResult{Class: "batch", Version: "v1", Kind: "Job", Order: "main", Data: dummySpecData(defSpecC)})
+	defSpecs = append(defSpecs, eve.DefinitionResult{Class: "apps", Version: "v1", Kind: "Deployment", Order: "main", Data: dummySpecData(defSpecD)})
+	defSpecs = append(defSpecs, eve.DefinitionResult{Class: "autoscaling", Version: "v1", Kind: "HorizontalPodAutoscaler", Order: "post", Data: dummySpecData(defSpecE)})
 
 	return defSpecs
 }
@@ -49,7 +41,7 @@ func TestManager_mergeDefinitionData(t *testing.T) {
 		repo *data.Repo
 	}
 	type args struct {
-		defSpecs []eve.DefinitionSpec
+		defSpecs []eve.DefinitionResult
 	}
 
 	tests := []struct {

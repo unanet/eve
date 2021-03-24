@@ -11,6 +11,7 @@ import (
 	"gitlab.unanet.io/devops/go/pkg/jmerge"
 	"gitlab.unanet.io/devops/go/pkg/json"
 	"strconv"
+	"strings"
 )
 
 func toDataDefinitionServiceMap(m eve.DefinitionServiceMap) data.DefinitionServiceMap {
@@ -328,70 +329,111 @@ func (m Manager) JobDefinitionMapsByDefinitionID(ctx context.Context, id int) ([
 	return fromDataDefinitionJobMaps(maps), nil
 }
 
-func (m *Manager) JobDefinitionData(ctx context.Context, id int) (eve.MetadataField, error) {
+func (m *Manager) JobDefinitionResults(ctx context.Context, id int) (eve.DefinitionResults, error) {
 	definitionData, err := m.repo.JobDefinition(ctx, id)
 	if err != nil {
 		return nil, service.CheckForNotFoundError(err)
 	}
 
-	var definitionSpecs []eve.DefinitionSpec
+	var definitionResults []eve.DefinitionResult
 	for _, x := range definitionData {
-		var defSpec = make(eve.DefinitionSpec)
-		var d = make(map[string]interface{})
-		if err := gojson.Unmarshal(x.Data, &d); err != nil {
-			return nil, errors.Wrapf("failed to parse the deployment definition: %s", err)
+		var defSpecData = make(map[string]interface{})
+		if err := gojson.Unmarshal(x.Data, &defSpecData); err != nil {
+			return nil, errors.Wrapf("failed to parse the job deployment definition: %s", err)
 		}
-		defSpec[x.DefinitionType] = d
-		definitionSpecs = append(definitionSpecs, defSpec)
+		definitionResults = append(definitionResults, eve.DefinitionResult{
+			Order:   x.DefinitionOrder,
+			Class:   x.DefinitionClass,
+			Version: x.DefinitionVersion,
+			Kind:    x.DefinitionKind,
+			Data:    defSpecData,
+		})
 	}
 
-	return m.mergeDefinitionData(definitionSpecs)
+	mergedResults, err := m.mergeDefinitionData(definitionResults)
+	if err!=nil {
+		return nil, errors.Wrapf("failed to merge the service deployment definitions: %s", err)
+	}
+
+	// Every Job Deployment Requires 1 definition (K8s Job)
+	mergedResults = m.defaultJobDefinitions(mergedResults)
+
+	return mergedResults, nil
 }
 
-func (m *Manager) ServiceDefinitionData(ctx context.Context, id int) (eve.MetadataField, error) {
+func (m *Manager) ServiceDefinitionResults(ctx context.Context, id int) (eve.DefinitionResults, error) {
 	definitionData, err := m.repo.ServiceDefinition(ctx, id)
 	if err != nil {
 		return nil, service.CheckForNotFoundError(err)
 	}
 
-	var definitionSpecs []eve.DefinitionSpec
+	var definitionResults []eve.DefinitionResult
 	for _, x := range definitionData {
-		var defSpec = make(eve.DefinitionSpec)
 		var defSpecData = make(map[string]interface{})
 		if err := gojson.Unmarshal(x.Data, &defSpecData); err != nil {
-			return nil, errors.Wrapf("failed to parse the deployment definition: %s", err)
+			return nil, errors.Wrapf("failed to parse the service deployment definition: %s", err)
 		}
-		defSpec[x.DefinitionType] = defSpecData
-		definitionSpecs = append(definitionSpecs, defSpec)
+		definitionResults = append(definitionResults, eve.DefinitionResult{
+			Order:   x.DefinitionOrder,
+			Class:   x.DefinitionClass,
+			Version: x.DefinitionVersion,
+			Kind:    x.DefinitionKind,
+			Data:    defSpecData,
+		})
 	}
 
-	return m.mergeDefinitionData(definitionSpecs)
+	mergedResults, err := m.mergeDefinitionData(definitionResults)
+	if err!=nil {
+		return nil, errors.Wrapf("failed to merge the service deployment definitions: %s", err)
+	}
+
+	// Every Service Deployment Requires at least 2 definitions (K8s Service and K8s Deployment)
+	mergedResults = m.defaultServiceDefinitions(mergedResults)
+
+
+	return mergedResults, nil
+
 }
 
-type result struct {
-	defs map[string]interface{}
-}
+func (m Manager) mergeDefinitionData(defResults []eve.DefinitionResult) (eve.DefinitionResults, error) {
 
-func (m Manager) mergeDefinitionData(defSpecs []eve.DefinitionSpec) (eve.MetadataField, error) {
+	var result = make(map[string]interface{})
 
-	r := result{defs: make(map[string]interface{})}
-
-	for _, defSpec := range defSpecs {
+	for _, defResult := range defResults {
 		resultSpecData := make(map[string]interface{})
-		for specType, specData := range defSpec {
-			existingSpecData, ok := r.defs[specType]
+		existingSpecData, ok := result[defResult.Key()]
+		if !ok {
+			resultSpecData = jmerge.Merge(resultSpecData, defResult.Data)
+		} else {
+			datamap, ok := existingSpecData.(map[string]interface{})
 			if !ok {
-				resultSpecData = jmerge.Merge(resultSpecData, specData)
-			} else {
-				datamap, ok := existingSpecData.(map[string]interface{})
-				if !ok {
-					return nil, goerrors.New("failed to cast existing spec data back to map interface")
-				}
-				resultSpecData = jmerge.Merge(datamap, specData)
+				return nil, goerrors.New("failed to cast existing spec data back to map interface")
 			}
-			r.defs[specType] = resultSpecData
+			resultSpecData = jmerge.Merge(datamap, defResult.Data)
 		}
+		result[defResult.Key()] = resultSpecData
 	}
 
-	return r.defs, nil
+	var mergedResults = make(eve.DefinitionResults, 0)
+
+	for key, d := range result {
+		keyParts := strings.Split(key, ".")
+		if len(keyParts) != 4 {
+			return nil, goerrors.New("invalid crd key parts length")
+		}
+
+		datamap, ok := d.(map[string]interface{})
+		if !ok {
+			return nil, goerrors.New("failed to cast existing spec data back to map string interface")
+		}
+
+		mergedResults = append(mergedResults, eve.DefinitionResult{
+			Order:   keyParts[0],
+			Class:   keyParts[1],
+			Version: keyParts[2],
+			Kind:    keyParts[3],
+			Data:    datamap,
+		})
+	}
+	return mergedResults, nil
 }

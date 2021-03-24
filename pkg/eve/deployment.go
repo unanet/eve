@@ -96,18 +96,16 @@ func (dps DeploymentPlanStatus) String() string {
 }
 
 type DeployArtifact struct {
-	ArtifactID       int           `json:"artifact_id"`
-	ArtifactName     string        `json:"artifact_name"`
-	RequestedVersion string        `json:"requested_version"`
-	DeployedVersion  string        `json:"deployed_version"`
-	AvailableVersion string        `json:"available_version"`
-	ServiceAccount   string        `json:"service_account"`
-	ImageTag         string        `json:"image_tag"`
-	Labels           MetadataField `json:"labels"`
-	Annotations      MetadataField `json:"annotations"`
-	Metadata         MetadataField `json:"metadata"`
-	//Definition          MetadataField        `json:"definition"`
-	DefinitionSpec      MetadataField        `json:"definition_spec"`
+	ArtifactID          int                  `json:"artifact_id"`
+	ArtifactName        string               `json:"artifact_name"`
+	RequestedVersion    string               `json:"requested_version"`
+	DeployedVersion     string               `json:"deployed_version"`
+	AvailableVersion    string               `json:"available_version"`
+	ServiceAccount      string               `json:"service_account"`
+	ImageTag            string               `json:"image_tag"`
+	Labels              MetadataField        `json:"labels"`
+	Annotations         MetadataField        `json:"annotations"`
+	Metadata            MetadataField        `json:"metadata"`
 	ArtifactoryFeed     string               `json:"artifactory_feed"`
 	ArtifactoryPath     string               `json:"artifactory_path"`
 	ArtifactoryFeedType string               `json:"artifactory_feed_type"`
@@ -131,21 +129,105 @@ func (da DeployArtifact) EvalImageTag() string {
 	return imageTag
 }
 
+type DeploymentSpec interface {
+	GetArtifact() *DeployArtifact
+	GetName() string
+	GetDefinitions() []byte
+	GetReadiness() []byte
+	GetLiveness() []byte
+	GetAutoscale() []byte
+	GetResources() []byte
+	GetServicePort() int
+	GetMetricsPort() int
+	GetExitCode() int
+	SetExitCode(int)
+	GetSuccessCodes() string
+	GetDeployResult() DeployArtifactResult
+	GetLabels() MetadataField
+	GetAnnotations() MetadataField
+	GetDefaultCount() int
+	GetDefaultRunAs() int
+	GetDefaultServiceAccount() string
+	SetDeployResult(DeployArtifactResult)
+	GetNuance() string
+}
+
 type DeployService struct {
 	*DeployArtifact
-	ServiceID      int    `json:"service_id"`
-	ServicePort    int    `json:"service_port"`
-	MetricsPort    int    `json:"metrics_port"`
-	ServiceName    string `json:"service_name"`
-	StickySessions bool   `json:"sticky_sessions"`
-	Count          int    `json:"count"`
-	//DefinitionData   []byte `json:"definition"`
+	ServiceID        int    `json:"service_id"`
+	ServicePort      int    `json:"service_port"`
+	MetricsPort      int    `json:"metrics_port"`
+	ServiceName      string `json:"service_name"`
+	StickySessions   bool   `json:"sticky_sessions"`
+	Count            int    `json:"count"`
 	Definition       []byte `json:"definition"`
 	LivelinessProbe  []byte `json:"liveliness_probe"`
 	ReadinessProbe   []byte `json:"readiness_probe"`
 	Autoscaling      []byte `json:"autoscaling"`
 	PodResource      []byte `json:"pod_resource"`
 	SuccessExitCodes string `json:"success_exit_codes"`
+	Nuance           string `json:"nuance"`
+}
+
+func (ds *DeployService) GetNuance() string {
+	return ds.Nuance
+}
+func (ds *DeployService) SetDeployResult(result DeployArtifactResult) {
+	ds.Result = result
+}
+func (ds *DeployService) SetExitCode(code int) {
+	ds.ExitCode = code
+}
+func (ds *DeployService) GetExitCode() int {
+	return ds.ExitCode
+}
+func (ds *DeployService) GetDefaultServiceAccount() string {
+	return ds.ServiceAccount
+}
+func (ds *DeployService) GetDefaultRunAs() int {
+	return ds.RunAs
+}
+func (ds *DeployService) GetDefaultCount() int {
+	return ds.Count
+}
+func (ds *DeployService) GetAnnotations() MetadataField {
+	return ds.Annotations
+}
+func (ds *DeployService) GetLabels() MetadataField {
+	return ds.Labels
+}
+func (ds *DeployService) GetDeployResult() DeployArtifactResult {
+	return ds.Result
+}
+func (ds *DeployService) GetSuccessCodes() string {
+	return ds.SuccessExitCodes
+}
+func (ds *DeployService) GetMetricsPort() int {
+	return ds.MetricsPort
+}
+func (ds *DeployService) GetServicePort() int {
+	return ds.ServicePort
+}
+func (ds *DeployService) GetName() string {
+	return ds.ServiceName
+}
+func (ds *DeployService) GetDefinitions() []byte {
+	return ds.Definition
+}
+func (ds *DeployService) GetReadiness() []byte {
+	return ds.ReadinessProbe
+}
+func (ds *DeployService) GetLiveness() []byte {
+	return ds.LivelinessProbe
+}
+func (ds *DeployService) GetAutoscale() []byte {
+	return ds.Autoscaling
+}
+func (ds *DeployService) GetResources() []byte {
+	return ds.PodResource
+}
+func (ds *DeployService) GetArtifact() *DeployArtifact {
+	return ds.DeployArtifact
 }
 
 type DeployServices []*DeployService
@@ -207,7 +289,69 @@ type DeployJob struct {
 	JobID            int    `json:"job_id"`
 	JobName          string `json:"job_name"`
 	SuccessExitCodes string `json:"success_exit_codes"`
-	Definition       []byte	`json:"definition"`
+	Definition       []byte `json:"definition"`
+	Nuance           string `json:"nuance"`
+}
+
+func (dj *DeployJob) GetNuance() string {
+	return dj.Nuance
+}
+func (dj *DeployJob) SetDeployResult(result DeployArtifactResult) {
+	dj.Result = result
+}
+func (dj *DeployJob) SetExitCode(code int) {
+	dj.ExitCode = code
+}
+func (dj *DeployJob) GetExitCode() int {
+	return dj.ExitCode
+}
+func (dj *DeployJob) GetDefaultServiceAccount() string {
+	return dj.ServiceAccount
+}
+func (dj *DeployJob) GetDefaultRunAs() int {
+	return dj.RunAs
+}
+func (dj *DeployJob) GetDefaultCount() int {
+	return 1
+}
+func (dj *DeployJob) GetAnnotations() MetadataField {
+	return dj.Annotations
+}
+func (dj *DeployJob) GetName() string {
+	return dj.JobName
+}
+func (dj *DeployJob) GetDefinitions() []byte {
+	return dj.Definition
+}
+func (dj *DeployJob) GetReadiness() []byte {
+	return nil
+}
+func (dj *DeployJob) GetLiveness() []byte {
+	return nil
+}
+func (dj *DeployJob) GetAutoscale() []byte {
+	return nil
+}
+func (dj *DeployJob) GetResources() []byte {
+	return nil
+}
+func (dj *DeployJob) GetArtifact() *DeployArtifact {
+	return dj.DeployArtifact
+}
+func (dj *DeployJob) GetMetricsPort() int {
+	return 0
+}
+func (dj *DeployJob) GetServicePort() int {
+	return 0
+}
+func (dj *DeployJob) GetDeployResult() DeployArtifactResult {
+	return dj.Result
+}
+func (dj *DeployJob) GetSuccessCodes() string {
+	return dj.SuccessExitCodes
+}
+func (dj *DeployJob) GetLabels() MetadataField {
+	return dj.Labels
 }
 
 type DeployJobs []*DeployJob
