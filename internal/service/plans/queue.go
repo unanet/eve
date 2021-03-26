@@ -200,19 +200,6 @@ func (dq *Queue) createServicesDeployment(ctx context.Context, deploymentID uuid
 	}
 	services := fromDataServices(dataServices)
 	for _, x := range services {
-
-		annotations, err := dq.crud.ServiceAnnotation(ctx, x.ServiceID)
-		if err != nil {
-			return nil, errors.Wrap(err)
-		}
-		x.Annotations = annotations
-
-		labels, err := dq.crud.ServiceLabel(ctx, x.ServiceID)
-		if err != nil {
-			return nil, errors.Wrap(err)
-		}
-		x.Labels = labels
-
 		metadata, err := dq.crud.ServiceMetadata(ctx, x.ServiceID)
 		if err != nil {
 			return nil, errors.Wrap(err)
@@ -256,21 +243,6 @@ func (dq *Queue) createJobsDeployment(ctx context.Context, deploymentID uuid.UUI
 	}
 	jobs := fromDataJobs(dataJobs)
 	for _, x := range jobs {
-
-		// TODO: Remove once Annotations are Migrated to Definitions
-		annotations, lErr := dq.crud.JobAnnotation(ctx, x.JobID)
-		if lErr != nil {
-			return nil, errors.Wrap(lErr)
-		}
-		x.Annotations = annotations
-
-		// TODO: Remove once Labels are Migrated to Definitions
-		labels, lErr := dq.crud.JobLabel(ctx, x.JobID)
-		if lErr != nil {
-			return nil, errors.Wrap(lErr)
-		}
-		x.Labels = labels
-
 		metadata, mErr := dq.crud.JobMetadata(ctx, x.JobID)
 		if mErr != nil {
 			return nil, errors.Wrap(mErr)
