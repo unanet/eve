@@ -103,8 +103,6 @@ type DeployArtifact struct {
 	AvailableVersion    string               `json:"available_version"`
 	ServiceAccount      string               `json:"service_account"`
 	ImageTag            string               `json:"image_tag"`
-	Labels              MetadataField        `json:"labels"`
-	Annotations         MetadataField        `json:"annotations"`
 	Metadata            MetadataField        `json:"metadata"`
 	ArtifactoryFeed     string               `json:"artifactory_feed"`
 	ArtifactoryPath     string               `json:"artifactory_path"`
@@ -144,8 +142,6 @@ type DeploymentSpec interface {
 	SetExitCode(int)
 	GetSuccessCodes() string
 	GetDeployResult() DeployArtifactResult
-	GetLabels() MetadataField
-	GetAnnotations() MetadataField
 	GetDefaultCount() int
 	GetDefaultRunAs() int
 	GetDefaultServiceAccount() string
@@ -193,12 +189,6 @@ func (ds *DeployService) GetDefaultRunAs() int {
 }
 func (ds *DeployService) GetDefaultCount() int {
 	return ds.Count
-}
-func (ds *DeployService) GetAnnotations() MetadataField {
-	return ds.Annotations
-}
-func (ds *DeployService) GetLabels() MetadataField {
-	return ds.Labels
 }
 func (ds *DeployService) GetDeployResult() DeployArtifactResult {
 	return ds.Result
@@ -318,9 +308,6 @@ func (dj *DeployJob) GetDefaultRunAs() int {
 func (dj *DeployJob) GetDefaultCount() int {
 	return 1
 }
-func (dj *DeployJob) GetAnnotations() MetadataField {
-	return dj.Annotations
-}
 func (dj *DeployJob) GetName() string {
 	return dj.JobName
 }
@@ -356,9 +343,6 @@ func (dj *DeployJob) GetDeployResult() DeployArtifactResult {
 }
 func (dj *DeployJob) GetSuccessCodes() string {
 	return dj.SuccessExitCodes
-}
-func (dj *DeployJob) GetLabels() MetadataField {
-	return dj.Labels
 }
 
 type DeployJobs []*DeployJob
