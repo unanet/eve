@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-
-
 // TODO: Remove these after the migration and once Defaults are applied to every service/job
 func DefaultServiceResourceDef() DefinitionResult {
 	return DefinitionResult{
@@ -25,7 +23,6 @@ func DefaultServiceResourceDef() DefinitionResult {
 	}
 }
 
-
 func DefaultDeploymentResourceDef() DefinitionResult {
 	return DefinitionResult{
 		Class:   "apps",
@@ -38,7 +35,6 @@ func DefaultDeploymentResourceDef() DefinitionResult {
 	}
 }
 
-
 func DefaultJobResourceDef() DefinitionResult {
 	return DefinitionResult{
 		Class:   "batch",
@@ -48,7 +44,6 @@ func DefaultJobResourceDef() DefinitionResult {
 		Data:    make(map[string]interface{}),
 	}
 }
-
 
 type DefinitionResults []DefinitionResult
 
@@ -70,56 +65,69 @@ type DefinitionResult struct {
 	Data    map[string]interface{} `json:"data"`
 }
 
-func (dr *DefinitionResult) Annotations(eveDeployment DeploymentSpec) (map[string]interface{}, []string) {
-	// Defaults
-	result := eveDeployment.GetAnnotations()
-	var keys = []string{"spec", "template", "metadata", "annotations"}
-
-	// Overrides
+func (dr *DefinitionResult) AnnotationKeys() []string {
 	switch strings.ToLower(dr.Kind) {
 	case "service":
-		keys = []string{"metadata", "annotations"}
+		return []string{"metadata", "annotations"}
+	}
+
+	return []string{"spec", "template", "metadata", "annotations"}
+}
+
+func (dr *DefinitionResult) StandardAnnotations(eveDeployment DeploymentSpec) map[string]interface{} {
+	switch strings.ToLower(dr.Kind) {
 	case "deployment":
 		// If the service has a metrics port we will set up scrape label here
 		// TODO: remove after migration from eve service to definition
 		if eveDeployment.GetMetricsPort() != 0 {
-			result["prometheus.io/scrape"] = "true"
-			result["prometheus.io/port"] = strconv.Itoa(eveDeployment.GetMetricsPort())
+			return map[string]interface{}{
+				"prometheus.io/scrape": "true",
+				"prometheus.io/port":   strconv.Itoa(eveDeployment.GetMetricsPort()),
+			}
 		}
 	}
-
-	return result, keys
+	return map[string]interface{}{}
 }
 
-func (dr *DefinitionResult) Labels(eveDeployment DeploymentSpec) (map[string]interface{}, []string) {
-	// Defaults
-	result := eveDeployment.GetLabels()
-	var keys = []string{"spec", "template", "metadata", "labels"}
-
-	// Overrides
+func (dr *DefinitionResult) StandardLabels(eveDeployment DeploymentSpec) map[string]interface{} {
+	// Base Labels
+	// TODO: Define in the Definition with Templated values instead
 	switch strings.ToLower(dr.Kind) {
-	case "service":
-		keys = []string{"metadata", "labels"}
 	case "deployment":
-		result["app"] = eveDeployment.GetName()
-		result["version"] = eveDeployment.GetArtifact().AvailableVersion
-		result["nuance"] = eveDeployment.GetNuance()
+		base := map[string]interface{}{
+			"app":     eveDeployment.GetName(),
+			"version": eveDeployment.GetArtifact().AvailableVersion,
+			"nuance":  eveDeployment.GetNuance(),
+		}
 
 		// If the service has a metrics port we will set up scrape label here
 		// TODO: remove after migration from eve service to definition
 		if eveDeployment.GetMetricsPort() > 0 {
-			result["metrics"] = "enabled"
+			base["metrics"] = "enabled"
 		}
+		return base
 	case "job":
-		result["job"] = eveDeployment.GetName()
-		result["version"] = eveDeployment.GetArtifact().AvailableVersion
+		return map[string]interface{}{
+			"job":     eveDeployment.GetName(),
+			"version": eveDeployment.GetArtifact().AvailableVersion,
+		}
 	}
 
-	return result, keys
+	return map[string]interface{}{}
+}
+
+func (dr *DefinitionResult) LabelKeys() []string {
+	// Overrides
+	switch strings.ToLower(dr.Kind) {
+	case "service":
+		return []string{"metadata", "labels"}
+	}
+
+	return []string{"spec", "template", "metadata", "labels"}
 }
 
 func (dr *DefinitionResult) APIVersion() string {
-	if strings.ToLower(dr.Kind) == "service"{
+	if strings.ToLower(dr.Kind) == "service" {
 		return dr.Version
 	}
 	if dr.Class == "" {
