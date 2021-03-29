@@ -52,7 +52,6 @@ func fromDataService(s data.DeployService) *eve.DeployService {
 			RunAs:            s.RunAs,
 		},
 		Autoscaling: s.Autoscaling,
-		PodResource: s.PodResource,
 		Nuance:      strconv.Itoa(int(time.Now().Unix())),
 	}
 }

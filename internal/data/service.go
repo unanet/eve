@@ -31,7 +31,6 @@ type DeployService struct {
 	Definition       json.Object    `db:"definition"`
 	LivelinessProbe  json.Object    `db:"liveliness_probe"`
 	ReadinessProbe   json.Object    `db:"readiness_probe"`
-	PodResource      json.Object    `db:"pod_resource"`
 	Autoscaling      json.Object    `db:"autoscaling"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
@@ -124,10 +123,6 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 	// Autoscale,Pod Resource, and soon to be Metadata...
 	for i := 0; i <= len(services)-1; i++ {
 		services[i].Autoscaling, err = r.HydrateDeployServicePodAutoscale(ctx, services[i])
-		if err != nil {
-			return nil, errors.Wrap(err)
-		}
-		services[i].PodResource, err = r.HydrateDeployServicePodResource(ctx, services[i])
 		if err != nil {
 			return nil, errors.Wrap(err)
 		}

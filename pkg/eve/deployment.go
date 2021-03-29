@@ -134,7 +134,6 @@ type DeploymentSpec interface {
 	GetReadiness() []byte
 	GetLiveness() []byte
 	GetAutoscale() []byte
-	GetResources() []byte
 	GetStickySessions() bool
 	GetServicePort() int
 	GetMetricsPort() int
@@ -161,7 +160,6 @@ type DeployService struct {
 	LivelinessProbe  []byte `json:"liveliness_probe"`
 	ReadinessProbe   []byte `json:"readiness_probe"`
 	Autoscaling      []byte `json:"autoscaling"`
-	PodResource      []byte `json:"pod_resource"`
 	SuccessExitCodes string `json:"success_exit_codes"`
 	Nuance           string `json:"nuance"`
 }
@@ -216,9 +214,6 @@ func (ds *DeployService) GetLiveness() []byte {
 }
 func (ds *DeployService) GetAutoscale() []byte {
 	return ds.Autoscaling
-}
-func (ds *DeployService) GetResources() []byte {
-	return ds.PodResource
 }
 func (ds *DeployService) GetArtifact() *DeployArtifact {
 	return ds.DeployArtifact
@@ -321,9 +316,6 @@ func (dj *DeployJob) GetLiveness() []byte {
 	return nil
 }
 func (dj *DeployJob) GetAutoscale() []byte {
-	return nil
-}
-func (dj *DeployJob) GetResources() []byte {
 	return nil
 }
 func (dj *DeployJob) GetStickySessions() bool {
