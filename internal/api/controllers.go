@@ -15,7 +15,6 @@ func InitializeControllers(
 		NewPingController(),
 		NewDeploymentsController(manager),
 		NewDeploymentPlansController(deploymentPlanGenerator),
-		NewPodController(manager),
 		NewReleaseController(releaseSvc),
 		NewMetadataController(manager),
 		NewEnvironmentController(manager),

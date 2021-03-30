@@ -51,7 +51,6 @@ func fromDataService(s data.DeployService) *eve.DeployService {
 			Result:           eve.DeployArtifactResultNoop,
 			RunAs:            s.RunAs,
 		},
-		Autoscaling: s.Autoscaling,
 		Nuance:      strconv.Itoa(int(time.Now().Unix())),
 	}
 }

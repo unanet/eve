@@ -31,7 +31,6 @@ type DeployService struct {
 	Definition       json.Object    `db:"definition"`
 	LivelinessProbe  json.Object    `db:"liveliness_probe"`
 	ReadinessProbe   json.Object    `db:"readiness_probe"`
-	Autoscaling      json.Object    `db:"autoscaling"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
 	SuccessExitCodes string         `db:"success_exit_codes"`
@@ -117,15 +116,6 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 			return nil, errors.Wrap(err)
 		}
 		services = append(services, service)
-	}
-
-	// This is where we are setting the Dynamic Configuration
-	// Autoscale,Pod Resource, and soon to be Metadata...
-	for i := 0; i <= len(services)-1; i++ {
-		services[i].Autoscaling, err = r.HydrateDeployServicePodAutoscale(ctx, services[i])
-		if err != nil {
-			return nil, errors.Wrap(err)
-		}
 	}
 
 	return services, nil
