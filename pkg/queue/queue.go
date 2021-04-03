@@ -2,6 +2,7 @@ package queue
 
 import (
 	"context"
+	goerrors "github.com/pkg/errors"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -115,9 +116,16 @@ func (q *Q) Message(ctx context.Context, m *M) error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	elapsed := time.Since(now)
-	q.logWith(ctx).Info("AWS SQS message sent", zap.Float64("elapsed_ms", float64(elapsed.Nanoseconds())/1000000.0))
+	if result == nil {
+		return goerrors.New("nil sqs message response")
+	}
+
 	m.MessageID = *result.MessageId
+	q.logWith(ctx).Info("AWS SQS message sent",
+		zap.Float64("elapsed_ms", float64(time.Since(now).Nanoseconds())/1000000.0),
+		zap.Any("id", m.ID),
+		zap.String("message_id", m.MessageID),
+	)
 	return nil
 }
 
@@ -158,7 +166,10 @@ func (q *Q) Receive(ctx context.Context) ([]*mContext, error) {
 			M:   m,
 			ctx: mctx,
 		})
-		q.logWith(mctx).Info("AWS SQS message received")
+		q.logWith(mctx).Info("AWS SQS message received",
+			zap.Any("id", m.ID),
+			zap.String("message_id", m.MessageID),
+		)
 	}
 
 	return returnMs, nil
@@ -173,7 +184,10 @@ func (q *Q) Delete(ctx context.Context, m *M) error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	elapsed := time.Since(now)
-	q.logWith(ctx).Info("AWS SQS message deleted", zap.Float64("elapsed_ms", float64(elapsed.Nanoseconds())/1000000.0))
+	q.logWith(ctx).Info("AWS SQS message deleted",
+		zap.Float64("elapsed_ms", float64(time.Since(now).Nanoseconds())/1000000.0),
+		zap.Any("id", m.ID),
+		zap.String("message_id", m.MessageID),
+	)
 	return nil
 }
