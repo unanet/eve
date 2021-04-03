@@ -307,10 +307,12 @@ func (dq *Queue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 	}
 
 	if options.DryRun || nsDeploymentPlan.NothingToDeploy() {
+		dq.Logger(ctx).Info("message deleted")
 		err = dq.worker.DeleteMessage(ctx, m)
 		if err != nil {
 			return dq.rollbackError(ctx, m, err)
 		}
+		dq.Logger(ctx).Info("updating scheduled deployment", zap.Any("id", deployment.ID))
 		_, err = dq.repo.UpdateDeploymentResult(ctx, deployment.ID)
 		if err != nil {
 			return errors.Wrap(err)
@@ -356,6 +358,7 @@ func (dq *Queue) handleMessage(ctx context.Context, m *queue.M) error {
 }
 
 func (dq *Queue) updateDeployment(ctx context.Context, m *queue.M) error {
+	dq.Logger(ctx).Info("updating message deployment", zap.Any("id", m.ID))
 	deployment, err := dq.repo.UpdateDeploymentResult(ctx, m.ID)
 	if err != nil {
 		return errors.Wrap(err)
