@@ -193,7 +193,7 @@ func (d *PlanGenerator) validateNamespaces(ctx context.Context, env *data.Enviro
 	} else {
 		// If we didn't specify any namespaces, we need to make sure were not deploying to namespaces that require you to explicitly specify them
 		included, excluded := namespacesToDeploy.FilterNamespaces(func(namespace data.Namespace) bool {
-			return !namespace.ExplicitDeployOnly
+			return !namespace.ExplicitDeploy
 		})
 		namespacesToDeploy = included
 		for _, x := range excluded {

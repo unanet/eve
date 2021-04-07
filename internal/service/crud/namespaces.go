@@ -13,16 +13,16 @@ import (
 
 func fromDataNamespace(namespace data.Namespace) eve.Namespace {
 	return eve.Namespace{
-		ID:                 namespace.ID,
-		Name:               namespace.Name,
-		Alias:              namespace.Alias,
-		EnvironmentID:      namespace.EnvironmentID,
-		EnvironmentName:    namespace.EnvironmentName,
-		RequestedVersion:   namespace.RequestedVersion,
-		ExplicitDeployOnly: namespace.ExplicitDeployOnly,
-		ClusterID:          namespace.ClusterID,
-		CreatedAt:          namespace.CreatedAt.Time,
-		UpdatedAt:          namespace.UpdatedAt.Time,
+		ID:               namespace.ID,
+		Name:             namespace.Name,
+		Alias:            namespace.Alias,
+		EnvironmentID:    namespace.EnvironmentID,
+		EnvironmentName:  namespace.EnvironmentName,
+		RequestedVersion: namespace.RequestedVersion,
+		ExplicitDeploy:   namespace.ExplicitDeploy,
+		ClusterID:        namespace.ClusterID,
+		CreatedAt:        namespace.CreatedAt.Time,
+		UpdatedAt:        namespace.UpdatedAt.Time,
 	}
 }
 
@@ -90,13 +90,13 @@ func (m *Manager) UpdateNamespace(ctx context.Context, n *eve.Namespace) (*eve.N
 
 func toDataNamespace(namespace eve.Namespace) data.Namespace {
 	return data.Namespace{
-		ID:                 namespace.ID,
-		Name:               namespace.Name,
-		Alias:              namespace.Alias,
-		EnvironmentID:      namespace.EnvironmentID,
-		EnvironmentName:    namespace.EnvironmentName,
-		RequestedVersion:   namespace.RequestedVersion,
-		ExplicitDeployOnly: namespace.ExplicitDeployOnly,
-		ClusterID:          namespace.ClusterID,
+		ID:               namespace.ID,
+		Name:             namespace.Name,
+		Alias:            namespace.Alias,
+		EnvironmentID:    namespace.EnvironmentID,
+		EnvironmentName:  namespace.EnvironmentName,
+		RequestedVersion: namespace.RequestedVersion,
+		ExplicitDeploy:   namespace.ExplicitDeploy,
+		ClusterID:        namespace.ClusterID,
 	}
 }

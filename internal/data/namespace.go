@@ -10,16 +10,16 @@ import (
 )
 
 type Namespace struct {
-	ID                 int          `db:"id"`
-	Name               string       `db:"name"`
-	Alias              string       `db:"alias"`
-	EnvironmentID      int          `db:"environment_id"`
-	EnvironmentName    string       `db:"environment_name"`
-	RequestedVersion   string       `db:"requested_version"`
-	ExplicitDeployOnly bool         `db:"explicit_deploy_only"`
-	ClusterID          int          `db:"cluster_id"`
-	CreatedAt          sql.NullTime `db:"created_at"`
-	UpdatedAt          sql.NullTime `db:"updated_at"`
+	ID               int          `db:"id"`
+	Name             string       `db:"name"`
+	Alias            string       `db:"alias"`
+	EnvironmentID    int          `db:"environment_id"`
+	EnvironmentName  string       `db:"environment_name"`
+	RequestedVersion string       `db:"requested_version"`
+	ExplicitDeploy   bool         `db:"explicit_deploy"`
+	ClusterID        int          `db:"cluster_id"`
+	CreatedAt        sql.NullTime `db:"created_at"`
+	UpdatedAt        sql.NullTime `db:"updated_at"`
 }
 
 type Namespaces []Namespace
@@ -113,7 +113,7 @@ func (r *Repo) namespaces(ctx context.Context, whereArgs ...WhereArg) (Namespace
 		       ns.name, 
 		       ns.environment_id, 
 		       ns.requested_version, 
-		       ns.explicit_deploy_only, 
+		       ns.explicit_deploy, 
 		       ns.cluster_id,
 		       ns.created_at,
 		       ns.updated_at,
@@ -143,12 +143,12 @@ func (r *Repo) UpdateNamespace(ctx context.Context, namespace *Namespace) error 
 	result, err := r.db.ExecContext(ctx, `
 		update namespace set 
 			requested_version = $1,
-			explicit_deploy_only = $2,
+			explicit_deploy = $2,
 			updated_at = $3
 		where id = $4
 	`,
 		namespace.RequestedVersion,
-		namespace.ExplicitDeployOnly,
+		namespace.ExplicitDeploy,
 		namespace.UpdatedAt,
 		namespace.ID)
 	if err != nil {
