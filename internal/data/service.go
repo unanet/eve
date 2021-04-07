@@ -135,7 +135,7 @@ func (r *Repo) ServiceArtifacts(ctx context.Context, namespaceIDs []int) (Reques
 			left join environment e on ns.environment_id = e.id
 			left join environment_feed_map efm on e.id = efm.environment_id
 			left join feed f on efm.feed_id = f.id and f.feed_type = a.feed_type
-		where f.name is not null and ns.id in (?) and explicit_deploy = false`, namespaceIDs)
+		where f.name is not null and ns.id in (?) and s.explicit_deploy = false`, namespaceIDs)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
