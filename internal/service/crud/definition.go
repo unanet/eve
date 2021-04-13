@@ -299,6 +299,7 @@ func (m Manager) ServiceDefinitionMapsByDefinitionID(ctx context.Context, id int
 	return fromDataDefinitionServiceMaps(maps), nil
 }
 
+
 func (m Manager) UpsertDefinitionJobMap(ctx context.Context, e *eve.DefinitionJobMap) error {
 	dataDefinitionJobMap := toDataDefinitionJobMap(*e)
 	err := m.repo.UpsertDefinitionJobMap(ctx, &dataDefinitionJobMap)
@@ -360,6 +361,17 @@ func (m *Manager) JobDefinitionResults(ctx context.Context, id int) (eve.Definit
 
 	return mergedResults, nil
 }
+
+
+func (m *Manager) ServiceDefinitions(ctx context.Context, id int) ([]eve.Definition, error) {
+	definitions, err := m.repo.ServiceDefinition(ctx, id)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	return fromDataDefinitionServiceListToDefinitionList(definitions), nil
+}
+
 
 func (m *Manager) ServiceDefinitionResults(ctx context.Context, id int) (eve.DefinitionResults, error) {
 	definitionData, err := m.repo.ServiceDefinition(ctx, id)

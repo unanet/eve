@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// TODO: Remove these after the migration and once Defaults are applied to every service/job
+// TODO: Remove once Defaults are applied to every service/job
 func DefaultServiceResourceDef() DefinitionResult {
 	return DefinitionResult{
 		Class:   "",
@@ -23,6 +23,7 @@ func DefaultServiceResourceDef() DefinitionResult {
 	}
 }
 
+// TODO: Remove once Defaults are applied to every service/job
 func DefaultDeploymentResourceDef() DefinitionResult {
 	return DefinitionResult{
 		Class:   "apps",
@@ -35,13 +36,16 @@ func DefaultDeploymentResourceDef() DefinitionResult {
 	}
 }
 
+// TODO: Remove once Defaults are applied to every service/job
 func DefaultJobResourceDef() DefinitionResult {
 	return DefinitionResult{
 		Class:   "batch",
 		Version: "v1",
 		Kind:    "Job",
 		Order:   "main",
-		Data:    make(map[string]interface{}),
+		Data: map[string]interface{}{
+			"spec": map[string]interface{}{},
+		},
 	}
 }
 
@@ -57,6 +61,13 @@ func (drs DefinitionResults) CRDs(order string) []DefinitionResult {
 	return result
 }
 
+type ResourceDefinition struct {
+	APIVersion string      `json:"apiVersion"`
+	Kind       string      `json:"kind"`
+	Meta       interface{} `json:"metadata"`
+	Spec       interface{} `json:"spec"`
+}
+
 type DefinitionResult struct {
 	Class   string                 `json:"class"`
 	Version string                 `json:"version"`
@@ -65,6 +76,16 @@ type DefinitionResult struct {
 	Data    map[string]interface{} `json:"data"`
 }
 
+func (dr DefinitionResult) ToResourceDefinition() ResourceDefinition {
+	return ResourceDefinition{
+		APIVersion: dr.APIVersion(),
+		Kind:       dr.Kind,
+		Meta:       dr.Data["metadata"],
+		Spec:       dr.Data["spec"],
+	}
+}
+
+// TODO: Remove once Standard Values (Annotations and Labels) are migrated to all Def
 func (dr *DefinitionResult) AnnotationKeys() []string {
 	switch strings.ToLower(dr.Kind) {
 	case "service":
@@ -74,6 +95,7 @@ func (dr *DefinitionResult) AnnotationKeys() []string {
 	return []string{"spec", "template", "metadata", "annotations"}
 }
 
+// TODO: Migrate to the Definition with Templated values instead
 func (dr *DefinitionResult) StandardAnnotations(eveDeployment DeploymentSpec) map[string]interface{} {
 	switch strings.ToLower(dr.Kind) {
 	case "deployment":
@@ -89,23 +111,16 @@ func (dr *DefinitionResult) StandardAnnotations(eveDeployment DeploymentSpec) ma
 	return map[string]interface{}{}
 }
 
+// TODO: Migrate to the Definition with Templated values instead
 func (dr *DefinitionResult) StandardLabels(eveDeployment DeploymentSpec) map[string]interface{} {
-	// Base Labels
-	// TODO: Define in the Definition with Templated values instead
 	switch strings.ToLower(dr.Kind) {
 	case "deployment":
-		base := map[string]interface{}{
+		return map[string]interface{}{
 			"app":     eveDeployment.GetName(),
 			"version": eveDeployment.GetArtifact().AvailableVersion,
 			"nuance":  eveDeployment.GetNuance(),
+			"metrics": eveDeployment.Metrics(),
 		}
-
-		// If the service has a metrics port we will set up scrape label here
-		// TODO: remove after migration from eve service to definition
-		if eveDeployment.GetMetricsPort() > 0 {
-			base["metrics"] = "enabled"
-		}
-		return base
 	case "job":
 		return map[string]interface{}{
 			"job":     eveDeployment.GetName(),
@@ -127,21 +142,19 @@ func (dr *DefinitionResult) LabelKeys() []string {
 }
 
 func (dr *DefinitionResult) APIVersion() string {
-	if strings.ToLower(dr.Kind) == "service" {
-		return dr.Version
-	}
-	if dr.Class == "" {
-		return dr.Version
-	}
-	return fmt.Sprintf("%s/%s", dr.Class, dr.Version)
+	// Some definitions dont have a Class (aka Group in K8s)
+	// So we trim the leading "/" when there isn't a Class
+	return strings.TrimPrefix(fmt.Sprintf("%s/%s", dr.Class, dr.Version),"/")
 }
 
-// main.apps.v1.Deployment
-// This is used to merge the data from slice to map in the service
+// Key is used to merge the data from slice to map in the service
+// ex: main.apps.v1.Deployment
+// we use it as a key in the map, and then split on the "." to extract the individual values
 func (dr *DefinitionResult) Key() string {
 	return fmt.Sprintf("%s.%s.%s.%s", dr.Order, dr.Class, dr.Version, dr.Kind)
 }
 
+// Resource is the just the lowercase, plural form of the Kind property
 func (dr *DefinitionResult) Resource() string {
 	if strings.HasSuffix(dr.Kind, "s") {
 		return strings.ToLower(dr.Kind)

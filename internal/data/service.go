@@ -21,16 +21,11 @@ type DeployService struct {
 	DeployedVersion  sql.NullString `db:"deployed_version"`
 	ServicePort      int            `db:"service_port"`
 	MetricsPort      int            `db:"metrics_port"`
-	ServiceAccount   string         `db:"service_account"`
 	ImageTag         string         `db:"image_tag"`
-	RunAs            int            `db:"run_as"`
-	StickySessions   bool           `db:"sticky_sessions"`
 	Count            int            `db:"count"`
 	EnvironmentID    int            `db:"environment_id"`
 	NamespaceID      int            `db:"namespace_id"`
 	Definition       json.Object    `db:"definition"`
-	LivelinessProbe  json.Object    `db:"liveliness_probe"`
-	ReadinessProbe   json.Object    `db:"readiness_probe"`
 	CreatedAt        sql.NullTime   `db:"created_at"`
 	UpdatedAt        sql.NullTime   `db:"updated_at"`
 	SuccessExitCodes string         `db:"success_exit_codes"`
@@ -49,7 +44,6 @@ type Service struct {
 	CreatedAt       sql.NullTime   `db:"created_at"`
 	UpdatedAt       sql.NullTime   `db:"updated_at"`
 	Name            string         `db:"name"`
-	StickySessions  bool           `db:"sticky_sessions"`
 	Count           int            `db:"count"`
 }
 
@@ -79,18 +73,13 @@ func (r *Repo) DeployedServicesByNamespaceID(ctx context.Context, namespaceID in
 	rows, err := r.db.QueryxContext(ctx, `
 		select s.id as service_id,
 		   a.service_port,
-		   a.liveliness_probe,
-		   a.readiness_probe, 
 		   e.id as environment_id,
 		   n.id as namespace_id,
 		   a.image_tag,
 		   a.metrics_port,
-		   a.service_account,
-		   s.sticky_sessions,
 		   s.success_exit_codes,
 		   s.count,
            s.name as service_name,
-		   a.run_as as run_as,
 		   s.artifact_id,
 		   a.name as artifact_name, 
 		   s.deployed_version,
@@ -165,7 +154,6 @@ func (r *Repo) ServiceByName(ctx context.Context, name string, namespace string)
 		       s.namespace_id, 
 		       s.artifact_id, 
 		       s.override_version,
-		       s.sticky_sessions,
 		       s.count,
 		       s.created_at,
 		       s.updated_at,
@@ -196,7 +184,6 @@ func (r *Repo) ServiceByID(ctx context.Context, id int) (*Service, error) {
 		       s.namespace_id, 
 		       s.artifact_id, 
 		       s.override_version,
-		       s.sticky_sessions,
 		       s.count,
 		       s.created_at,
 		       s.updated_at,
@@ -235,8 +222,7 @@ func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) ([]Service, 
 		       s.deployed_version, 
 		       s.created_at, 
 		       s.updated_at, 
-		       s.name, 
-		       s.sticky_sessions,
+		       s.name,
 		       s.count,
 		       n.name as namespace_name,
 		       a.name as artifact_name
@@ -272,7 +258,6 @@ func (r *Repo) UpdateService(ctx context.Context, service *Service) error {
 			artifact_id = $3,
 		   	override_version = $4,
 		    deployed_version = $5,
-			sticky_sessions = $6,
 		    count = $7,
 		    updated_at = $8
 		where id = $9
@@ -282,7 +267,6 @@ func (r *Repo) UpdateService(ctx context.Context, service *Service) error {
 		service.ArtifactID,
 		service.OverrideVersion,
 		service.DeployedVersion,
-		service.StickySessions,
 		service.Count,
 		service.UpdatedAt,
 		service.ID)
