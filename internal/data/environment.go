@@ -93,7 +93,7 @@ func (r *Repo) UpdateEnvironment(ctx context.Context, environment *Environment) 
 		update environment set 
 			description = $1,
 			updated_at = $2
-		where id = $4
+		where id = $3
 	`,
 		environment.Description,
 		environment.UpdatedAt,
