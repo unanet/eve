@@ -72,8 +72,7 @@ type mContext struct {
 }
 
 func (q *Q) logWith(ctx context.Context) *zap.Logger {
-	return q.log.With(
-		zap.String("req_id", log.GetReqID(ctx)))
+	return q.log.With(zap.String("req_id", log.GetReqID(ctx)))
 }
 
 func (q *Q) Message(ctx context.Context, m *M) error {

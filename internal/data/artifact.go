@@ -6,7 +6,6 @@ import (
 	goErrors "errors"
 
 	"gitlab.unanet.io/devops/go/pkg/errors"
-	"gitlab.unanet.io/devops/go/pkg/json"
 )
 
 type Artifact struct {
@@ -17,10 +16,6 @@ type Artifact struct {
 	ImageTag        string         `db:"image_tag"`
 	ServicePort     int            `db:"service_port"`
 	MetricsPort     int            `db:"metrics_port"`
-	ServiceAccount  string         `db:"service_account"`
-	RunAs           int            `db:"run_as"`
-	LivelinessProbe json.Object    `db:"liveliness_probe"`
-	ReadinessProbe  json.Object    `db:"readiness_probe"`
 }
 
 type Artifacts []Artifact
@@ -65,10 +60,6 @@ func (r *Repo) ArtifactsByProvider(ctx context.Context, provider string) (Artifa
 		       a.image_tag,
 		       a.service_port,
 		       a.metrics_port,
-		       a.service_account,
-		       a.run_as,
-		       a.liveliness_probe,
-		       a.readiness_probe
 		       from artifact a where provider_group = $1`, provider)
 
 	if err != nil {

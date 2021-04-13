@@ -36,20 +36,15 @@ func fromDataService(s data.DeployService) *eve.DeployService {
 		ServicePort:      s.ServicePort,
 		MetricsPort:      s.MetricsPort,
 		ServiceName:      s.ServiceName,
-		StickySessions:   s.StickySessions,
 		Count:            s.Count,
-		LivelinessProbe:  s.LivelinessProbe,
-		ReadinessProbe:   s.ReadinessProbe,
 		SuccessExitCodes: s.SuccessExitCodes,
 		DeployArtifact: &eve.DeployArtifact{
 			ArtifactID:       s.ArtifactID,
 			ArtifactName:     s.ArtifactName,
 			RequestedVersion: s.RequestedVersion,
 			DeployedVersion:  s.DeployedVersion.String,
-			ServiceAccount:   s.ServiceAccount,
 			ImageTag:         s.ImageTag,
 			Result:           eve.DeployArtifactResultNoop,
-			RunAs:            s.RunAs,
 		},
 		Nuance:      strconv.Itoa(int(time.Now().Unix())),
 	}
@@ -74,10 +69,8 @@ func fromDataJob(j data.DeployJob) *eve.DeployJob {
 			ArtifactName:     j.ArtifactName,
 			RequestedVersion: j.RequestedVersion,
 			DeployedVersion:  j.DeployedVersion.String,
-			ServiceAccount:   j.ServiceAccount,
 			ImageTag:         j.ImageTag,
 			Result:           eve.DeployArtifactResultNoop,
-			RunAs:            j.RunAs,
 		},
 	}
 }

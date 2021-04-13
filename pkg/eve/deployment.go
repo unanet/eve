@@ -101,7 +101,6 @@ type DeployArtifact struct {
 	RequestedVersion    string               `json:"requested_version"`
 	DeployedVersion     string               `json:"deployed_version"`
 	AvailableVersion    string               `json:"available_version"`
-	ServiceAccount      string               `json:"service_account"`
 	ImageTag            string               `json:"image_tag"`
 	Metadata            MetadataField        `json:"metadata"`
 	ArtifactoryFeed     string               `json:"artifactory_feed"`
@@ -109,7 +108,6 @@ type DeployArtifact struct {
 	ArtifactoryFeedType string               `json:"artifactory_feed_type"`
 	Result              DeployArtifactResult `json:"result"`
 	ExitCode            int                  `json:"exit_code"`
-	RunAs               int                  `json:"run_as"`
 	Deploy              bool                 `json:"-"`
 }
 
@@ -131,9 +129,6 @@ type DeploymentSpec interface {
 	GetArtifact() *DeployArtifact
 	GetName() string
 	GetDefinitions() []byte
-	GetReadiness() []byte
-	GetLiveness() []byte
-	GetStickySessions() bool
 	GetServicePort() int
 	GetMetricsPort() int
 	GetExitCode() int
@@ -141,10 +136,9 @@ type DeploymentSpec interface {
 	GetSuccessCodes() string
 	GetDeployResult() DeployArtifactResult
 	GetDefaultCount() int
-	GetDefaultRunAs() int
-	GetDefaultServiceAccount() string
 	SetDeployResult(DeployArtifactResult)
 	GetNuance() string
+	Metrics() string
 }
 
 type DeployService struct {
@@ -153,17 +147,17 @@ type DeployService struct {
 	ServicePort      int    `json:"service_port"`
 	MetricsPort      int    `json:"metrics_port"`
 	ServiceName      string `json:"service_name"`
-	StickySessions   bool   `json:"sticky_sessions"`
 	Count            int    `json:"count"`
 	Definition       []byte `json:"definition"`
-	LivelinessProbe  []byte `json:"liveliness_probe"`
-	ReadinessProbe   []byte `json:"readiness_probe"`
 	SuccessExitCodes string `json:"success_exit_codes"`
 	Nuance           string `json:"nuance"`
 }
 
-func (ds *DeployService) GetStickySessions() bool {
-	return ds.StickySessions
+func (ds *DeployService) Metrics() string {
+	if ds.MetricsPort > 0 {
+		return "enabled"
+	}
+	return "disabled"
 }
 func (ds *DeployService) GetNuance() string {
 	return ds.Nuance
@@ -176,12 +170,6 @@ func (ds *DeployService) SetExitCode(code int) {
 }
 func (ds *DeployService) GetExitCode() int {
 	return ds.ExitCode
-}
-func (ds *DeployService) GetDefaultServiceAccount() string {
-	return ds.ServiceAccount
-}
-func (ds *DeployService) GetDefaultRunAs() int {
-	return ds.RunAs
 }
 func (ds *DeployService) GetDefaultCount() int {
 	return ds.Count
@@ -203,12 +191,6 @@ func (ds *DeployService) GetName() string {
 }
 func (ds *DeployService) GetDefinitions() []byte {
 	return ds.Definition
-}
-func (ds *DeployService) GetReadiness() []byte {
-	return ds.ReadinessProbe
-}
-func (ds *DeployService) GetLiveness() []byte {
-	return ds.LivelinessProbe
 }
 func (ds *DeployService) GetArtifact() *DeployArtifact {
 	return ds.DeployArtifact
@@ -289,12 +271,6 @@ func (dj *DeployJob) SetExitCode(code int) {
 func (dj *DeployJob) GetExitCode() int {
 	return dj.ExitCode
 }
-func (dj *DeployJob) GetDefaultServiceAccount() string {
-	return dj.ServiceAccount
-}
-func (dj *DeployJob) GetDefaultRunAs() int {
-	return dj.RunAs
-}
 func (dj *DeployJob) GetDefaultCount() int {
 	return 1
 }
@@ -303,15 +279,6 @@ func (dj *DeployJob) GetName() string {
 }
 func (dj *DeployJob) GetDefinitions() []byte {
 	return dj.Definition
-}
-func (dj *DeployJob) GetReadiness() []byte {
-	return nil
-}
-func (dj *DeployJob) GetLiveness() []byte {
-	return nil
-}
-func (dj *DeployJob) GetStickySessions() bool {
-	return false
 }
 func (dj *DeployJob) GetArtifact() *DeployArtifact {
 	return dj.DeployArtifact
@@ -327,6 +294,9 @@ func (dj *DeployJob) GetDeployResult() DeployArtifactResult {
 }
 func (dj *DeployJob) GetSuccessCodes() string {
 	return dj.SuccessExitCodes
+}
+func (dj *DeployJob) Metrics() string {
+	return "disabled"
 }
 
 type DeployJobs []*DeployJob
