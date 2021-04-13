@@ -258,9 +258,9 @@ func (r *Repo) UpdateService(ctx context.Context, service *Service) error {
 			artifact_id = $3,
 		   	override_version = $4,
 		    deployed_version = $5,
-		    count = $7,
-		    updated_at = $8
-		where id = $9
+		    count = $6,
+		    updated_at = $7
+		where id = $8
 	`,
 		service.Name,
 		service.NamespaceID,
