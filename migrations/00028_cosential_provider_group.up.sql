@@ -1,1 +1,0 @@
-ALTER TYPE provider_group ADD VALUE 'cosential' AFTER 'ops';

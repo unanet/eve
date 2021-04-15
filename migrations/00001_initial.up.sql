@@ -1,310 +1,551 @@
-DROP TYPE IF EXISTS feed_type;
-CREATE TYPE feed_type AS ENUM (
-    'docker',
-    'generic'
-    );
-
-
-DROP TYPE IF EXISTS provider_group;
-CREATE TYPE provider_group AS ENUM (
-    'unanet',
-    'clearview',
-    'ops'
-    );
-
-
-DROP TYPE IF EXISTS deployment_state;
-CREATE TYPE deployment_state AS ENUM (
-    'queued',
-    'scheduled',
-    'completed'
-    );
-
-
-DROP TYPE IF EXISTS deployment_cron_state;
-CREATE TYPE deployment_cron_state AS ENUM (
-    'idle',
-    'running'
-    );
-
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE OR REPLACE FUNCTION jsonb_merge(orig jsonb, delta jsonb)
-RETURNS jsonb LANGUAGE sql AS $$
-    SELECT
-        jsonb_object_agg(
-            coalesce(keyOrig, keyDelta),
-            CASE
-                WHEN valOrig ISNULL THEN valDelta
-                WHEN valDelta ISNULL THEN valOrig
-                WHEN (jsonb_typeof(valOrig) <> 'object' OR jsonb_typeof(valDelta) <> 'object') THEN valDelta
-                ELSE jsonb_merge(valOrig, valDelta)
-            END
-        )
-    FROM jsonb_each(orig) e1(keyOrig, valOrig)
-    FULL JOIN jsonb_each(delta) e2(keyDelta, valDelta) ON keyOrig = keyDelta
+create type feed_type as enum ('docker', 'generic');
+
+create type provider_group as enum ('unanet', 'clearview', 'ops', 'cosential', 'connect');
+
+create type deployment_state as enum ('queued', 'scheduled', 'completed');
+
+create type deployment_cron_state as enum ('idle', 'running');
+
+create type definition_order as enum ('main', 'pre', 'post');
+
+create table if not exists feed
+(
+    id              integer               not null,
+    name            varchar(25)           not null,
+    promotion_order integer     default 0 not null,
+    feed_type       feed_type,
+    alias           varchar(25) default ''::character varying,
+    constraint feed_pk
+        primary key (id)
+);
+
+create unique index if not exists feed_name_uindex
+    on feed (name);
+
+create table if not exists artifact
+(
+    id               integer                                           not null,
+    name             varchar(50)                                       not null,
+    feed_type        feed_type                                         not null,
+    provider_group   provider_group                                    not null,
+    image_tag        varchar(25) default '$version'::character varying not null,
+    service_port     integer     default 8080                          not null,
+    metrics_port     integer     default 0                             not null,
+    service_account  varchar(50) default 'unanet'::character varying   not null,
+    run_as           integer     default 1101                          not null,
+    liveliness_probe jsonb       default '{}'::json                    not null,
+    readiness_probe  jsonb       default '{}'::json                    not null,
+    constraint artifact_pk
+        primary key (id)
+);
+
+create unique index if not exists artifact_name_uindex
+    on artifact (name);
+
+create table if not exists environment
+(
+    id          integer       not null,
+    name        varchar(25)   not null,
+    alias       varchar(25)   not null,
+    description varchar(1024) not null,
+    updated_at  timestamp default now(),
+    constraint environment_pk
+        primary key (id)
+);
+
+create unique index if not exists environment_name_uindex
+    on environment (name);
+
+create table if not exists cluster
+(
+    id             integer                 not null,
+    name           varchar(50)             not null,
+    sch_queue_url  varchar(200)            not null,
+    provider_group provider_group          not null,
+    created_at     timestamp default now() not null,
+    updated_at     timestamp default now() not null,
+    constraint cluster_pk
+        primary key (id)
+);
+
+create unique index if not exists cluster_name_uindex
+    on cluster (name);
+
+create table if not exists namespace
+(
+    id                serial                  not null,
+    alias             varchar(50)             not null,
+    environment_id    integer                 not null,
+    requested_version varchar(50)             not null,
+    explicit_deploy   boolean   default false not null,
+    cluster_id        integer                 not null,
+    created_at        timestamp default now() not null,
+    updated_at        timestamp default now() not null,
+    name              varchar(50)             not null,
+    constraint namespace_pk
+        primary key (id),
+    constraint namespace_environment_id_fk
+        foreign key (environment_id) references environment,
+    constraint namespace_cluster_id_fk
+        foreign key (cluster_id) references cluster
+);
+
+create unique index if not exists namespace_environment_id_cluster_id_alias_uindex
+    on namespace (environment_id, cluster_id, alias);
+
+create unique index if not exists namespace_name_cluster_id_uindex
+    on namespace (name, cluster_id);
+
+create table if not exists service
+(
+    id                 serial                                         not null,
+    namespace_id       integer                                        not null,
+    artifact_id        integer                                        not null,
+    override_version   varchar(50),
+    deployed_version   varchar(50),
+    created_at         timestamp    default now()                     not null,
+    updated_at         timestamp    default now()                     not null,
+    name               varchar(50)  default 'blah'::character varying not null,
+    sticky_sessions    boolean      default false                     not null,
+    count              integer      default 2                         not null,
+    success_exit_codes varchar(100) default '0'::character varying    not null,
+    explicit_deploy    boolean      default false                     not null,
+    constraint service_pk
+        primary key (id),
+    constraint service_artifact_id_fk
+        foreign key (artifact_id) references artifact,
+    constraint service_namespace_id_fk
+        foreign key (namespace_id) references namespace
+);
+
+create unique index if not exists service_namespace_id_name_uindex
+    on service (name, namespace_id);
+
+create table if not exists environment_feed_map
+(
+    environment_id integer not null,
+    feed_id        integer not null,
+    constraint environment_feed_map_environment_id
+        foreign key (environment_id) references environment,
+    constraint environment_feed_map_feed_id
+        foreign key (feed_id) references feed
+);
+
+create unique index if not exists environment_feed_map_environment_id_feed_id_uindex
+    on environment_feed_map (environment_id, feed_id);
+
+create table if not exists deployment
+(
+    id             uuid      default uuid_generate_v4() not null,
+    environment_id integer                              not null,
+    namespace_id   integer                              not null,
+    req_id         varchar(100),
+    message_id     varchar(100),
+    receipt_handle varchar(1024),
+    plan_options   jsonb                                not null,
+    plan_location  jsonb,
+    state          deployment_state                     not null,
+    "user"         varchar(50)                          not null,
+    created_at     timestamp default now()              not null,
+    updated_at     timestamp default now()              not null,
+    constraint deployment_pkey
+        primary key (id),
+    constraint deployment_environment_id
+        foreign key (environment_id) references environment,
+    constraint deployment_namespace_id
+        foreign key (namespace_id) references namespace
+);
+
+create table if not exists deployment_cron
+(
+    id           uuid                  default uuid_generate_v4()            not null,
+    plan_options jsonb                                                       not null,
+    schedule     varchar(25)                                                 not null,
+    state        deployment_cron_state default 'idle'::deployment_cron_state not null,
+    last_run     timestamp             default now()                         not null,
+    disabled     boolean               default false                         not null,
+    description  varchar(100),
+    exec_order   integer               default 0                             not null,
+    constraint deployment_cron_pkey
+        primary key (id)
+);
+
+create table if not exists deployment_cron_job
+(
+    deployment_cron_id uuid not null,
+    deployment_id      uuid not null,
+    constraint deployment_cron_job_deployment_id
+        foreign key (deployment_id) references deployment
+            on delete cascade,
+    constraint deployment_cron_job_deployment_cron_id
+        foreign key (deployment_cron_id) references deployment_cron
+            on delete cascade
+);
+
+create table if not exists job
+(
+    id                 serial                                      not null,
+    name               varchar(50)                                 not null,
+    artifact_id        integer                                     not null,
+    namespace_id       integer,
+    override_version   varchar(50),
+    deployed_version   varchar(50),
+    created_at         timestamp    default now()                  not null,
+    updated_at         timestamp    default now()                  not null,
+    success_exit_codes varchar(100) default '0'::character varying not null,
+    explicit_deploy    boolean      default false                  not null,
+    constraint job_pk
+        primary key (id),
+    constraint job_artifact_id_fk
+        foreign key (artifact_id) references artifact,
+    constraint job_namespace_id_fk
+        foreign key (namespace_id) references namespace
+);
+
+create unique index if not exists job_namespace_id_name_uindex
+    on job (name, namespace_id);
+
+create table if not exists metadata
+(
+    id            serial                       not null,
+    description   varchar(100)                 not null,
+    value         jsonb     default '{}'::json not null,
+    created_at    timestamp default now()      not null,
+    updated_at    timestamp default now()      not null,
+    migrated_from integer,
+    constraint metadata_pk
+        primary key (id)
+);
+
+create unique index if not exists metadata_description_uindex
+    on metadata (description);
+
+create unique index if not exists metadata_id_uindex
+    on metadata (id);
+
+create table if not exists metadata_job_map
+(
+    description    varchar(100)            not null,
+    metadata_id    integer                 not null,
+    environment_id integer,
+    artifact_id    integer,
+    namespace_id   integer,
+    job_id         integer,
+    stacking_order integer   default 0     not null,
+    created_at     timestamp default now() not null,
+    updated_at     timestamp default now() not null,
+    cluster_id     integer,
+    constraint metadata_job_map_metadata_id_fk
+        foreign key (metadata_id) references metadata
+            on update cascade on delete cascade,
+    constraint metadata_job_map_environment_id_fk
+        foreign key (environment_id) references environment
+            on update cascade on delete cascade,
+    constraint metadata_job_map_artifact_id_fk
+        foreign key (artifact_id) references artifact
+            on update cascade on delete cascade,
+    constraint metadata_job_map_namespace_id_fk
+        foreign key (namespace_id) references namespace
+            on update cascade on delete cascade,
+    constraint metadata_job_map_job_id_fk
+        foreign key (job_id) references job
+            on update cascade on delete cascade,
+    constraint metadata_job_map_cluster_id_fk
+        foreign key (cluster_id) references cluster
+            on update cascade on delete cascade
+);
+
+create unique index if not exists metadata_job_map_description_uindex
+    on metadata_job_map (description);
+
+alter table metadata_job_map
+    add constraint chk_only_service_id_or_artifact_id_nonnull
+        check (num_nonnulls(job_id, artifact_id) <= 1);
+
+alter table metadata_job_map
+    add constraint chk_only_at_least_one_must_be_set
+        check (num_nonnulls(job_id, cluster_id, environment_id, namespace_id, artifact_id) >= 1);
+
+alter table metadata_job_map
+    add constraint chk_no_more_than_one_can_be_set
+        check (num_nonnulls(job_id, cluster_id, environment_id, namespace_id) <= 1);
+
+create table if not exists metadata_service_map
+(
+    description    varchar(100)            not null,
+    metadata_id    integer                 not null,
+    environment_id integer,
+    artifact_id    integer,
+    namespace_id   integer,
+    service_id     integer,
+    stacking_order integer   default 0     not null,
+    created_at     timestamp default now() not null,
+    updated_at     timestamp default now() not null,
+    cluster_id     integer,
+    constraint metadata_service_map_metadata_id_fk
+        foreign key (metadata_id) references metadata
+            on update cascade on delete cascade,
+    constraint metadata_service_map_environment_id_fk
+        foreign key (environment_id) references environment
+            on update cascade on delete cascade,
+    constraint metadata_service_map_artifact_id_fk
+        foreign key (artifact_id) references artifact
+            on update cascade on delete cascade,
+    constraint metadata_service_map_namespace_id_fk
+        foreign key (namespace_id) references namespace
+            on update cascade on delete cascade,
+    constraint metadata_service_map_service_id_fk
+        foreign key (service_id) references service
+            on update cascade on delete cascade,
+    constraint metadata_service_map_cluster_id_fk
+        foreign key (cluster_id) references cluster
+            on update cascade on delete cascade
+);
+
+create unique index if not exists metadata_service_map_description_uindex
+    on metadata_service_map (description);
+
+alter table metadata_service_map
+    add constraint chk_only_service_id_or_artifact_id_nonnull
+        check (num_nonnulls(service_id, artifact_id) <= 1);
+
+alter table metadata_service_map
+    add constraint chk_only_at_least_one_must_be_set
+        check (num_nonnulls(service_id, cluster_id, environment_id, namespace_id, artifact_id) >= 1);
+
+alter table metadata_service_map
+    add constraint chk_no_more_than_one_can_be_set
+        check (num_nonnulls(service_id, cluster_id, environment_id, namespace_id) <= 1);
+
+create table if not exists metadata_history
+(
+    metadata_id integer      not null,
+    description varchar(100) not null,
+    value       jsonb        not null,
+    created     timestamp,
+    created_by  varchar(32),
+    deleted     timestamp,
+    deleted_by  varchar(32)
+);
+
+create table if not exists definition_type
+(
+    id               serial                  not null,
+    name             varchar(50)             not null,
+    description      varchar(250)            not null,
+    created_at       timestamp default now() not null,
+    updated_at       timestamp default now() not null,
+    class            varchar(50)             not null,
+    version          varchar(50)             not null,
+    kind             varchar(50)             not null,
+    definition_order definition_order        not null,
+    constraint definition_type_pk
+        primary key (id)
+);
+
+create unique index if not exists definition_type_name_uindex
+    on definition_type (name);
+
+create unique index if not exists definition_type_description_uindex
+    on definition_type (description);
+
+create unique index if not exists definition_type_id_uindex
+    on definition_type (id);
+
+create table if not exists definition
+(
+    id                 serial                       not null,
+    description        varchar(200)                 not null,
+    definition_type_id integer,
+    data               jsonb     default '{}'::json not null,
+    created_at         timestamp default now()      not null,
+    updated_at         timestamp default now()      not null,
+    constraint definition_pk
+        primary key (id),
+    constraint definition_service_map_definition_id_fk
+        foreign key (definition_type_id) references definition_type
+            on update cascade on delete cascade
+);
+
+create unique index if not exists definition_description_uindex
+    on definition (description);
+
+create unique index if not exists definition_id_uindex
+    on definition (id);
+
+create table if not exists definition_service_map
+(
+    description    varchar(200)            not null,
+    definition_id  integer                 not null,
+    environment_id integer,
+    artifact_id    integer,
+    namespace_id   integer,
+    service_id     integer,
+    cluster_id     integer,
+    stacking_order integer   default 0     not null,
+    created_at     timestamp default now() not null,
+    updated_at     timestamp default now() not null,
+    constraint definition_service_map_definition_id_fk
+        foreign key (definition_id) references definition
+            on update cascade on delete cascade,
+    constraint definition_service_map_environment_id_fk
+        foreign key (environment_id) references environment
+            on update cascade on delete cascade,
+    constraint definition_service_map_artifact_id_fk
+        foreign key (artifact_id) references artifact
+            on update cascade on delete cascade,
+    constraint definition_service_map_namespace_id_fk
+        foreign key (namespace_id) references namespace
+            on update cascade on delete cascade,
+    constraint definition_service_map_service_id_fk
+        foreign key (service_id) references service
+            on update cascade on delete cascade,
+    constraint definition_service_map_cluster_id_fk
+        foreign key (cluster_id) references cluster
+            on update cascade on delete cascade
+);
+
+create unique index if not exists definition_service_map_description_uindex
+    on definition_service_map (description);
+
+alter table definition_service_map
+    add constraint chk_only_service_id_or_artifact_id_nonnull
+        check (num_nonnulls(service_id, artifact_id) <= 1);
+
+alter table definition_service_map
+    add constraint chk_only_at_least_one_must_be_set
+        check (num_nonnulls(service_id, cluster_id, environment_id, namespace_id, artifact_id) >= 1);
+
+alter table definition_service_map
+    add constraint chk_no_more_than_one_can_be_set
+        check (num_nonnulls(service_id, cluster_id, environment_id, namespace_id) <= 1);
+
+create table if not exists definition_job_map
+(
+    description    varchar(200)            not null,
+    definition_id  integer                 not null,
+    environment_id integer,
+    artifact_id    integer,
+    namespace_id   integer,
+    job_id         integer,
+    cluster_id     integer,
+    stacking_order integer   default 0     not null,
+    created_at     timestamp default now() not null,
+    updated_at     timestamp default now() not null,
+    constraint definition_job_map_definition_id_fk
+        foreign key (definition_id) references definition
+            on update cascade on delete cascade,
+    constraint definition_job_map_environment_id_fk
+        foreign key (environment_id) references environment
+            on update cascade on delete cascade,
+    constraint definition_job_map_artifact_id_fk
+        foreign key (artifact_id) references artifact
+            on update cascade on delete cascade,
+    constraint definition_job_map_namespace_id_fk
+        foreign key (namespace_id) references namespace
+            on update cascade on delete cascade,
+    constraint definition_job_map_job_id_fk
+        foreign key (job_id) references job
+            on update cascade on delete cascade,
+    constraint definition_job_map_cluster_id_fk
+        foreign key (cluster_id) references cluster
+            on update cascade on delete cascade
+);
+
+create unique index if not exists definition_job_map_description_uindex
+    on definition_job_map (description);
+
+alter table definition_job_map
+    add constraint chk_only_job_id_or_artifact_id_nonnull
+        check (num_nonnulls(job_id, artifact_id) <= 1);
+
+alter table definition_job_map
+    add constraint chk_only_at_least_one_must_be_set
+        check (num_nonnulls(job_id, cluster_id, environment_id, namespace_id, artifact_id) >= 1);
+
+alter table definition_job_map
+    add constraint chk_no_more_than_one_can_be_set
+        check (num_nonnulls(job_id, cluster_id, environment_id, namespace_id) <= 1);
+
+create function jsonb_merge(orig jsonb, delta jsonb) returns jsonb
+    language sql
+as
+$$
+SELECT jsonb_object_agg(
+               coalesce(keyOrig, keyDelta),
+               CASE
+                   WHEN valOrig ISNULL THEN valDelta
+                   WHEN valDelta ISNULL THEN valOrig
+                   WHEN (jsonb_typeof(valOrig) <> 'object' OR jsonb_typeof(valDelta) <> 'object') THEN valDelta
+                   ELSE jsonb_merge(valOrig, valDelta)
+                   END
+           )
+FROM jsonb_each(orig) e1(keyOrig, valOrig)
+         FULL JOIN jsonb_each(delta) e2(keyDelta, valDelta) ON keyOrig = keyDelta
 $$;
 
+create function metadata_insert() returns trigger
+    language plpgsql
+as
+$$
+BEGIN
+    INSERT INTO metadata_history
+    (metadata_id, description, value, created, created_by)
+    VALUES (NEW.id, NEW.description, NEW.value, current_timestamp, current_user);
+    RETURN NEW;
+END;
+$$;
 
-CREATE TABLE feed (
-    id integer NOT NULL,
-    name character varying(25) NOT NULL,
-    promotion_order integer DEFAULT 0 NOT NULL,
-    feed_type feed_type,
-    alias character varying(25) DEFAULT '' NOT NULL
-);
-CREATE UNIQUE INDEX feed_name_uindex ON feed USING btree (name);
-ALTER TABLE ONLY feed ADD CONSTRAINT feed_pk PRIMARY KEY (id);
+create trigger metadata_insert_trigger
+    after insert
+    on metadata
+    for each row
+execute procedure metadata_insert();
 
+create function metadata_delete() returns trigger
+    language plpgsql
+as
+$$
+BEGIN
+    UPDATE metadata_history
+    SET deleted    = current_timestamp,
+        deleted_by = current_user
+    WHERE deleted IS NULL
+      and metadata_id = OLD.id;
+    RETURN NULL;
+END;
+$$;
 
-CREATE TABLE artifact (
-    id integer NOT NULL,
-    name character varying(50) NOT NULL,
-    feed_type feed_type NOT NULL,
-    provider_group provider_group NOT NULL,
-    function_pointer character varying(250),
-    image_tag character varying (25) DEFAULT '$version' NOT NULL,
-    service_port integer default 8080 NOT NULL,
-    metrics_port integer default 0 NOT NULL,
-    service_account character varying (50) DEFAULT 'unanet' NOT NULL,
-    run_as character varying (20) DEFAULT '1101' NOT NULL,
-    metadata jsonb DEFAULT '{}'::json NOT NULL,
-    liveliness_probe jsonb DEFAULT '{}'::json NOT NULL,
-    readiness_probe jsonb DEFAULT '{}'::json NOT NULL,
-    autoscaling jsonb DEFAULT '{}'::json NOT NULL,
-    pod_resource jsonb DEFAULT '{}'::json NOT NULL
-);
-CREATE UNIQUE INDEX artifact_name_uindex ON artifact USING btree (name);
-ALTER TABLE ONLY artifact ADD CONSTRAINT artifact_pk PRIMARY KEY (id);
+create trigger metadata_delete_trigger
+    after delete
+    on metadata
+    for each row
+execute procedure metadata_delete();
 
+create function metadata_update() returns trigger
+    language plpgsql
+as
+$$
+BEGIN
 
-CREATE TABLE automation_job (
-    id integer NOT NULL,
-    name character varying(50) NOT NULL,
-    parameters jsonb DEFAULT '{}'::json NOT NULL
-);
-CREATE SEQUENCE automation_job_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER SEQUENCE automation_job_id_seq OWNED BY automation_job.id;
-ALTER TABLE ONLY automation_job ADD CONSTRAINT automation_job_pk PRIMARY KEY (id);
+    UPDATE metadata_history
+    SET deleted    = current_timestamp,
+        deleted_by = current_user
+    WHERE deleted IS NULL
+      and metadata_id = OLD.id;
 
+    INSERT INTO metadata_history
+    (metadata_id, description, value, created, created_by)
+    VALUES (NEW.id, NEW.description, NEW.value, current_timestamp, current_user);
+    RETURN NEW;
 
-CREATE TABLE environment (
-    id integer NOT NULL,
-    name character varying(25) NOT NULL,
-    alias character varying(25) NOT NULL,
-    metadata jsonb DEFAULT '{}'::json NOT NULL,
-    description character varying(1024) NOT NULL
-);
-CREATE UNIQUE INDEX environment_name_uindex ON environment USING btree (name);
-ALTER TABLE ONLY environment ADD CONSTRAINT environment_pk PRIMARY KEY (id);
+END;
+$$;
 
-
-CREATE TABLE cluster (
-    id integer NOT NULL,
-    name character varying(50) NOT NULL,
-    sch_queue_url character varying(200) NOT NULL,
-    provider_group provider_group NOT NULL,
-    created_at timestamp without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL
-);
-CREATE UNIQUE INDEX cluster_name_uindex ON cluster USING btree (name);
-ALTER TABLE ONLY cluster ADD CONSTRAINT cluster_pk PRIMARY KEY (id);
-
-
-CREATE TABLE namespace (
-    id integer NOT NULL,
-    name character varying(50) NOT NULL,
-    alias character varying(50) NOT NULL,
-    environment_id integer NOT NULL,
-    requested_version character varying(50) NOT NULL,
-    explicit_deploy_only boolean DEFAULT false NOT NULL,
-    cluster_id integer NOT NULL,
-    metadata jsonb DEFAULT '{}'::json NOT NULL,
-    created_at timestamp without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL
-);
-CREATE SEQUENCE namespace_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER SEQUENCE namespace_id_seq OWNED BY namespace.id;
-ALTER TABLE ONLY namespace ALTER COLUMN id SET DEFAULT nextval('namespace_id_seq'::regclass);
-CREATE UNIQUE INDEX namespace_name_cluster_id_uindex ON namespace (name, cluster_id);
-CREATE UNIQUE INDEX namespace_environment_id_cluster_id_alias_uindex ON namespace (environment_id, cluster_id, alias);
-ALTER TABLE ONLY namespace ADD CONSTRAINT namespace_pk PRIMARY KEY (id);
-
-
-CREATE TABLE service (
-    id integer NOT NULL,
-    name varchar(50) NOT NULL,
-    namespace_id integer NOT NULL,
-    artifact_id integer NOT NULL,
-    override_version character varying(50),
-    deployed_version character varying(50),
-    metadata jsonb DEFAULT '{}'::json NOT NULL,
-    sticky_sessions bool DEFAULT false NOT NULL,
-    count int DEFAULT 2 NOT NULL,
-    created_at timestamp without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL,
-    autoscaling jsonb DEFAULT '{}'::json NOT NULL,
-    pod_resource jsonb DEFAULT '{}'::json NOT NULL
-
-);
-CREATE SEQUENCE service_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER SEQUENCE service_id_seq OWNED BY service.id;
-ALTER TABLE ONLY service ALTER COLUMN id SET DEFAULT nextval('service_id_seq'::regclass);
-CREATE UNIQUE INDEX service_namespace_id_name_uindex ON service (name, namespace_id);
-ALTER TABLE ONLY service ADD CONSTRAINT service_pk PRIMARY KEY (id);
-
-
-CREATE TABLE database_server (
-    id integer NOT NULL,
-    name character varying(50),
-    metadata jsonb DEFAULT '{}'::json NOT NULL
-);
-ALTER TABLE ONLY database_server ADD CONSTRAINT database_server_pk PRIMARY KEY (id);
-CREATE UNIQUE INDEX database_server_name_uindex ON database_server USING btree (name);
-
-
-CREATE TABLE database_type (
-    id integer NOT NULL,
-    name character varying(50),
-    migration_artifact_id integer
-);
-ALTER TABLE ONLY database_type ADD CONSTRAINT database_type_pk PRIMARY KEY (id);
-CREATE UNIQUE INDEX database_type_name_uindex ON database_type USING btree (name);
-
-
-CREATE TABLE database_instance (
-    id integer NOT NULL,
-    name character varying(50),
-    database_type_id integer NOT NULL,
-    database_server_id integer NOT NULL,
-    namespace_id integer NOT NULL,
-    migration_override_version character varying(50),
-    migration_deployed_version character varying(50),
-    metadata jsonb DEFAULT '{}'::json NOT NULL,
-    created_at timestamp without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL
-);
-CREATE SEQUENCE database_instance_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER SEQUENCE database_instance_id_seq OWNED BY database_instance.id;
-ALTER TABLE ONLY database_instance ALTER COLUMN id SET DEFAULT nextval('database_instance_id_seq'::regclass);
-ALTER TABLE ONLY database_instance ADD CONSTRAINT database_instance_pk PRIMARY KEY (id);
-CREATE UNIQUE INDEX database_instance_namespace_id_name_uindex ON database_instance (name, namespace_id);
-
-
-CREATE TABLE automation_job_service_map (
-    service_id integer NOT NULL,
-    automation_job_id integer NOT NULL,
-    parameters jsonb DEFAULT '{}'::json NOT NULL
-);
-CREATE UNIQUE INDEX automation_job_service_map_service_id_automation_job_id_uindex
-    ON automation_job_service_map (service_id, automation_job_id);
-
-
-CREATE TABLE environment_feed_map (
-    environment_id int NOT NULL,
-    feed_id int NOT NULL
-);
-CREATE UNIQUE INDEX environment_feed_map_environment_id_feed_id_uindex
-    ON environment_feed_map (environment_id, feed_id);
-
-
-CREATE TABLE deployment (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    environment_id integer NOT NULL,
-    namespace_id integer NOT NULL,
-    req_id character varying(100),
-    message_id character varying(100),
-    receipt_handle character varying(1024),
-    plan_options jsonb NOT NULL,
-    plan_location jsonb,
-    state deployment_state NOT NULL,
-    "user" character varying(50) NOT NULL,
-    created_at timestamp without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL
-);
-
-
-CREATE TABLE deployment_cron (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    description character varying(100),
-    plan_options jsonb NOT NULL,
-    schedule character varying(25) NOT NULL,
-    state deployment_cron_state DEFAULT 'idle' NOT NULL,
-    last_run timestamp without time zone DEFAULT now() NOT NULL,
-    disabled bool DEFAULT false NOT NULL,
-    exec_order int DEFAULT 0 NOT NULL
-);
-
-
-CREATE TABLE deployment_cron_job (
-    deployment_cron_id UUID NOT NULL,
-    deployment_id UUID NOT NULL
-);
-
-SELECT pg_catalog.setval('automation_job_id_seq', 1, false);
-SELECT pg_catalog.setval('database_instance_id_seq', 1, false);
-SELECT pg_catalog.setval('service_id_seq', 1, false);
-SELECT pg_catalog.setval('namespace_id_seq', 1, false);
-
-ALTER TABLE ONLY database_type
-    ADD CONSTRAINT database_type_migration_artifact_id_fk FOREIGN KEY (migration_artifact_id) REFERENCES artifact(id);
-
-ALTER TABLE ONLY database_instance
-    ADD CONSTRAINT database_instance_namespace_id_fk FOREIGN KEY (namespace_id) REFERENCES namespace(id);
-ALTER TABLE ONLY database_instance
-    ADD CONSTRAINT database_instance_database_type_id_fk FOREIGN KEY (database_type_id) REFERENCES database_type(id);
-ALTER TABLE ONLY database_instance
-    ADD CONSTRAINT database_instance_database_sever_id_fk FOREIGN KEY (database_server_id) REFERENCES database_server(id);
-
-ALTER TABLE ONLY namespace
-    ADD CONSTRAINT namespace_environment_id_fk FOREIGN KEY (environment_id) REFERENCES environment(id);
-ALTER TABLE ONLY namespace
-    ADD CONSTRAINT namespace_cluster_id_fk FOREIGN KEY (cluster_id) REFERENCES cluster(id);
-
-ALTER TABLE ONLY service
-    ADD CONSTRAINT service_artifact_id_fk FOREIGN KEY (artifact_id) REFERENCES artifact(id);
-ALTER TABLE ONLY service
-    ADD CONSTRAINT service_namespace_id_fk FOREIGN KEY (namespace_id) REFERENCES namespace(id);
-
-ALTER TABLE ONLY automation_job_service_map
-    ADD CONSTRAINT automation_job_service_map_automation_job_id_fk FOREIGN KEY (automation_job_id) REFERENCES automation_job(id);
-ALTER TABLE ONLY automation_job_service_map
-    ADD CONSTRAINT automation_job_service_map_service_id FOREIGN KEY (service_id) REFERENCES service(id);
-
-ALTER TABLE ONLY environment_feed_map
-    ADD CONSTRAINT environment_feed_map_environment_id FOREIGN KEY (environment_id) REFERENCES environment(id);
-ALTER TABLE ONLY environment_feed_map
-    ADD CONSTRAINT environment_feed_map_feed_id FOREIGN KEY(feed_id) REFERENCES feed(id);
-
-ALTER TABLE ONLY deployment
-    ADD CONSTRAINT deployment_environment_id FOREIGN KEY (environment_id) REFERENCES environment(id);
-ALTER TABLE ONLY deployment
-    ADD CONSTRAINT deployment_namespace_id FOREIGN KEY (namespace_id) REFERENCES namespace(id);
-
-ALTER TABLE ONLY deployment_cron_job
-    ADD CONSTRAINT deployment_cron_job_deployment_id FOREIGN KEY (deployment_id) REFERENCES deployment(id) ON DELETE CASCADE;;
-ALTER TABLE ONLY deployment_cron_job
-    ADD CONSTRAINT deployment_cron_job_deployment_cron_id FOREIGN KEY (deployment_cron_id) REFERENCES deployment_cron(id) ON DELETE CASCADE;
+create trigger metadata_update_trigger
+    after update
+    on metadata
+    for each row
+execute procedure metadata_update();

@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"gitlab.unanet.io/devops/eve/pkg/s3"
 	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/internal/api"
@@ -13,7 +14,6 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/artifactory"
 	"gitlab.unanet.io/devops/eve/pkg/gitlab"
 	"gitlab.unanet.io/devops/eve/pkg/queue"
-	"gitlab.unanet.io/devops/eve/pkg/s3"
 	"gitlab.unanet.io/devops/go/pkg/log"
 )
 
