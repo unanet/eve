@@ -59,7 +59,7 @@ func (r *Repo) ArtifactsByProvider(ctx context.Context, provider string) (Artifa
 		       a.provider_group,
 		       a.image_tag,
 		       a.service_port,
-		       a.metrics_port,
+		       a.metrics_port
 		       from artifact a where provider_group = $1`, provider)
 
 	if err != nil {
