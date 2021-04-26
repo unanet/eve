@@ -3,6 +3,7 @@ package crud
 import (
 	"context"
 	gojson "encoding/json"
+	"fmt"
 	goerrors "github.com/pkg/errors"
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
@@ -353,7 +354,7 @@ func (m *Manager) JobDefinitionResults(ctx context.Context, id int) (eve.Definit
 
 	mergedResults, err := m.mergeDefinitionData(definitionResults)
 	if err!=nil {
-		return nil, errors.Wrapf("failed to merge the service deployment definitions: %s", err)
+		return nil, errors.Wrapf("failed to merge the job deployment definitions: %s", err)
 	}
 
 	// Every Job Deployment Requires 1 definition (K8s Job)
@@ -431,7 +432,7 @@ func (m Manager) mergeDefinitionData(defResults []eve.DefinitionResult) (eve.Def
 	for key, d := range result {
 		keyParts := strings.Split(key, ".")
 		if len(keyParts) != 4 {
-			return nil, goerrors.New("invalid crd key parts length")
+			return nil, fmt.Errorf("invalid crd key parts: %s", key)
 		}
 
 		datamap, ok := d.(map[string]interface{})

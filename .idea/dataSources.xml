@@ -14,5 +14,19 @@
       <jdbc-url>jdbc:postgresql://devops-prod-rds-us-east-2-dpw9di9ejn.cluster-cg83jqzndof0.us-east-2.rds.amazonaws.com:5432/postgres</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="app-nonprod-mssql-us-east-2-q2oqffsg86" uuid="2ca4ee8a-5c51-496e-8544-c6bdae5bedf3">
+      <driver-ref>sqlserver.ms</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.microsoft.sqlserver.jdbc.SQLServerDriver</jdbc-driver>
+      <jdbc-url>jdbc:sqlserver://app-nonprod-mssql-us-east-2-q2oqffsg86.cg83jqzndof0.us-east-2.rds.amazonaws.com:1433</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="app-nonprod-mssql-us-east-2-dup40v729j" uuid="8e148ab1-fd7e-4bd7-ae1b-3a30dbce3a2f">
+      <driver-ref>sqlserver.ms</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.microsoft.sqlserver.jdbc.SQLServerDriver</jdbc-driver>
+      <jdbc-url>jdbc:sqlserver://app-nonprod-mssql-us-east-2-dup40v729j.cg83jqzndof0.us-east-2.rds.amazonaws.com</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>
