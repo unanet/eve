@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="devops-prod" uuid="6f2e6c3b-c363-4574-bb2e-d5641d878743">
-      <driver-ref>postgresql</driver-ref>
-      <synchronize>true</synchronize>
-      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://devops-prod-db.unanet.io:5432/eve</jdbc-url>
-    </data-source>
-    <data-source source="LOCAL" name="new-devops-prod" uuid="0d599ed5-17c3-4ed0-8111-ecebb8241729">
+    <data-source source="LOCAL" name="devops-prod" uuid="0d599ed5-17c3-4ed0-8111-ecebb8241729">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
