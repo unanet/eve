@@ -329,3 +329,15 @@ func (m DefinitionJobMap) ValidateWithContext(ctx context.Context) error {
 			return nil
 		})))
 }
+
+type DefinitionType struct {
+	ID              int    `json:"id"`
+	Name            string    `json:"name"`
+	Description     string    `json:"description"`
+	Class           string    `json:"class"`
+	Version         string    `json:"version"`
+	Kind            string    `json:"kind"`
+	DefinitionOrder string    `json:"definition_order"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}

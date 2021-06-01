@@ -353,7 +353,7 @@ func (r *Repo) DeleteDefinitionServiceMap(ctx context.Context, definitionID int,
 	return nil
 }
 
-func (r *Repo) JobDefinitionMaps(ctx context.Context, jobID int) ([]DefinitionJobMap, error) {
+func (r *Repo) JobDefinitionMapsByJobID(ctx context.Context, jobID int) ([]DefinitionJobMap, error) {
 	rows, err := r.db.QueryxContext(ctx, `
 		select description, 
 		       definition_id, 
@@ -388,6 +388,79 @@ func (r *Repo) JobDefinitionMaps(ctx context.Context, jobID int) ([]DefinitionJo
 	}
 
 	return mjms, nil
+}
+
+func (r *Repo) DefinitionJobMaps(ctx context.Context) ([]DefinitionJobMap, error) {
+	rows, err := r.db.QueryxContext(ctx, `
+		select
+			description,
+			definition_id,
+			environment_id,
+			artifact_id,
+			namespace_id,
+			job_id,
+			cluster_id,
+			stacking_order,
+			created_at,
+			updated_at
+		from definition_job_map
+		`)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	defer rows.Close()
+
+	var ss []DefinitionJobMap
+	for rows.Next() {
+		if rows.Err() != nil {
+			return nil, errors.Wrap(err)
+		}
+
+		var s DefinitionJobMap
+		err = rows.StructScan(&s)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+		ss = append(ss, s)
+	}
+
+	return ss, nil
+}
+
+func (r *Repo) DefinitionServiceMaps(ctx context.Context) ([]DefinitionServiceMap, error) {
+	rows, err := r.db.QueryxContext(ctx, `
+		select 
+			description,
+			definition_id,
+			environment_id,
+			artifact_id,
+			namespace_id,
+			service_id,
+			cluster_id,
+			stacking_order,
+			created_at,
+			updated_at
+		from definition_service_map`)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	defer rows.Close()
+
+	var ss []DefinitionServiceMap
+	for rows.Next() {
+		if rows.Err() != nil {
+			return nil, errors.Wrap(err)
+		}
+
+		var s DefinitionServiceMap
+		err = rows.StructScan(&s)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+		ss = append(ss, s)
+	}
+
+	return ss, nil
 }
 
 func (r *Repo) JobDefinitionMapsByDefinitionID(ctx context.Context, definitionID int) ([]DefinitionJobMap, error) {

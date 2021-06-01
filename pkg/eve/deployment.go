@@ -422,3 +422,14 @@ type Deployment struct {
 	CreatedAt     time.Time       `json:"created_at"`
 	UpdatedAt     time.Time       `json:"updated_at"`
 }
+
+type DeploymentCronJob struct {
+	ID          string                   `json:"id"`
+	Description string                   `json:"description"`
+	PlanOptions map[string]interface{}   `json:"plan_options"`
+	Schedule    string                   `json:"schedule"`
+	LastRun     time.Time                `json:"last_run"`
+	State       data.DeploymentCronState `json:"state"`
+	Disabled    bool                     `json:"disabled"`
+	Order       int                      `json:"exec_order"`
+}

@@ -25,6 +25,7 @@ type MetadataServiceMap struct {
 	EnvironmentID sql.NullInt32 `db:"environment_id"`
 	ArtifactID    sql.NullInt32 `db:"artifact_id"`
 	NamespaceID   sql.NullInt32 `db:"namespace_id"`
+	ClusterID     sql.NullInt32 `db:"cluster_id"`
 	ServiceID     sql.NullInt32 `db:"service_id"`
 	StackingOrder int           `db:"stacking_order"`
 	CreatedAt     sql.NullTime  `db:"created_at"`
@@ -37,6 +38,7 @@ type MetadataJobMap struct {
 	EnvironmentID sql.NullInt32 `db:"environment_id"`
 	ArtifactID    sql.NullInt32 `db:"artifact_id"`
 	NamespaceID   sql.NullInt32 `db:"namespace_id"`
+	ClusterID     sql.NullInt32 `db:"cluster_id"`
 	JobID         sql.NullInt32 `db:"job_id"`
 	StackingOrder int           `db:"stacking_order"`
 	CreatedAt     sql.NullTime  `db:"created_at"`
@@ -335,7 +337,7 @@ func (r *Repo) DeleteMetadataServiceMap(ctx context.Context, metadataID int, map
 	return nil
 }
 
-func (r *Repo) JobMetadataMaps(ctx context.Context, jobID int) ([]MetadataJobMap, error) {
+func (r *Repo) JobMetadataMapsByJobID(ctx context.Context, jobID int) ([]MetadataJobMap, error) {
 	rows, err := r.db.QueryxContext(ctx, `
 		select description, 
 		       metadata_id, 
@@ -369,6 +371,78 @@ func (r *Repo) JobMetadataMaps(ctx context.Context, jobID int) ([]MetadataJobMap
 	}
 
 	return mjms, nil
+}
+
+func (r *Repo) MetadataJobMaps(ctx context.Context) ([]MetadataJobMap, error) {
+	rows, err := r.db.QueryxContext(ctx, `
+		select 
+			description,
+			metadata_id,
+			environment_id,
+			artifact_id,
+			namespace_id,
+			job_id,
+			stacking_order,
+			created_at,
+			updated_at
+		from metadata_job_map`)
+
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	defer rows.Close()
+
+	var ss []MetadataJobMap
+	for rows.Next() {
+		if rows.Err() != nil {
+			return nil, errors.Wrap(err)
+		}
+
+		var s MetadataJobMap
+		err = rows.StructScan(&s)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+		ss = append(ss, s)
+	}
+
+	return ss, nil
+}
+
+func (r *Repo) MetadataServiceMaps(ctx context.Context) ([]MetadataServiceMap, error) {
+	rows, err := r.db.QueryxContext(ctx, `
+		select 
+			description,
+			metadata_id,
+			environment_id,
+			artifact_id,
+			namespace_id,
+			service_id,
+			stacking_order,
+			created_at,
+			updated_at
+		from metadata_service_map`)
+
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	defer rows.Close()
+
+	var ss []MetadataServiceMap
+	for rows.Next() {
+		if rows.Err() != nil {
+			return nil, errors.Wrap(err)
+		}
+
+		var s MetadataServiceMap
+		err = rows.StructScan(&s)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+		ss = append(ss, s)
+	}
+
+	return ss, nil
 }
 
 func (r *Repo) JobMetadataMapsByMetadataID(ctx context.Context, metadataID int) ([]MetadataJobMap, error) {
@@ -577,4 +651,83 @@ func (r *Repo) ServiceMetadata(ctx context.Context, serviceID int) ([]MetadataSe
 	}
 
 	return msms, nil
+}
+
+
+func (r *Repo) CreateMetadataJobMap(ctx context.Context, model *MetadataJobMap) error {
+	model.CreatedAt = sql.NullTime{
+		Time:  time.Now().UTC(),
+		Valid: true,
+	}
+
+	err := r.db.QueryRowxContext(ctx,`
+	INSERT INTO metadata_job_map(
+					description,
+					metadata_id,
+					environment_id,
+					artifact_id,
+					namespace_id,
+					 cluster_id,
+					job_id,
+					stacking_order,
+					created_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING created_at
+	`,
+		model.Description,
+		model.MetadataID,
+		model.EnvironmentID,
+		model.ArtifactID,
+		model.NamespaceID,
+		model.ClusterID,
+		model.JobID,
+		model.StackingOrder,
+		model.CreatedAt).
+		StructScan(model)
+
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	return nil
+}
+
+func (r *Repo) CreateMetadataServiceMap(ctx context.Context, model *MetadataServiceMap) error {
+	model.CreatedAt = sql.NullTime{
+		Time:  time.Now().UTC(),
+		Valid: true,
+	}
+
+	err := r.db.QueryRowxContext(ctx,`
+	INSERT INTO metadata_service_map(
+					description,
+					metadata_id,
+					environment_id,
+					artifact_id,
+					namespace_id,
+					service_id,
+					cluster_id,
+					stacking_order,
+					created_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING created_at
+	`,
+		model.Description,
+		model.MetadataID,
+		model.EnvironmentID,
+		model.ArtifactID,
+		model.NamespaceID,
+		model.ClusterID,
+		model.ServiceID,
+		model.StackingOrder,
+		model.CreatedAt).
+		StructScan(model)
+
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	return nil
 }

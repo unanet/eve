@@ -165,3 +165,34 @@ func (r *Repo) UpdateNamespace(ctx context.Context, namespace *Namespace) error 
 	}
 	return nil
 }
+
+func (r *Repo) CreateNamespace(ctx context.Context, ns *Namespace) error {
+	now := time.Now().UTC()
+	ns.CreatedAt = sql.NullTime{
+		Time:  now,
+		Valid: true,
+	}
+
+	err := r.db.QueryRowxContext(ctx, `
+	INSERT INTO namespace(name, alias, environment_id, requested_version, explicit_deploy, cluster_id, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id, created_at
+	`,
+	ns.Name,
+	ns.Alias,
+	ns.EnvironmentID,
+	ns.RequestedVersion,
+	ns.ExplicitDeploy,
+	ns.ClusterID,
+	ns.CreatedAt).
+		StructScan(ns)
+
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	return nil
+}
+func (r *Repo) DeleteNamespace(ctx context.Context, id int) error {
+	return r.deleteByID(ctx, "namespace", id)
+}

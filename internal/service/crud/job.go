@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 
+	"gitlab.unanet.io/devops/go/pkg/errors"
 	"gitlab.unanet.io/devops/eve/internal/data"
 	"gitlab.unanet.io/devops/eve/internal/service"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
@@ -100,4 +101,28 @@ func (m *Manager) UpdateJob(ctx context.Context, j *eve.Job) (*eve.Job, error) {
 
 	j2 := fromDataJob(d)
 	return &j2, nil
+}
+
+func (m *Manager) Jobs(ctx context.Context) (models []eve.Job, err error)  {
+	dbModels, err := m.repo.Jobs(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	return fromDataJobs(dbModels), nil
+}
+
+func (m *Manager) CreateJob(ctx context.Context, model *eve.Job) error  {
+	dbModel := toDataJob(*model)
+	if err := m.repo.CreateJob(ctx, &dbModel); err != nil {
+		return errors.Wrap(err)
+	}
+
+	model.ID = dbModel.ID
+
+	return nil
+}
+
+func (m *Manager) DeleteJob(ctx context.Context, id int) (err error)  {
+	return m.repo.DeleteJob(ctx, id)
 }

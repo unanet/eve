@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
+	"gitlab.unanet.io/devops/eve/internal/service/crud"
+	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/go/pkg/errors"
 	"gitlab.unanet.io/devops/go/pkg/json"
 
-	"gitlab.unanet.io/devops/eve/internal/service/crud"
-	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 )
 
 type NamespaceController struct {
@@ -24,6 +24,7 @@ func NewNamespaceController(manager *crud.Manager) *NamespaceController {
 }
 
 func (c NamespaceController) Setup(r chi.Router) {
+	r.Post("/namespaces", c.createNamespace)
 	r.Get("/namespaces", c.namespaces)
 	r.Get("/namespaces/{namespace}", c.namespace)
 	r.Post("/namespaces/{namespace}", c.updateNamespace)
@@ -31,6 +32,7 @@ func (c NamespaceController) Setup(r chi.Router) {
 	r.Get("/namespaces/{namespace}/services/{service}", c.service)
 	r.Get("/namespaces/{namespace}/jobs", c.namespaceJobs)
 	r.Get("/namespaces/{namespace}/jobs/{job}", c.job)
+	//r.Delete("/namespaces/{namespace}", c.deleteNamespace)
 }
 
 func (c NamespaceController) job(w http.ResponseWriter, r *http.Request) {
@@ -152,4 +154,40 @@ func (c NamespaceController) service(w http.ResponseWriter, r *http.Request) {
 		render.Respond(w, r, errors.NotFoundf("service not specified"))
 		return
 	}
+}
+
+
+func (c NamespaceController) createNamespace(w http.ResponseWriter, r *http.Request) {
+
+	var m eve.Namespace
+	if err := json.ParseBody(r, &m); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	err := c.manager.CreateNamespace(r.Context(), &m)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusCreated)
+	render.Respond(w, r, m)
+}
+
+func (c NamespaceController) deleteNamespace(w http.ResponseWriter, r *http.Request) {
+	namespaceID := chi.URLParam(r, "namespace")
+	intID, err := strconv.Atoi(namespaceID)
+	if err != nil {
+		render.Respond(w, r, errors.BadRequest("invalid namespace in route"))
+		return
+	}
+
+	err = c.manager.DeleteNamespace(r.Context(), intID)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusNoContent)
 }

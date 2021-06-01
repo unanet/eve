@@ -148,3 +148,103 @@ func (r *Repo) UpdateFinishedJobs(ctx context.Context) error {
 
 	return nil
 }
+
+
+func (r *Repo) DeploymentCronJobs(ctx context.Context) ([]DeploymentCronJob, error) {
+	rows, err := r.db.QueryxContext(ctx, `
+		select 
+			id,
+			description,
+			plan_options,
+			schedule,
+			last_run,
+			state,
+			disabled,
+			exec_order
+		from deployment_cron`)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	defer rows.Close()
+
+	var ss []DeploymentCronJob
+	for rows.Next() {
+		if rows.Err() != nil {
+			return nil, errors.Wrap(err)
+		}
+
+		var s DeploymentCronJob
+		err = rows.StructScan(&s)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+
+		ss = append(ss, s)
+	}
+
+	return ss, nil
+}
+
+func (r *Repo) CreateDeploymentCronJob(ctx context.Context, m *DeploymentCronJob) error {
+
+	now := time.Now().UTC()
+	m.LastRun = sql.NullTime{
+		Time:  now,
+		Valid: true,
+	}
+
+	err := r.db.QueryRowxContext(ctx,`
+	INSERT INTO deployment_cron(plan_options, schedule, state, last_run, disabled, description, exec_order)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id
+	`,
+		m.PlanOptions,
+		m.Schedule,
+		DeploymentCronStateIdle,
+		m.LastRun,
+		m.Disabled,
+		m.Description,
+		m.Order,
+	).StructScan(m)
+
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	return nil
+}
+
+func (r *Repo) UpdateDeploymentCronJob(ctx context.Context, m *DeploymentCronJob) error {
+
+	result, err := r.db.ExecContext(ctx, `
+		update deployment_cron set plan_options = $2, schedule = $3, state = $4, disabled = $5, description = $6, exec_order = $7
+		where id = $1
+		RETURNING last_run
+	`,
+		m.ID,
+		m.PlanOptions,
+		m.Schedule,
+		m.State,
+		m.Disabled,
+		m.Description,
+		m.Order)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if affected == 0 {
+		return errors.NotFoundf("deployment cron by id: %s not found", m.ID)
+	}
+	return nil
+}
+
+func (r *Repo) DeleteDeploymentCronJob(ctx context.Context, id string) error {
+	return r.deleteWithQuery(ctx, "deployment_cron", fmt.Sprintf("id = '%s'", id))
+}
+
+

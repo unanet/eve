@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
+	"gitlab.unanet.io/devops/eve/internal/service/crud"
+	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/go/pkg/errors"
 	"gitlab.unanet.io/devops/go/pkg/json"
 
-	"gitlab.unanet.io/devops/eve/internal/service/crud"
-	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 )
 
 type EnvironmentController struct {
@@ -25,8 +25,10 @@ func NewEnvironmentController(manager *crud.Manager) *EnvironmentController {
 
 func (c EnvironmentController) Setup(r chi.Router) {
 	r.Get("/environments", c.environments)
+	r.Post("/environments", c.createEnvironment)
 	r.Get("/environments/{environment}", c.environment)
 	r.Post("/environments/{environment}", c.updateEnvironment)
+	//r.Delete("/environments/{environment}", c.deleteEnvironment)
 }
 
 func (c EnvironmentController) environments(w http.ResponseWriter, r *http.Request) {
@@ -76,3 +78,39 @@ func (c EnvironmentController) updateEnvironment(w http.ResponseWriter, r *http.
 
 	render.Respond(w, r, rs)
 }
+
+
+func (c EnvironmentController) createEnvironment(w http.ResponseWriter, r *http.Request) {
+
+	var m eve.Environment
+	if err := json.ParseBody(r, &m); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	err := c.manager.CreateEnvironment(r.Context(), &m)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusCreated)
+	render.Respond(w, r, m)
+}
+
+func (c EnvironmentController) deleteEnvironment(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "environment")
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		render.Respond(w, r, errors.BadRequest("invalid environment in route"))
+		return
+	}
+
+	if err = c.manager.DeleteEnvironment(r.Context(), intID); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusNoContent)
+}
+

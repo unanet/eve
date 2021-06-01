@@ -206,14 +206,14 @@ func (r *Repo) ServiceByID(ctx context.Context, id int) (*Service, error) {
 }
 
 func (r *Repo) ServicesByNamespaceID(ctx context.Context, namespaceID int) ([]Service, error) {
-	return r.services(ctx, Where("s.namespace_id", namespaceID))
+	return r.Services(ctx, Where("s.namespace_id", namespaceID))
 }
 
 func (r *Repo) ServicesByNamespaceName(ctx context.Context, namespaceName string) ([]Service, error) {
-	return r.services(ctx, Where("n.name", namespaceName))
+	return r.Services(ctx, Where("n.name", namespaceName))
 }
 
-func (r *Repo) services(ctx context.Context, whereArgs ...WhereArg) ([]Service, error) {
+func (r *Repo) Services(ctx context.Context, whereArgs ...WhereArg) ([]Service, error) {
 	esql, args := CheckWhereArgs(`
 		select s.id, 
 		       s.namespace_id, 
@@ -305,4 +305,44 @@ func (r *Repo) UpdateServiceCount(ctx context.Context, serviceID int, count int)
 		return errors.NotFoundf("service id: %d not found", serviceID)
 	}
 	return nil
+}
+
+func (r *Repo) CreateService(ctx context.Context, model *Service) error {
+	model.CreatedAt = sql.NullTime{
+		Time:  time.Now().UTC(),
+		Valid: true,
+	}
+
+	err := r.db.QueryRowxContext(ctx,`
+	INSERT INTO service(
+				namespace_id,
+				artifact_id,
+				override_version,
+				deployed_version,
+				created_at,
+				name,
+				count
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id
+	`,
+		model.NamespaceID,
+		model.ArtifactID,
+		model.OverrideVersion,
+		model.DeployedVersion,
+		model.CreatedAt,
+		model.Name,
+		model.Count,
+	).
+		StructScan(model)
+
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	return nil
+}
+
+func (r *Repo) DeleteService(ctx context.Context, id int) error {
+	return r.deleteByID(ctx, "service", id)
 }

@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
+	"gitlab.unanet.io/devops/eve/internal/service/crud"
+	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/go/pkg/errors"
 	"gitlab.unanet.io/devops/go/pkg/json"
 
-	"gitlab.unanet.io/devops/eve/internal/service/crud"
-	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 )
 
 type JobController struct {
@@ -24,8 +24,11 @@ func NewJobController(manager *crud.Manager) *JobController {
 }
 
 func (c JobController) Setup(r chi.Router) {
+	r.Get("/jobs", c.jobs)
+	r.Post("/jobs", c.create)
 	r.Get("/jobs/{job}", c.job)
 	r.Post("/jobs/{job}", c.updateJob)
+	r.Delete("/jobs/{job}", c.delete)
 	r.Get("/jobs/{job}/metadata", c.getJobMetadata)
 	r.Get("/jobs/{job}/metadata-maps", c.getJobMetadataMaps)
 }
@@ -103,4 +106,51 @@ func (c JobController) getJobMetadataMaps(w http.ResponseWriter, r *http.Request
 	}
 
 	render.Respond(w, r, result)
+}
+
+func (c JobController) jobs(w http.ResponseWriter, r *http.Request) {
+
+	results, err := c.manager.Jobs(r.Context())
+
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, results)
+}
+
+
+func (c JobController) create(w http.ResponseWriter, r *http.Request) {
+
+	var m eve.Job
+	if err := json.ParseBody(r, &m); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	err := c.manager.CreateJob(r.Context(), &m)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusCreated)
+	render.Respond(w, r, m)
+}
+
+func (c JobController) delete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "job")
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		render.Respond(w, r, errors.BadRequest("invalid job in route"))
+		return
+	}
+
+	if err = c.manager.DeleteJob(r.Context(), intID); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusNoContent)
 }

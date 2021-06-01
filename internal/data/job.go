@@ -195,14 +195,14 @@ func (r *Repo) JobByID(ctx context.Context, id int) (*Job, error) {
 }
 
 func (r *Repo) JobsByNamespaceID(ctx context.Context, namespaceID int) ([]Job, error) {
-	return r.jobs(ctx, Where("n.id", namespaceID))
+	return r.Jobs(ctx, Where("n.id", namespaceID))
 }
 
 func (r *Repo) JobsByNamespaceName(ctx context.Context, namespaceName string) ([]Job, error) {
-	return r.jobs(ctx, Where("n.name", namespaceName))
+	return r.Jobs(ctx, Where("n.name", namespaceName))
 }
 
-func (r *Repo) jobs(ctx context.Context, whereArgs ...WhereArg) ([]Job, error) {
+func (r *Repo) Jobs(ctx context.Context, whereArgs ...WhereArg) ([]Job, error) {
 	s, args := CheckWhereArgs(`
 		select j.id, 
 		       j.namespace_id, 
@@ -269,4 +269,37 @@ func (r *Repo) UpdateJob(ctx context.Context, job *Job) error {
 		return errors.NotFoundf("job id: %d not found", job.ID)
 	}
 	return nil
+}
+
+func (r *Repo) CreateJob(ctx context.Context, model *Job) error {
+
+	err := r.db.QueryRowxContext(ctx, `
+	INSERT INTO job(namespace_id,
+					artifact_id,
+					override_version,
+					deployed_version,
+					created_at,
+					name
+					)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id
+	`,
+		model.NamespaceID,
+		model.ArtifactID,
+		model.OverrideVersion,
+		model.DeployedVersion,
+		model.CreatedAt,
+		model.Name,
+	).
+		StructScan(model)
+
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	return nil
+}
+
+func (r *Repo) DeleteJob(ctx context.Context, id int) error {
+	return r.deleteByID(ctx, "job", id)
 }

@@ -146,8 +146,8 @@ func fromDataDefinitionJobMap(m data.DefinitionJobMap) eve.DefinitionJobMap {
 		EnvironmentID: int(m.EnvironmentID.Int32),
 		ArtifactID:    int(m.ArtifactID.Int32),
 		NamespaceID:   int(m.NamespaceID.Int32),
-		JobID:         int(m.JobID.Int32),
 		ClusterID:     int(m.ClusterID.Int32),
+		JobID:         int(m.JobID.Int32),
 		StackingOrder: m.StackingOrder,
 		CreatedAt:     m.CreatedAt.Time,
 		UpdatedAt:     m.UpdatedAt.Time,
@@ -169,8 +169,8 @@ func fromDataDefinitionServiceMap(m data.DefinitionServiceMap) eve.DefinitionSer
 		EnvironmentID: int(m.EnvironmentID.Int32),
 		ArtifactID:    int(m.ArtifactID.Int32),
 		NamespaceID:   int(m.NamespaceID.Int32),
-		ServiceID:     int(m.ServiceID.Int32),
 		ClusterID:     int(m.ClusterID.Int32),
+		ServiceID:     int(m.ServiceID.Int32),
 		StackingOrder: m.StackingOrder,
 		CreatedAt:     m.CreatedAt.Time,
 		UpdatedAt:     m.UpdatedAt.Time,
@@ -184,8 +184,8 @@ func fromDataDefinitionService(m data.DefinitionService) eve.DefinitionServiceMa
 		EnvironmentID: int(m.MapEnvironmentID.Int32),
 		ArtifactID:    int(m.MapArtifactID.Int32),
 		NamespaceID:   int(m.MapNamespaceID.Int32),
-		ServiceID:     int(m.MapServiceID.Int32),
 		ClusterID:     int(m.MapClusterID.Int32),
+		ServiceID:     int(m.MapServiceID.Int32),
 		StackingOrder: m.StackingOrder,
 		CreatedAt:     m.CreatedAt.Time,
 		UpdatedAt:     m.UpdatedAt.Time,
@@ -449,4 +449,22 @@ func (m Manager) mergeDefinitionData(defResults []eve.DefinitionResult) (eve.Def
 		})
 	}
 	return mergedResults, nil
+}
+
+func (m Manager) DefinitionJobMaps(ctx context.Context) (models []eve.DefinitionJobMap, err error)  {
+	dbModels, err := m.repo.DefinitionJobMaps(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return fromDataDefinitionJobMaps(dbModels), err
+}
+
+func (m Manager) DefinitionServiceMaps(ctx context.Context) (models []eve.DefinitionServiceMap, err error)  {
+	dbModels, err := m.repo.DefinitionServiceMaps(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return fromDataDefinitionServiceMaps(dbModels), err
 }

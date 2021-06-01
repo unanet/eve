@@ -79,8 +79,10 @@ func main() {
 	)
 
 	cron := plans.NewDeploymentCron(repo, deploymentPlanGenerator, config.CronTimeout)
-	cron.Start()
-	deploymentQueue.Start()
+	if !config.LocalDev {
+		cron.Start()
+		deploymentQueue.Start()
+	}
 
 	apiServer.Start(func() {
 		cron.Stop()
