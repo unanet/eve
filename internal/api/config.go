@@ -46,6 +46,7 @@ type Config struct {
 	LogConfig
 	ArtifactoryConfig
 	GitlabConfig
+	LocalDev               bool          `split_words:"true" default:"false"`
 	ApiQUrl                string        `split_words:"true" required:"true"`
 	ApiQWaitTimeSecond     int64         `split_words:"true" default:"20"`
 	ApiQVisibilityTimeout  int64         `split_words:"true" default:"3600"`

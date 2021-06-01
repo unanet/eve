@@ -1,30 +1,37 @@
 package api
 
 import (
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
+	"net/http"
+	"strconv"
+
 	"gitlab.unanet.io/devops/eve/internal/service/crud"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/go/pkg/errors"
 	"gitlab.unanet.io/devops/go/pkg/json"
-	"net/http"
-	"strconv"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 )
 
-type DefinitionController struct {
+type DefinitionsController struct {
 	manager *crud.Manager
 }
 
-func NewDefinitionController(manager *crud.Manager) *DefinitionController {
-	return &DefinitionController{
+func NewDefinitionsController(manager *crud.Manager) *DefinitionsController {
+	return &DefinitionsController{
 		manager: manager,
 	}
 }
 
-func (c DefinitionController) Setup(r chi.Router) {
+func (c DefinitionsController) Setup(r chi.Router) {
 	r.Get("/definitions", c.definitions)
 	r.Put("/definitions", c.upsertDefinition)
 	r.Patch("/definitions", c.upsertMergeDefinition)
+
+	// Sorted here to go above thee definitions by id
+	r.Get("/definitions/job-maps", c.definitionJobMaps)
+	r.Get("/definitions/service-maps", c.definitionServiceMaps)
+
 	r.Delete("/definitions/{definition}/{key}", c.deleteDefinitionKey)
 	r.Delete("/definitions/{definition}", c.deleteDefinition)
 	r.Get("/definitions/{definition}", c.getDefinition)
@@ -36,9 +43,14 @@ func (c DefinitionController) Setup(r chi.Router) {
 	r.Put("/definitions/{definition}/job-maps", c.upsertDefinitionJobMap)
 	r.Delete("/definitions/{definition}/job-maps/{description}", c.deleteJobDefinitionMap)
 	r.Get("/definitions/{definition}/job-maps", c.getJobDefinitionMapsByDefinitionID)
+
+	r.Get("/definition-types", c.definitionTypes)
+	r.Post("/definition-types", c.createDefinitionType)
+	r.Put("/definition-types/{definitionType}", c.updateDefinitionType)
+	r.Delete("/definition-types/{definitionType}", c.deleteDefinitionType)
 }
 
-func (c DefinitionController) definitions(w http.ResponseWriter, r *http.Request) {
+func (c DefinitionsController) definitions(w http.ResponseWriter, r *http.Request) {
 	result, err := c.manager.Definitions(r.Context())
 	if err != nil {
 		render.Respond(w, r, err)
@@ -48,7 +60,7 @@ func (c DefinitionController) definitions(w http.ResponseWriter, r *http.Request
 	render.Respond(w, r, result)
 }
 
-func (c DefinitionController) upsertDefinition(w http.ResponseWriter, r *http.Request) {
+func (c DefinitionsController) upsertDefinition(w http.ResponseWriter, r *http.Request) {
 	var m eve.Definition
 	if err := json.ParseBody(r, &m); err != nil {
 		render.Respond(w, r, err)
@@ -65,7 +77,7 @@ func (c DefinitionController) upsertDefinition(w http.ResponseWriter, r *http.Re
 	render.Respond(w, r, m)
 }
 
-func (c DefinitionController) upsertMergeDefinition(w http.ResponseWriter, r *http.Request) {
+func (c DefinitionsController) upsertMergeDefinition(w http.ResponseWriter, r *http.Request) {
 	var m eve.Definition
 	if err := json.ParseBody(r, &m); err != nil {
 		render.Respond(w, r, err)
@@ -82,7 +94,7 @@ func (c DefinitionController) upsertMergeDefinition(w http.ResponseWriter, r *ht
 	render.Respond(w, r, m)
 }
 
-func (c DefinitionController) deleteDefinitionKey(w http.ResponseWriter, r *http.Request) {
+func (c DefinitionsController) deleteDefinitionKey(w http.ResponseWriter, r *http.Request) {
 	definitionID := chi.URLParam(r, "definition")
 	intID, err := strconv.Atoi(definitionID)
 	if err != nil {
@@ -105,7 +117,7 @@ func (c DefinitionController) deleteDefinitionKey(w http.ResponseWriter, r *http
 	render.Respond(w, r, definition)
 }
 
-func (c DefinitionController) deleteDefinition(w http.ResponseWriter, r *http.Request) {
+func (c DefinitionsController) deleteDefinition(w http.ResponseWriter, r *http.Request) {
 	definitionID := chi.URLParam(r, "definition")
 	intID, err := strconv.Atoi(definitionID)
 	if err != nil {
@@ -121,7 +133,7 @@ func (c DefinitionController) deleteDefinition(w http.ResponseWriter, r *http.Re
 	render.Status(r, http.StatusNoContent)
 }
 
-func (c DefinitionController) getDefinition(w http.ResponseWriter, r *http.Request) {
+func (c DefinitionsController) getDefinition(w http.ResponseWriter, r *http.Request) {
 	definitionID := chi.URLParam(r, "definition")
 	definition, err := c.manager.GetDefinition(r.Context(), definitionID)
 	if err != nil {
@@ -132,7 +144,7 @@ func (c DefinitionController) getDefinition(w http.ResponseWriter, r *http.Reque
 	render.Respond(w, r, definition)
 }
 
-func (c DefinitionController) upsertDefinitionServiceMap(w http.ResponseWriter, r *http.Request) {
+func (c DefinitionsController) upsertDefinitionServiceMap(w http.ResponseWriter, r *http.Request) {
 	definitionID := chi.URLParam(r, "definition")
 	intID, err := strconv.Atoi(definitionID)
 	if err != nil {
@@ -156,7 +168,7 @@ func (c DefinitionController) upsertDefinitionServiceMap(w http.ResponseWriter, 
 	render.Respond(w, r, m)
 }
 
-func (c DefinitionController) deleteServiceDefinitionMap(w http.ResponseWriter, r *http.Request) {
+func (c DefinitionsController) deleteServiceDefinitionMap(w http.ResponseWriter, r *http.Request) {
 	definitionID := chi.URLParam(r, "definition")
 	intID, err := strconv.Atoi(definitionID)
 	if err != nil {
@@ -179,7 +191,7 @@ func (c DefinitionController) deleteServiceDefinitionMap(w http.ResponseWriter, 
 	render.Status(r, http.StatusNoContent)
 }
 
-func (c DefinitionController) getServiceDefinitionMapsByDefinitionID(w http.ResponseWriter, r *http.Request) {
+func (c DefinitionsController) getServiceDefinitionMapsByDefinitionID(w http.ResponseWriter, r *http.Request) {
 	definitionID := chi.URLParam(r, "definition")
 	intID, err := strconv.Atoi(definitionID)
 	if err != nil {
@@ -195,7 +207,7 @@ func (c DefinitionController) getServiceDefinitionMapsByDefinitionID(w http.Resp
 	render.Respond(w, r, result)
 }
 
-func (c DefinitionController) upsertDefinitionJobMap(w http.ResponseWriter, r *http.Request) {
+func (c DefinitionsController) upsertDefinitionJobMap(w http.ResponseWriter, r *http.Request) {
 	definitionID := chi.URLParam(r, "definition")
 	intID, err := strconv.Atoi(definitionID)
 	if err != nil {
@@ -219,7 +231,7 @@ func (c DefinitionController) upsertDefinitionJobMap(w http.ResponseWriter, r *h
 	render.Respond(w, r, m)
 }
 
-func (c DefinitionController) deleteJobDefinitionMap(w http.ResponseWriter, r *http.Request) {
+func (c DefinitionsController) deleteJobDefinitionMap(w http.ResponseWriter, r *http.Request) {
 	definitionID := chi.URLParam(r, "definition")
 	intID, err := strconv.Atoi(definitionID)
 	if err != nil {
@@ -242,7 +254,7 @@ func (c DefinitionController) deleteJobDefinitionMap(w http.ResponseWriter, r *h
 	render.Status(r, http.StatusNoContent)
 }
 
-func (c DefinitionController) getJobDefinitionMapsByDefinitionID(w http.ResponseWriter, r *http.Request) {
+func (c DefinitionsController) getJobDefinitionMapsByDefinitionID(w http.ResponseWriter, r *http.Request) {
 	definitionID := chi.URLParam(r, "definition")
 	intID, err := strconv.Atoi(definitionID)
 	if err != nil {
@@ -256,4 +268,108 @@ func (c DefinitionController) getJobDefinitionMapsByDefinitionID(w http.Response
 	}
 
 	render.Respond(w, r, result)
+}
+
+
+func (c DefinitionsController) definitionTypes(w http.ResponseWriter, r *http.Request) {
+
+	results, err := c.manager.DefinitionTypes(r.Context())
+
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, results)
+}
+
+func (c DefinitionsController) createDefinitionType(w http.ResponseWriter, r *http.Request) {
+
+	var m eve.DefinitionType
+	if err := json.ParseBody(r, &m); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	err := c.manager.CreateDefinitionType(r.Context(), &m)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusCreated)
+	render.Respond(w, r, m)
+}
+
+
+func (c DefinitionsController) updateDefinitionType(w http.ResponseWriter, r *http.Request) {
+
+	id := chi.URLParam(r, "definitionType")
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		render.Respond(w, r, errors.BadRequest("invalid definitionType in route"))
+		return
+	}
+
+	var m eve.DefinitionType
+	if err := json.ParseBody(r, &m); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	m.ID = intID
+
+	err = c.manager.UpdateDefinitionType(r.Context(), &m)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusCreated)
+	render.Respond(w, r, m)
+}
+
+func (c DefinitionsController) deleteDefinitionType(w http.ResponseWriter, r *http.Request) {
+	// TODO conversation is needed about if this is needed or do we do a soft delete
+	render.Status(r, http.StatusNotImplemented)
+	return
+
+	clusterID := chi.URLParam(r, "definitionType")
+	intID, err := strconv.Atoi(clusterID)
+	if err != nil {
+		render.Respond(w, r, errors.BadRequest("invalid definitionType in route"))
+		return
+	}
+
+	if err = c.manager.DeleteDefinitionType(r.Context(), intID); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusNoContent)
+}
+
+
+func (c DefinitionsController) definitionJobMaps(w http.ResponseWriter, r *http.Request) {
+
+	results, err := c.manager.DefinitionJobMaps(r.Context())
+
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, results)
+}
+
+func (c DefinitionsController) definitionServiceMaps(w http.ResponseWriter, r *http.Request) {
+
+	results, err := c.manager.DefinitionServiceMaps(r.Context())
+
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, results)
 }

@@ -2,6 +2,7 @@ package crud
 
 import (
 	"context"
+	"gitlab.unanet.io/devops/go/pkg/errors"
 	"strconv"
 
 	"gitlab.unanet.io/devops/eve/internal/data"
@@ -92,6 +93,14 @@ func (m *Manager) Service(ctx context.Context, id string, namespace string) (*ev
 	return &s, nil
 }
 
+func (m *Manager) Services(ctx context.Context) ([]eve.Service, error) {
+	dbServices, err := m.repo.Services(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	return fromDataServices(dbServices), nil
+}
+
 func (m *Manager) UpdateService(ctx context.Context, s *eve.Service) (*eve.Service, error) {
 	dService := toDataService(*s)
 
@@ -102,4 +111,25 @@ func (m *Manager) UpdateService(ctx context.Context, s *eve.Service) (*eve.Servi
 
 	s2 := fromDataService(dService)
 	return &s2, nil
+}
+
+func (m *Manager) CreateService(ctx context.Context, model *eve.Service) error  {
+
+	dbService := toDataService(*model)
+	if err := m.repo.CreateService(ctx, &dbService); err != nil {
+		return errors.Wrap(err)
+	}
+
+	model.ID = dbService.ID
+
+	return nil
+}
+
+func (m *Manager) DeleteService(ctx context.Context, id int) (err error)  {
+
+	if err := m.repo.DeleteService(ctx, id); err != nil {
+		return service.CheckForNotFoundError(err)
+	}
+
+	return nil
 }

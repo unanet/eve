@@ -13,14 +13,19 @@ func InitializeControllers(
 ) ([]Controller, error) {
 	return []Controller{
 		NewPingController(),
-		NewDeploymentsController(manager),
+		NewArtifactController(manager),
+		NewClusterController(manager),
+		NewDefinitionsController(manager),
 		NewDeploymentPlansController(deploymentPlanGenerator),
-		NewReleaseController(releaseSvc),
-		NewMetadataController(manager),
+		NewDeploymentsController(manager),
+		NewDeploymentsCronController(manager),
 		NewEnvironmentController(manager),
+		NewReleaseController(releaseSvc),
+		NewFeedController(manager),
+		NewJobController(manager),
+		NewEnvironmentFeedMapController(manager),
+		NewMetadataController(manager),
 		NewNamespaceController(manager),
 		NewServiceController(manager),
-		NewJobController(manager),
-		NewDefinitionController(manager),
 	}, nil
 }

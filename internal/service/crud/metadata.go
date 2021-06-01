@@ -132,6 +132,7 @@ func fromDataMetadataJobMap(m data.MetadataJobMap) eve.MetadataJobMap {
 		EnvironmentID: int(m.EnvironmentID.Int32),
 		ArtifactID:    int(m.ArtifactID.Int32),
 		NamespaceID:   int(m.NamespaceID.Int32),
+		ClusterID:     int(m.ClusterID.Int32),
 		JobID:         int(m.JobID.Int32),
 		StackingOrder: m.StackingOrder,
 		CreatedAt:     m.CreatedAt.Time,
@@ -154,6 +155,7 @@ func fromDataMetadataServiceMap(m data.MetadataServiceMap) eve.MetadataServiceMa
 		EnvironmentID: int(m.EnvironmentID.Int32),
 		ArtifactID:    int(m.ArtifactID.Int32),
 		NamespaceID:   int(m.NamespaceID.Int32),
+		ClusterID:     int(m.ClusterID.Int32),
 		ServiceID:     int(m.ServiceID.Int32),
 		StackingOrder: m.StackingOrder,
 		CreatedAt:     m.CreatedAt.Time,
@@ -254,7 +256,7 @@ func (m *Manager) DeleteMetadata(ctx context.Context, id int) error {
 }
 
 func (m *Manager) JobMetadataMaps(ctx context.Context, id int) ([]eve.MetadataJobMap, error) {
-	maps, err := m.repo.JobMetadataMaps(ctx, id)
+	maps, err := m.repo.JobMetadataMapsByJobID(ctx, id)
 	if err != nil {
 		return nil, service.CheckForNotFoundError(err)
 	}
@@ -287,6 +289,46 @@ func (m *Manager) JobMetadataMapsByMetadataID(ctx context.Context, id int) ([]ev
 	}
 
 	return fromDataMetadataJobMaps(maps), nil
+}
+
+func (m *Manager) CreateMetadataJobMap(ctx context.Context, model *eve.MetadataJobMap) error {
+	dbModel := toDataMetadataJobMap(*model)
+	if err := m.repo.CreateMetadataJobMap(ctx, &dbModel); err != nil {
+		return errors.Wrap(err)
+	}
+
+	model.CreatedAt = dbModel.CreatedAt.Time
+
+	return nil
+}
+
+func (m *Manager) CreateMetadataServiceMap(ctx context.Context, model *eve.MetadataServiceMap) error {
+	dbModel := toDataMetadataServiceMap(*model)
+	if err := m.repo.CreateMetadataServiceMap(ctx, &dbModel); err != nil {
+		return errors.Wrap(err)
+	}
+
+	model.CreatedAt = dbModel.CreatedAt.Time
+
+	return nil
+}
+
+func (m *Manager) MetadataJobMaps(ctx context.Context) ([]eve.MetadataJobMap, error) {
+	maps, err := m.repo.MetadataJobMaps(ctx)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	return fromDataMetadataJobMaps(maps), nil
+}
+
+func (m *Manager) MetadataServiceMaps(ctx context.Context) ([]eve.MetadataServiceMap, error) {
+	maps, err := m.repo.MetadataServiceMaps(ctx)
+	if err != nil {
+		return nil, service.CheckForNotFoundError(err)
+	}
+
+	return fromDataMetadataServiceMaps(maps), nil
 }
 
 func (m *Manager) UpsertMetadataJobMap(ctx context.Context, e *eve.MetadataJobMap) error {

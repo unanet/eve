@@ -3,12 +3,12 @@ package api
 import (
 	"net/http"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
-	"gitlab.unanet.io/devops/go/pkg/json"
-
 	"gitlab.unanet.io/devops/eve/internal/service/plans"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"gitlab.unanet.io/devops/go/pkg/json"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 )
 
 type DeploymentPlansController struct {

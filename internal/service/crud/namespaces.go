@@ -88,6 +88,28 @@ func (m *Manager) UpdateNamespace(ctx context.Context, n *eve.Namespace) (*eve.N
 	return &n2, nil
 }
 
+
+func (m *Manager) CreateNamespace(ctx context.Context, model *eve.Namespace) error  {
+
+	dbNamespace := toDataNamespace(*model)
+	if err := m.repo.CreateNamespace(ctx, &dbNamespace); err != nil {
+		return errors.Wrap(err)
+	}
+
+	model.ID = dbNamespace.ID
+
+	return nil
+}
+
+func (m *Manager) DeleteNamespace(ctx context.Context, id int) (err error)  {
+
+	if err := m.repo.DeleteNamespace(ctx, id); err != nil {
+		return service.CheckForNotFoundError(err)
+	}
+
+	return nil
+}
+
 func toDataNamespace(namespace eve.Namespace) data.Namespace {
 	return data.Namespace{
 		ID:               namespace.ID,

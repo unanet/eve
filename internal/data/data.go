@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -87,4 +88,31 @@ func (m MigrationLogger) Printf(format string, v ...interface{}) {
 
 func (m MigrationLogger) Verbose() bool {
 	return m.debug
+}
+
+func (r *Repo) deleteByID(ctx context.Context, tableName string, id int) error {
+	return r.deleteByIDWithField(ctx, tableName, "id", id)
+}
+
+func (r *Repo) deleteByIDWithField(ctx context.Context, tableName string, fieldName string, id int) error {
+	query := fmt.Sprintf(`%s = %v`, fieldName, id)
+	return r.deleteWithQuery(ctx, tableName, query)
+}
+
+func (r *Repo) deleteWithQuery(ctx context.Context, tableName string, query string) error {
+	result, err := r.db.ExecContext(ctx, fmt.Sprintf("DELETE FROM %s WHERE %s", tableName, query))
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if affected == 0 {
+		return errors.NotFoundf(fmt.Sprintf("unable to delete %s using query (%s)", tableName, query))
+	}
+
+	return nil
 }

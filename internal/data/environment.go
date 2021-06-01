@@ -112,3 +112,25 @@ func (r *Repo) UpdateEnvironment(ctx context.Context, environment *Environment) 
 	}
 	return nil
 }
+
+func (r *Repo) CreateEnvironment(ctx context.Context, model *Environment) error {
+	err := r.db.QueryRowxContext(ctx,`
+	INSERT INTO environment(id, name, alias, description)
+		VALUES ($1, $2, $3, $4)
+	`,
+		model.ID,
+		model.Name,
+		model.Alias,
+		model.Description).
+		StructScan(model)
+
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	return nil
+}
+
+func (r *Repo) DeleteEnvironment(ctx context.Context, id int) error {
+	return r.deleteByID(ctx, "environment", id)
+}

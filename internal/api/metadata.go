@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
+	"gitlab.unanet.io/devops/eve/internal/service/crud"
+	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/go/pkg/errors"
 	"gitlab.unanet.io/devops/go/pkg/json"
 
-	"gitlab.unanet.io/devops/eve/internal/service/crud"
-	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 )
 
 type MetadataController struct {
@@ -27,9 +27,20 @@ func (c MetadataController) Setup(r chi.Router) {
 	r.Get("/metadata", c.metadata)
 	r.Put("/metadata", c.upsertMetadata)
 	r.Patch("/metadata", c.upsertMergeMetadata)
+
 	r.Delete("/metadata/{metadata}/{key}", c.deleteMetadataKey)
 	r.Delete("/metadata/{metadata}", c.deleteMetadata)
 	r.Get("/metadata/{metadata}", c.getMetadata)
+
+	r.Get("/metadata/job-maps", c.metadataJobMaps)
+	r.Put("/metadata/job-maps", c.updateMetadataJobMap)
+	r.Post("/metadata/job-maps", c.createMetadataJobMap)
+	r.Delete("/metadata/job-maps", c.deleteMetadataJobMap)
+
+	r.Get("/metadata/service-maps", c.metadataServiceMaps)
+	r.Put("/metadata/service-maps", c.updateMetadataServiceMap)
+	r.Post("/metadata/service-maps", c.createMetadataServiceMaps)
+	r.Delete("/metadata/service-maps", c.deleteMetadataServiceMap)
 
 	r.Put("/metadata/{metadata}/service-maps", c.upsertMetadataServiceMap)
 	r.Delete("/metadata/{metadata}/service-maps/{description}", c.deleteServiceMetadataMap)
@@ -38,6 +49,8 @@ func (c MetadataController) Setup(r chi.Router) {
 	r.Put("/metadata/{metadata}/job-maps", c.upsertMetadataJobMap)
 	r.Delete("/metadata/{metadata}/job-maps/{description}", c.deleteJobMetadataMap)
 	r.Get("/metadata/{metadata}/job-maps", c.getJobMetadataMapsByMetadataID)
+
+	r.Get("/metadata-history", c.metadataHistory)
 }
 
 func (c MetadataController) metadata(w http.ResponseWriter, r *http.Request) {
@@ -65,6 +78,18 @@ func (c MetadataController) upsertMergeMetadata(w http.ResponseWriter, r *http.R
 
 	render.Status(r, http.StatusOK)
 	render.Respond(w, r, m)
+}
+
+func (c MetadataController) metadataHistory(w http.ResponseWriter, r *http.Request) {
+
+	results, err := c.manager.MetadataHistory(r.Context())
+
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, results)
 }
 
 func (c MetadataController) upsertMetadata(w http.ResponseWriter, r *http.Request) {
@@ -258,4 +283,132 @@ func (c MetadataController) getJobMetadataMapsByMetadataID(w http.ResponseWriter
 	}
 
 	render.Respond(w, r, result)
+}
+
+
+func (c MetadataController) metadataJobMaps(w http.ResponseWriter, r *http.Request) {
+
+	results, err := c.manager.MetadataJobMaps(r.Context())
+
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, results)
+}
+
+
+func (c MetadataController) createMetadataJobMap(w http.ResponseWriter, r *http.Request) {
+
+	var m eve.MetadataJobMap
+	if err := json.ParseBody(r, &m); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	err := c.manager.CreateMetadataJobMap(r.Context(), &m)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusCreated)
+	render.Respond(w, r, m)
+}
+
+func (c MetadataController) updateMetadataJobMap(w http.ResponseWriter, r *http.Request) {
+
+	var m eve.MetadataJobMap
+	if err := json.ParseBody(r, &m); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	err := c.manager.UpsertMetadataJobMap(r.Context(), &m)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusOK)
+	render.Respond(w, r, m)
+}
+
+func (c MetadataController) deleteMetadataJobMap(w http.ResponseWriter, r *http.Request) {
+	var m eve.MetadataJobMap
+	if err := json.ParseBody(r, &m); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	if err := c.manager.DeleteMetadataJobMap(r.Context(), m.MetadataID, m.Description); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusNoContent)
+}
+
+func (c MetadataController) metadataServiceMaps(w http.ResponseWriter, r *http.Request) {
+
+	results, err := c.manager.MetadataServiceMaps(r.Context())
+
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Respond(w, r, results)
+}
+
+func (c MetadataController) createMetadataServiceMaps(w http.ResponseWriter, r *http.Request) {
+
+	var m eve.MetadataServiceMap
+	if err := json.ParseBody(r, &m); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	err := c.manager.CreateMetadataServiceMap(r.Context(), &m)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusCreated)
+	render.Respond(w, r, m)
+}
+
+func (c MetadataController) updateMetadataServiceMap(w http.ResponseWriter, r *http.Request) {
+
+	var m eve.MetadataServiceMap
+	if err := json.ParseBody(r, &m); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	err := c.manager.UpsertMetadataServiceMap(r.Context(), &m)
+	if err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusOK)
+	render.Respond(w, r, m)
+}
+
+func (c MetadataController) deleteMetadataServiceMap(w http.ResponseWriter, r *http.Request) {
+	var m eve.MetadataServiceMap
+	if err := json.ParseBody(r, &m); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	if err := c.manager.DeleteMetadataServiceMap(r.Context(), m.MetadataID, m.Description); err != nil {
+		render.Respond(w, r, err)
+		return
+	}
+
+	render.Status(r, http.StatusNoContent)
 }
