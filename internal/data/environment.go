@@ -66,7 +66,8 @@ func (r *Repo) EnvironmentByID(ctx context.Context, id int) (*Environment, error
 func (r *Repo) Environments(ctx context.Context) (Environments, error) {
 	rows, err := r.db.QueryxContext(ctx, `
 		select id, 
-		       name, 
+		       name,
+		       alias,
 		       description 
 		from environment order by name
 		`)
