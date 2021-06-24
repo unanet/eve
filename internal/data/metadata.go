@@ -345,6 +345,7 @@ func (r *Repo) JobMetadataMapsByJobID(ctx context.Context, jobID int) ([]Metadat
 		       artifact_id, 
 		       namespace_id, 
 		       job_id, 
+		       cluster_id,
 		       stacking_order, 
 		       created_at, 
 		       updated_at
@@ -382,6 +383,7 @@ func (r *Repo) MetadataJobMaps(ctx context.Context) ([]MetadataJobMap, error) {
 			artifact_id,
 			namespace_id,
 			job_id,
+		    cluster_id,
 			stacking_order,
 			created_at,
 			updated_at
@@ -418,6 +420,7 @@ func (r *Repo) MetadataServiceMaps(ctx context.Context) ([]MetadataServiceMap, e
 			artifact_id,
 			namespace_id,
 			service_id,
+		    cluster_id,
 			stacking_order,
 			created_at,
 			updated_at
@@ -452,7 +455,8 @@ func (r *Repo) JobMetadataMapsByMetadataID(ctx context.Context, metadataID int) 
 		       environment_id, 
 		       artifact_id, 
 		       namespace_id, 
-		       job_id, 
+		       job_id,
+		       cluster_id,
 		       stacking_order, 
 		       created_at, 
 		       updated_at
@@ -489,6 +493,7 @@ func (r *Repo) ServiceMetadataMapsByMetadataID(ctx context.Context, metadataID i
 		       artifact_id, 
 		       namespace_id, 
 		       service_id, 
+		       cluster_id,
 		       stacking_order, 
 		       created_at, 
 		       updated_at
@@ -585,6 +590,7 @@ func (r *Repo) JobMetadata(ctx context.Context, jobID int) ([]MetadataJob, error
 	return mjms, nil
 }
 
+
 func (r *Repo) ServiceMetadata(ctx context.Context, serviceID int) ([]MetadataService, error) {
 	rows, err := r.db.QueryxContext(ctx, `
 		WITH env_data AS (
@@ -667,7 +673,7 @@ func (r *Repo) CreateMetadataJobMap(ctx context.Context, model *MetadataJobMap) 
 					environment_id,
 					artifact_id,
 					namespace_id,
-					 cluster_id,
+					cluster_id,
 					job_id,
 					stacking_order,
 					created_at
