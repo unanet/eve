@@ -7,7 +7,6 @@ import (
 	"gitlab.unanet.io/devops/eve/internal/service/crud"
 	"gitlab.unanet.io/devops/go/pkg/json"
 
-	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
 
@@ -21,11 +20,11 @@ func NewEnvironmentFeedMapController(manager *crud.Manager) *EnvironmentFeedMapC
 	}
 }
 
-func (c EnvironmentFeedMapController) Setup(r chi.Router) {
-	r.Get("/environment-feed-maps", c.environmentFeedMaps)
-	r.Post("/environment-feed-maps", c.createEnvironmentFeedMaps)
-	r.Put("/environment-feed-maps", c.updateEnvironmentFeedMap)
-	r.Delete("/environment-feed-maps", c.deleteEnvironmentFeedMap)
+func (c EnvironmentFeedMapController) Setup(r *Routers) {
+	r.Auth.Get("/environment-feed-maps", c.environmentFeedMaps)
+	r.Auth.Post("/environment-feed-maps", c.createEnvironmentFeedMaps)
+	r.Auth.Put("/environment-feed-maps", c.updateEnvironmentFeedMap)
+	r.Auth.Delete("/environment-feed-maps", c.deleteEnvironmentFeedMap)
 }
 
 func (c EnvironmentFeedMapController) environmentFeedMaps(w http.ResponseWriter, r *http.Request) {

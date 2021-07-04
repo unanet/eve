@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
 	"gitlab.unanet.io/devops/go/pkg/errors"
@@ -17,10 +16,10 @@ func NewPingController() *PingController {
 	return &PingController{}
 }
 
-func (c PingController) Setup(r chi.Router) {
-	r.Get("/internal-error", c.internalError)
-	r.Get("/rest-error", c.restError)
-	r.Get("/ping", c.ping)
+func (c PingController) Setup(r *Routers) {
+	r.Anonymous.Get("/internal-error", c.internalError)
+	r.Anonymous.Get("/rest-error", c.restError)
+	r.Anonymous.Get("/ping", c.ping)
 }
 
 func (c PingController) restError(w http.ResponseWriter, r *http.Request) {

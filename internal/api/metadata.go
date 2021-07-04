@@ -23,34 +23,34 @@ func NewMetadataController(manager *crud.Manager) *MetadataController {
 	}
 }
 
-func (c MetadataController) Setup(r chi.Router) {
-	r.Get("/metadata", c.metadata)
-	r.Put("/metadata", c.upsertMetadata)
-	r.Patch("/metadata", c.upsertMergeMetadata)
+func (c MetadataController) Setup(r *Routers) {
+	r.Auth.Get("/metadata", c.metadata)
+	r.Auth.Put("/metadata", c.upsertMetadata)
+	r.Auth.Patch("/metadata", c.upsertMergeMetadata)
 
-	r.Delete("/metadata/{metadata}/{key}", c.deleteMetadataKey)
-	r.Delete("/metadata/{metadata}", c.deleteMetadata)
-	r.Get("/metadata/{metadata}", c.getMetadata)
+	r.Auth.Delete("/metadata/{metadata}/{key}", c.deleteMetadataKey)
+	r.Auth.Delete("/metadata/{metadata}", c.deleteMetadata)
+	r.Auth.Get("/metadata/{metadata}", c.getMetadata)
 
-	r.Get("/metadata/job-maps", c.metadataJobMaps)
-	r.Put("/metadata/job-maps", c.updateMetadataJobMap)
-	r.Post("/metadata/job-maps", c.createMetadataJobMap)
-	r.Delete("/metadata/job-maps", c.deleteMetadataJobMap)
+	r.Auth.Get("/metadata/job-maps", c.metadataJobMaps)
+	r.Auth.Put("/metadata/job-maps", c.updateMetadataJobMap)
+	r.Auth.Post("/metadata/job-maps", c.createMetadataJobMap)
+	r.Auth.Delete("/metadata/job-maps", c.deleteMetadataJobMap)
 
-	r.Get("/metadata/service-maps", c.metadataServiceMaps)
-	r.Put("/metadata/service-maps", c.updateMetadataServiceMap)
-	r.Post("/metadata/service-maps", c.createMetadataServiceMaps)
-	r.Delete("/metadata/service-maps", c.deleteMetadataServiceMap)
+	r.Auth.Get("/metadata/service-maps", c.metadataServiceMaps)
+	r.Auth.Put("/metadata/service-maps", c.updateMetadataServiceMap)
+	r.Auth.Post("/metadata/service-maps", c.createMetadataServiceMaps)
+	r.Auth.Delete("/metadata/service-maps", c.deleteMetadataServiceMap)
 
-	r.Put("/metadata/{metadata}/service-maps", c.upsertMetadataServiceMap)
-	r.Delete("/metadata/{metadata}/service-maps/{description}", c.deleteServiceMetadataMap)
-	r.Get("/metadata/{metadata}/service-maps", c.getServiceMetadataMapsByMetadataID)
+	r.Auth.Put("/metadata/{metadata}/service-maps", c.upsertMetadataServiceMap)
+	r.Auth.Delete("/metadata/{metadata}/service-maps/{description}", c.deleteServiceMetadataMap)
+	r.Auth.Get("/metadata/{metadata}/service-maps", c.getServiceMetadataMapsByMetadataID)
 
-	r.Put("/metadata/{metadata}/job-maps", c.upsertMetadataJobMap)
-	r.Delete("/metadata/{metadata}/job-maps/{description}", c.deleteJobMetadataMap)
-	r.Get("/metadata/{metadata}/job-maps", c.getJobMetadataMapsByMetadataID)
+	r.Auth.Put("/metadata/{metadata}/job-maps", c.upsertMetadataJobMap)
+	r.Auth.Delete("/metadata/{metadata}/job-maps/{description}", c.deleteJobMetadataMap)
+	r.Auth.Get("/metadata/{metadata}/job-maps", c.getJobMetadataMapsByMetadataID)
 
-	r.Get("/metadata-history", c.metadataHistory)
+	r.Auth.Get("/metadata-history", c.metadataHistory)
 }
 
 func (c MetadataController) metadata(w http.ResponseWriter, r *http.Request) {
@@ -285,7 +285,6 @@ func (c MetadataController) getJobMetadataMapsByMetadataID(w http.ResponseWriter
 	render.Respond(w, r, result)
 }
 
-
 func (c MetadataController) metadataJobMaps(w http.ResponseWriter, r *http.Request) {
 
 	results, err := c.manager.MetadataJobMaps(r.Context())
@@ -297,7 +296,6 @@ func (c MetadataController) metadataJobMaps(w http.ResponseWriter, r *http.Reque
 
 	render.Respond(w, r, results)
 }
-
 
 func (c MetadataController) createMetadataJobMap(w http.ResponseWriter, r *http.Request) {
 

@@ -8,13 +8,13 @@ import (
 )
 
 type Artifact struct {
-	ID              int            `db:"id"`
-	Name            string         `db:"name"`
-	FeedType        string         `db:"feed_type"`
-	ProviderGroup   string         `db:"provider_group"`
-	ImageTag        string         `db:"image_tag"`
-	ServicePort     int            `db:"service_port"`
-	MetricsPort     int            `db:"metrics_port"`
+	ID            int    `db:"id"`
+	Name          string `db:"name"`
+	FeedType      string `db:"feed_type"`
+	ProviderGroup string `db:"provider_group"`
+	ImageTag      string `db:"image_tag"`
+	ServicePort   int    `db:"service_port"`
+	MetricsPort   int    `db:"metrics_port"`
 }
 
 type Artifacts []Artifact
@@ -116,6 +116,7 @@ func (r *Repo) Artifact(ctx context.Context) ([]Artifact, error) {
 }
 
 func (r *Repo) CreateArtifact(ctx context.Context, art *Artifact) error {
+
 	err := r.db.QueryRowxContext(ctx, `
 	INSERT INTO artifact (
 		 id, 
@@ -127,13 +128,13 @@ func (r *Repo) CreateArtifact(ctx context.Context, art *Artifact) error {
 		 metrics_port)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`,
-	art.ID,
-	art.Name,
-	art.FeedType,
-	art.ProviderGroup,
-	art.ImageTag,
-	art.ServicePort,
-	art.MetricsPort).
+		art.ID,
+		art.Name,
+		art.FeedType,
+		art.ProviderGroup,
+		art.ImageTag,
+		art.ServicePort,
+		art.MetricsPort).
 		StructScan(art)
 
 	if err != nil {

@@ -8,8 +8,7 @@ import (
 	"gitlab.unanet.io/devops/go/pkg/json"
 )
 
-
-func (m *Manager) MetadataHistory(ctx context.Context) (models []eve.MetadataHistory, err error)  {
+func (m *Manager) MetadataHistory(ctx context.Context) (models []eve.MetadataHistory, err error) {
 	dbResults, err := m.repo.MetadataHistory(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -25,13 +24,13 @@ func fromDataMetadataHistory(dbModel data.MetadataHistory) eve.MetadataHistory {
 	}
 
 	return eve.MetadataHistory{
-		MetadataId: dbModel.MetadataId,
+		MetadataId:  dbModel.MetadataId,
 		Description: dbModel.Description,
-		Value: dbModel.Value.AsMapOrEmpty(),
-		Created: dbModel.Created.Time,
-		CreatedBy: dbModel.CreatedBy,
-		Deleted: deletedTime,
-		DeletedBy: dbModel.DeletedBy,
+		Value:       dbModel.Value.AsMapOrEmpty(),
+		Created:     dbModel.Created.Time,
+		CreatedBy:   dbModel.CreatedBy,
+		Deleted:     deletedTime,
+		DeletedBy:   dbModel.DeletedBy,
 	}
 }
 
@@ -45,11 +44,10 @@ func fromDataMetadataHistoryList(dbModels []data.MetadataHistory) []eve.Metadata
 
 func toDataMetadataHistory(model eve.MetadataHistory) data.MetadataHistory {
 	return data.MetadataHistory{
-		MetadataId: model.MetadataId,
+		MetadataId:  model.MetadataId,
 		Description: model.Description,
-		Value: json.FromMapOrEmpty(model.Value),
-		CreatedBy: model.CreatedBy,
-		DeletedBy: model.DeletedBy,
+		Value:       json.FromMapOrEmpty(model.Value),
+		CreatedBy:   model.CreatedBy,
+		DeletedBy:   model.DeletedBy,
 	}
 }
-

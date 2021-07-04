@@ -6,8 +6,7 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 )
 
-
-func (m *Manager) DefinitionTypes(ctx context.Context) (models []eve.DefinitionType, err error)  {
+func (m *Manager) DefinitionTypes(ctx context.Context) (models []eve.DefinitionType, err error) {
 	dbArtifacts, err := m.repo.DefinitionTypes(ctx)
 	if err != nil {
 		return nil, err
@@ -16,7 +15,7 @@ func (m *Manager) DefinitionTypes(ctx context.Context) (models []eve.DefinitionT
 	return fromDataDefinitionTypeList(dbArtifacts), err
 }
 
-func (m *Manager) CreateDefinitionType(ctx context.Context, model *eve.DefinitionType) error  {
+func (m *Manager) CreateDefinitionType(ctx context.Context, model *eve.DefinitionType) error {
 	dbModel := toDataDefinitionType(*model)
 	if err := m.repo.CreateDefinitionType(ctx, &dbModel); err != nil {
 		return err
@@ -26,7 +25,7 @@ func (m *Manager) CreateDefinitionType(ctx context.Context, model *eve.Definitio
 	return nil
 }
 
-func (m *Manager) UpdateDefinitionType(ctx context.Context, model *eve.DefinitionType) (err error)  {
+func (m *Manager) UpdateDefinitionType(ctx context.Context, model *eve.DefinitionType) (err error) {
 
 	dbModel := toDataDefinitionType(*model)
 	if err := m.repo.UpdateDefinitionType(ctx, &dbModel); err != nil {
@@ -38,7 +37,7 @@ func (m *Manager) UpdateDefinitionType(ctx context.Context, model *eve.Definitio
 	return nil
 }
 
-func (m *Manager) DeleteDefinitionType(ctx context.Context, id int) (err error)  {
+func (m *Manager) DeleteDefinitionType(ctx context.Context, id int) (err error) {
 	return m.repo.DeleteDefinitionType(ctx, id)
 }
 

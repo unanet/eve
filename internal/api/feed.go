@@ -23,11 +23,11 @@ func NewFeedController(manager *crud.Manager) *FeedController {
 	}
 }
 
-func (c FeedController) Setup(r chi.Router) {
-	r.Get("/feeds", c.feed)
-	r.Post("/feeds", c.create)
-	r.Put("/feeds/{feedID}", c.update)
-	r.Delete("/feeds/{feedID}", c.delete)
+func (c FeedController) Setup(r *Routers) {
+	r.Auth.Get("/feeds", c.feed)
+	r.Auth.Post("/feeds", c.create)
+	r.Auth.Put("/feeds/{feedID}", c.update)
+	//r.Auth.Delete("/feeds/{feedID}", c.delete)
 }
 
 func (c FeedController) feed(w http.ResponseWriter, r *http.Request) {

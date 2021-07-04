@@ -46,7 +46,7 @@ func fromDataService(s data.DeployService) *eve.DeployService {
 			ImageTag:         s.ImageTag,
 			Result:           eve.DeployArtifactResultNoop,
 		},
-		Nuance:      strconv.Itoa(int(time.Now().Unix())),
+		Nuance: strconv.Itoa(int(time.Now().Unix())),
 	}
 }
 
@@ -63,7 +63,7 @@ func fromDataJob(j data.DeployJob) *eve.DeployJob {
 		JobID:            j.JobID,
 		JobName:          j.JobName,
 		SuccessExitCodes: j.SuccessExitCodes,
-		Nuance:      strconv.Itoa(int(time.Now().Unix())),
+		Nuance:           strconv.Itoa(int(time.Now().Unix())),
 		DeployArtifact: &eve.DeployArtifact{
 			ArtifactID:       j.ArtifactID,
 			ArtifactName:     j.ArtifactName,

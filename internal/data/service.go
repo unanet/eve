@@ -313,7 +313,7 @@ func (r *Repo) CreateService(ctx context.Context, model *Service) error {
 		Valid: true,
 	}
 
-	err := r.db.QueryRowxContext(ctx,`
+	err := r.db.QueryRowxContext(ctx, `
 	INSERT INTO service(
 				namespace_id,
 				artifact_id,

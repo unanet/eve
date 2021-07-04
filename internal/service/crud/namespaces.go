@@ -88,8 +88,7 @@ func (m *Manager) UpdateNamespace(ctx context.Context, n *eve.Namespace) (*eve.N
 	return &n2, nil
 }
 
-
-func (m *Manager) CreateNamespace(ctx context.Context, model *eve.Namespace) error  {
+func (m *Manager) CreateNamespace(ctx context.Context, model *eve.Namespace) error {
 
 	dbNamespace := toDataNamespace(*model)
 	if err := m.repo.CreateNamespace(ctx, &dbNamespace); err != nil {
@@ -101,7 +100,7 @@ func (m *Manager) CreateNamespace(ctx context.Context, model *eve.Namespace) err
 	return nil
 }
 
-func (m *Manager) DeleteNamespace(ctx context.Context, id int) (err error)  {
+func (m *Manager) DeleteNamespace(ctx context.Context, id int) (err error) {
 
 	if err := m.repo.DeleteNamespace(ctx, id); err != nil {
 		return service.CheckForNotFoundError(err)

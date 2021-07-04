@@ -23,17 +23,16 @@ func NewServiceController(manager *crud.Manager) *ServiceController {
 	}
 }
 
-func (c ServiceController) Setup(r chi.Router) {
-	r.Get("/services", c.services)
-	r.Post("/services", c.create)
-	r.Get("/services/{service}", c.service)
-	r.Post("/services/{service}", c.updateService)
-	r.Delete("/services/{service}", c.delete)
-	r.Get("/services/{service}/metadata", c.getServiceMetadata)
-	r.Get("/services/{service}/metadata-maps", c.getServiceMetadataMaps)
-	r.Get("/services/{service}/definitions", c.getServiceDefinitionResult)
-	r.Get("/services/{service}/definition-maps", c.getServiceDefinitions)
-
+func (c ServiceController) Setup(r *Routers) {
+	r.Auth.Get("/services", c.services)
+	r.Auth.Post("/services", c.create)
+	r.Auth.Get("/services/{service}", c.service)
+	r.Auth.Post("/services/{service}", c.updateService)
+	r.Auth.Delete("/services/{service}", c.delete)
+	r.Auth.Get("/services/{service}/metadata", c.getServiceMetadata)
+	r.Auth.Get("/services/{service}/metadata-maps", c.getServiceMetadataMaps)
+	r.Auth.Get("/services/{service}/definitions", c.getServiceDefinitionResult)
+	r.Auth.Get("/services/{service}/definition-maps", c.getServiceDefinitions)
 }
 
 func (c ServiceController) service(w http.ResponseWriter, r *http.Request) {
@@ -142,7 +141,6 @@ func (c ServiceController) getServiceDefinitions(w http.ResponseWriter, r *http.
 
 	render.Respond(w, r, result)
 }
-
 
 func (c ServiceController) services(w http.ResponseWriter, r *http.Request) {
 

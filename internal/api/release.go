@@ -7,7 +7,6 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/go/pkg/json"
 
-	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
 
@@ -21,8 +20,8 @@ func NewReleaseController(s *releases.ReleaseSvc) *ReleaseController {
 	}
 }
 
-func (c ReleaseController) Setup(r chi.Router) {
-	r.Post("/release", c.release)
+func (c ReleaseController) Setup(r *Routers) {
+	r.Auth.Post("/release", c.release)
 }
 
 func (c ReleaseController) release(w http.ResponseWriter, r *http.Request) {

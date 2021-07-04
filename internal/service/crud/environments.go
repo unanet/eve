@@ -48,7 +48,7 @@ func (m *Manager) UpdateEnvironment(ctx context.Context, e *eve.Environment) (*e
 	return &e2, nil
 }
 
-func (m *Manager) CreateEnvironment(ctx context.Context, model *eve.Environment) error  {
+func (m *Manager) CreateEnvironment(ctx context.Context, model *eve.Environment) error {
 
 	dbEnvironment := toDataEnvironment(*model)
 	if err := m.repo.CreateEnvironment(ctx, &dbEnvironment); err != nil {
@@ -60,7 +60,7 @@ func (m *Manager) CreateEnvironment(ctx context.Context, model *eve.Environment)
 	return nil
 }
 
-func (m *Manager) DeleteEnvironment(ctx context.Context, id int) (err error)  {
+func (m *Manager) DeleteEnvironment(ctx context.Context, id int) (err error) {
 
 	if err := m.repo.DeleteEnvironment(ctx, id); err != nil {
 		return service.CheckForNotFoundError(err)
@@ -95,4 +95,3 @@ func toDataEnvironment(environment eve.Environment) data.Environment {
 		Description: environment.Description,
 	}
 }
-

@@ -590,7 +590,6 @@ func (r *Repo) JobMetadata(ctx context.Context, jobID int) ([]MetadataJob, error
 	return mjms, nil
 }
 
-
 func (r *Repo) ServiceMetadata(ctx context.Context, serviceID int) ([]MetadataService, error) {
 	rows, err := r.db.QueryxContext(ctx, `
 		WITH env_data AS (
@@ -659,14 +658,13 @@ func (r *Repo) ServiceMetadata(ctx context.Context, serviceID int) ([]MetadataSe
 	return msms, nil
 }
 
-
 func (r *Repo) CreateMetadataJobMap(ctx context.Context, model *MetadataJobMap) error {
 	model.CreatedAt = sql.NullTime{
 		Time:  time.Now().UTC(),
 		Valid: true,
 	}
 
-	err := r.db.QueryRowxContext(ctx,`
+	err := r.db.QueryRowxContext(ctx, `
 	INSERT INTO metadata_job_map(
 					description,
 					metadata_id,
@@ -705,7 +703,7 @@ func (r *Repo) CreateMetadataServiceMap(ctx context.Context, model *MetadataServ
 		Valid: true,
 	}
 
-	err := r.db.QueryRowxContext(ctx,`
+	err := r.db.QueryRowxContext(ctx, `
 	INSERT INTO metadata_service_map(
 					description,
 					metadata_id,

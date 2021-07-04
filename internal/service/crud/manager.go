@@ -19,7 +19,7 @@ type Manager struct {
 // inspect the service definitions and make sure required defs are present
 // if not, add default definitions
 func (m *Manager) defaultServiceDefinitions(defs []eve.DefinitionResult) []eve.DefinitionResult {
-	var validSvc,validDep bool
+	var validSvc, validDep bool
 	for _, def := range defs {
 		if def.Kind == "Service" {
 			validSvc = true
@@ -45,7 +45,6 @@ func (m *Manager) defaultServiceDefinitions(defs []eve.DefinitionResult) []eve.D
 	return defs
 }
 
-
 // inspect the service definitions and make sure required defs are present
 // if not, add default definitions
 func (m *Manager) defaultJobDefinitions(defs []eve.DefinitionResult) []eve.DefinitionResult {
@@ -64,9 +63,3 @@ func (m *Manager) defaultJobDefinitions(defs []eve.DefinitionResult) []eve.Defin
 
 	return defs
 }
-
-
-
-
-
-

@@ -23,16 +23,16 @@ func NewNamespaceController(manager *crud.Manager) *NamespaceController {
 	}
 }
 
-func (c NamespaceController) Setup(r chi.Router) {
-	r.Post("/namespaces", c.createNamespace)
-	r.Get("/namespaces", c.namespaces)
-	r.Get("/namespaces/{namespace}", c.namespace)
-	r.Post("/namespaces/{namespace}", c.updateNamespace)
-	r.Get("/namespaces/{namespace}/services", c.namespaceServices)
-	r.Get("/namespaces/{namespace}/services/{service}", c.service)
-	r.Get("/namespaces/{namespace}/jobs", c.namespaceJobs)
-	r.Get("/namespaces/{namespace}/jobs/{job}", c.job)
-	//r.Delete("/namespaces/{namespace}", c.deleteNamespace)
+func (c NamespaceController) Setup(r *Routers) {
+	r.Auth.Post("/namespaces", c.createNamespace)
+	r.Auth.Get("/namespaces", c.namespaces)
+	r.Auth.Get("/namespaces/{namespace}", c.namespace)
+	r.Auth.Post("/namespaces/{namespace}", c.updateNamespace)
+	r.Auth.Get("/namespaces/{namespace}/services", c.namespaceServices)
+	r.Auth.Get("/namespaces/{namespace}/services/{service}", c.service)
+	r.Auth.Get("/namespaces/{namespace}/jobs", c.namespaceJobs)
+	r.Auth.Get("/namespaces/{namespace}/jobs/{job}", c.job)
+	//r.Auth.Delete("/namespaces/{namespace}", c.deleteNamespace)
 }
 
 func (c NamespaceController) job(w http.ResponseWriter, r *http.Request) {
@@ -155,7 +155,6 @@ func (c NamespaceController) service(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-
 
 func (c NamespaceController) createNamespace(w http.ResponseWriter, r *http.Request) {
 

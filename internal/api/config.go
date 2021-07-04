@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"gitlab.unanet.io/devops/go/pkg/identity"
+
 	"github.com/kelseyhightower/envconfig"
 	"gitlab.unanet.io/devops/go/pkg/log"
 	"go.uber.org/zap"
@@ -42,10 +44,18 @@ func (c DBConfig) MigrationConnectionString() string {
 	return fmt.Sprintf("postgres://%s:%d/%s?sslmode=disable&user=%s&password=%s", c.DBHost, c.DBPort, c.DBName, c.DBUsername, c.DBPassword)
 }
 
+// IDENTITY_CONN_URL
+// IDENTITY_CLIENT_ID
+// IDENTITY_CLIENT_SECRET
+// IDENTITY_REDIRECT_URL
+type IdentityConfig = identity.Config
+
+// Config
 type Config struct {
 	LogConfig
 	ArtifactoryConfig
 	GitlabConfig
+	Identity               IdentityConfig
 	LocalDev               bool          `split_words:"true" default:"false"`
 	ApiQUrl                string        `split_words:"true" required:"true"`
 	ApiQWaitTimeSecond     int64         `split_words:"true" default:"20"`
@@ -59,6 +69,7 @@ type Config struct {
 	Port                   int           `split_words:"true" default:"8080"`
 	MetricsPort            int           `split_words:"true" default:"3001"`
 	ServiceName            string        `split_words:"true" default:"eve"`
+	AdminToken             string        `split_words:"true" required:"true"`
 }
 
 type FlagConfig struct {

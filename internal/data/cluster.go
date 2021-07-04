@@ -73,7 +73,7 @@ func (r *Repo) CreateCluster(ctx context.Context, model *Cluster) error {
 		Valid: true,
 	}
 
-	err := r.db.QueryRowxContext(ctx,`
+	err := r.db.QueryRowxContext(ctx, `
 	INSERT INTO cluster(id, name, provider_group, sch_queue_url, created_at)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, created_at

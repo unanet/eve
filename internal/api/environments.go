@@ -23,11 +23,11 @@ func NewEnvironmentController(manager *crud.Manager) *EnvironmentController {
 	}
 }
 
-func (c EnvironmentController) Setup(r chi.Router) {
-	r.Get("/environments", c.environments)
-	r.Post("/environments", c.createEnvironment)
-	r.Get("/environments/{environment}", c.environment)
-	r.Post("/environments/{environment}", c.updateEnvironment)
+func (c EnvironmentController) Setup(r *Routers) {
+	r.Auth.Get("/environments", c.environments)
+	r.Auth.Post("/environments", c.createEnvironment)
+	r.Auth.Get("/environments/{environment}", c.environment)
+	r.Auth.Post("/environments/{environment}", c.updateEnvironment)
 	//r.Delete("/environments/{environment}", c.deleteEnvironment)
 }
 
@@ -79,7 +79,6 @@ func (c EnvironmentController) updateEnvironment(w http.ResponseWriter, r *http.
 	render.Respond(w, r, rs)
 }
 
-
 func (c EnvironmentController) createEnvironment(w http.ResponseWriter, r *http.Request) {
 
 	var m eve.Environment
@@ -113,4 +112,3 @@ func (c EnvironmentController) deleteEnvironment(w http.ResponseWriter, r *http.
 
 	render.Status(r, http.StatusNoContent)
 }
-

@@ -42,7 +42,6 @@ func (m *Manager) DeleteDeploymentCronJob(ctx context.Context, id string) (err e
 	return m.repo.DeleteDeploymentCronJob(ctx, id)
 }
 
-
 func fromDataDeploymentCronJobList(crons []data.DeploymentCronJob) []eve.DeploymentCronJob {
 	var list []eve.DeploymentCronJob
 	for _, x := range crons {
@@ -53,14 +52,14 @@ func fromDataDeploymentCronJobList(crons []data.DeploymentCronJob) []eve.Deploym
 
 func fromDataDeploymentCronJob(dbModel data.DeploymentCronJob) eve.DeploymentCronJob {
 	return eve.DeploymentCronJob{
-		ID: dbModel.ID.String(),
+		ID:          dbModel.ID.String(),
 		Description: dbModel.Description,
 		PlanOptions: dbModel.PlanOptions.AsMapOrEmpty(),
-		Schedule: dbModel.Schedule,
-		LastRun: dbModel.LastRun.Time,
-		State: dbModel.State,
-		Disabled: dbModel.Disabled,
-		Order: dbModel.Order,
+		Schedule:    dbModel.Schedule,
+		LastRun:     dbModel.LastRun.Time,
+		State:       dbModel.State,
+		Disabled:    dbModel.Disabled,
+		Order:       dbModel.Order,
 	}
 }
 
@@ -69,13 +68,13 @@ func toDataDeploymentCronJob(m eve.DeploymentCronJob) data.DeploymentCronJob {
 	id, _ := uuid.FromString(m.ID)
 
 	return data.DeploymentCronJob{
-		ID: id,
+		ID:          id,
 		Description: m.Description,
 		PlanOptions: json.FromMapOrEmpty(m.PlanOptions),
-		Schedule: m.Schedule,
+		Schedule:    m.Schedule,
 		// Omit last run
-		State: m.State,
+		State:    m.State,
 		Disabled: m.Disabled,
-		Order: m.Order,
+		Order:    m.Order,
 	}
 }

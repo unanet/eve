@@ -300,7 +300,6 @@ func (m Manager) ServiceDefinitionMapsByDefinitionID(ctx context.Context, id int
 	return fromDataDefinitionServiceMaps(maps), nil
 }
 
-
 func (m Manager) UpsertDefinitionJobMap(ctx context.Context, e *eve.DefinitionJobMap) error {
 	dataDefinitionJobMap := toDataDefinitionJobMap(*e)
 	err := m.repo.UpsertDefinitionJobMap(ctx, &dataDefinitionJobMap)
@@ -353,7 +352,7 @@ func (m *Manager) JobDefinitionResults(ctx context.Context, id int) (eve.Definit
 	}
 
 	mergedResults, err := m.mergeDefinitionData(definitionResults)
-	if err!=nil {
+	if err != nil {
 		return nil, errors.Wrapf("failed to merge the job deployment definitions: %s", err)
 	}
 
@@ -363,7 +362,6 @@ func (m *Manager) JobDefinitionResults(ctx context.Context, id int) (eve.Definit
 	return mergedResults, nil
 }
 
-
 func (m *Manager) ServiceDefinitions(ctx context.Context, id int) ([]eve.Definition, error) {
 	definitions, err := m.repo.ServiceDefinition(ctx, id)
 	if err != nil {
@@ -372,7 +370,6 @@ func (m *Manager) ServiceDefinitions(ctx context.Context, id int) ([]eve.Definit
 
 	return fromDataDefinitionServiceListToDefinitionList(definitions), nil
 }
-
 
 func (m *Manager) ServiceDefinitionResults(ctx context.Context, id int) (eve.DefinitionResults, error) {
 	definitionData, err := m.repo.ServiceDefinition(ctx, id)
@@ -396,13 +393,12 @@ func (m *Manager) ServiceDefinitionResults(ctx context.Context, id int) (eve.Def
 	}
 
 	mergedResults, err := m.mergeDefinitionData(definitionResults)
-	if err!=nil {
+	if err != nil {
 		return nil, errors.Wrapf("failed to merge the service deployment definitions: %s", err)
 	}
 
 	// Every Service Deployment Requires at least 2 definitions (K8s Service and K8s Deployment)
 	mergedResults = m.defaultServiceDefinitions(mergedResults)
-
 
 	return mergedResults, nil
 
@@ -451,7 +447,7 @@ func (m Manager) mergeDefinitionData(defResults []eve.DefinitionResult) (eve.Def
 	return mergedResults, nil
 }
 
-func (m Manager) DefinitionJobMaps(ctx context.Context) (models []eve.DefinitionJobMap, err error)  {
+func (m Manager) DefinitionJobMaps(ctx context.Context) (models []eve.DefinitionJobMap, err error) {
 	dbModels, err := m.repo.DefinitionJobMaps(ctx)
 	if err != nil {
 		return nil, err
@@ -460,7 +456,7 @@ func (m Manager) DefinitionJobMaps(ctx context.Context) (models []eve.Definition
 	return fromDataDefinitionJobMaps(dbModels), err
 }
 
-func (m Manager) DefinitionServiceMaps(ctx context.Context) (models []eve.DefinitionServiceMap, err error)  {
+func (m Manager) DefinitionServiceMaps(ctx context.Context) (models []eve.DefinitionServiceMap, err error) {
 	dbModels, err := m.repo.DefinitionServiceMaps(ctx)
 	if err != nil {
 		return nil, err

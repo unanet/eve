@@ -1,11 +1,12 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi"
 	"gitlab.unanet.io/devops/eve/internal/service/crud"
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/go/pkg/json"
-	"net/http"
 
 	"github.com/go-chi/render"
 )
@@ -20,11 +21,12 @@ func NewDeploymentsCronController(manager *crud.Manager) *DeploymentsCronControl
 	}
 }
 
-func (c DeploymentsCronController) Setup(r chi.Router) {
-	r.Get("/deployment-crons", c.deploymentCrons)
-	r.Put("/deployment-crons/{deploymentCronJob}", c.updateDeploymentCron)
-	r.Post("/deployment-crons", c.createDeploymentCron)
-	r.Delete("/deployment-crons/{deploymentCronJob}", c.deleteDeploymentCron)
+func (c DeploymentsCronController) Setup(r *Routers) {
+	r.Auth.Get("/deployment-crons", c.deploymentCrons)
+	r.Auth.Put("/deployment-crons/{deploymentCronJob}", c.updateDeploymentCron)
+	r.Auth.Post("/deployment-crons", c.createDeploymentCron)
+	r.Auth.Put("/deployment-crons/{deploymentCron}", c.updateDeploymentCron)
+	r.Auth.Delete("/deployment-crons/{deploymentCronJob}", c.deleteDeploymentCron)
 }
 
 func (c DeploymentsCronController) deploymentCrons(w http.ResponseWriter, r *http.Request) {
@@ -89,4 +91,3 @@ func (c DeploymentsCronController) deleteDeploymentCron(w http.ResponseWriter, r
 
 	render.Status(r, http.StatusNoContent)
 }
-

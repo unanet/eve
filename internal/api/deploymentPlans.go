@@ -7,7 +7,6 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/eve"
 	"gitlab.unanet.io/devops/go/pkg/json"
 
-	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
 
@@ -21,8 +20,8 @@ func NewDeploymentPlansController(planGenerator *plans.PlanGenerator) *Deploymen
 	}
 }
 
-func (c DeploymentPlansController) Setup(r chi.Router) {
-	r.Post("/deployment-plans", c.createDeploymentPlan)
+func (c DeploymentPlansController) Setup(r *Routers) {
+	r.Auth.Post("/deployment-plans", c.createDeploymentPlan)
 }
 
 func (c DeploymentPlansController) createDeploymentPlan(w http.ResponseWriter, r *http.Request) {

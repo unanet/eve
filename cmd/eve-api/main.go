@@ -3,7 +3,11 @@ package main
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/casbin/casbin/v2"
+	"github.com/casbin/casbin/v2/model"
+	casbinpgadapter "github.com/cychiuae/casbin-pg-adapter"
 	"gitlab.unanet.io/devops/eve/pkg/s3"
+	"gitlab.unanet.io/devops/go/pkg/identity"
 	"go.uber.org/zap"
 
 	"gitlab.unanet.io/devops/eve/internal/api"
@@ -16,6 +20,15 @@ import (
 	"gitlab.unanet.io/devops/eve/pkg/queue"
 	"gitlab.unanet.io/devops/go/pkg/log"
 )
+
+func GetPolicyModel() model.Model {
+	m := model.NewModel()
+	m.AddDef("r", "r", "sub, obj, act")
+	m.AddDef("p", "p", "sub, obj, act")
+	m.AddDef("e", "e", "some(where (p.eft == allow))")
+	m.AddDef("m", "m", "r.sub == p.sub && (keyMatch(r.obj, p.obj) || keyMatch2(r.obj, p.obj)) && (r.act == p.act || p.act == \"*\")")
+	return m
+}
 
 func main() {
 	dbConfig := api.GetDBConfig()
@@ -64,7 +77,27 @@ func main() {
 	if err != nil {
 		log.Logger.Panic("Unable to Initialize the Controllers")
 	}
-	apiServer, err := api.NewApi(controllers, config)
+
+	identitySvc, err := identity.NewService(config.Identity)
+	if err != nil {
+		log.Logger.Panic("Unable to Initialize the Identity Service Manager", zap.Error(err))
+	}
+
+	adapter, err := casbinpgadapter.NewAdapter(db.DB, "policies")
+	if err != nil {
+		log.Logger.Panic("failed to create casbin adaptor", zap.Error(err))
+	}
+	enforcer, err := casbin.NewEnforcer(GetPolicyModel(), adapter)
+	if err != nil {
+		log.Logger.Panic("failed to create casbin enforcer", zap.Error(err))
+	}
+
+	err = enforcer.LoadPolicy()
+	if err != nil {
+		log.Logger.Panic("failed to load casbin policy", zap.Error(err))
+	}
+
+	apiServer, err := api.NewApi(controllers, identitySvc, enforcer, config)
 	if err != nil {
 		log.Logger.Panic("Failed to Create Api App", zap.Error(err))
 	}
