@@ -23,11 +23,11 @@ func NewClusterController(manager *crud.Manager) *ClusterController {
 	}
 }
 
-func (c ClusterController) Setup(r chi.Router) {
-	r.Get("/clusters", c.cluster)
-	r.Post("/clusters", c.createCluster)
-	r.Put("/clusters/{clusterID}", c.updateCluster)
-	r.Delete("/clusters/{clusterID}", c.deleteCluster)
+func (c ClusterController) Setup(r *Routers) {
+	r.Auth.Get("/clusters", c.cluster)
+	r.Auth.Post("/clusters", c.createCluster)
+	r.Auth.Put("/clusters/{clusterID}", c.updateCluster)
+	//r.Auth.Delete("/clusters/{clusterID}", c.deleteCluster)
 }
 
 func (c ClusterController) cluster(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +59,6 @@ func (c ClusterController) createCluster(w http.ResponseWriter, r *http.Request)
 	render.Status(r, http.StatusCreated)
 	render.Respond(w, r, m)
 }
-
 
 func (c ClusterController) updateCluster(w http.ResponseWriter, r *http.Request) {
 	// TODO conversation is needed about if this is needed or do we do a soft delete
@@ -105,4 +104,3 @@ func (c ClusterController) deleteCluster(w http.ResponseWriter, r *http.Request)
 
 	render.Status(r, http.StatusNoContent)
 }
-

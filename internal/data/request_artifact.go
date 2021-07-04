@@ -10,12 +10,12 @@ import (
 )
 
 type RequestArtifact struct {
-	ArtifactID       int            `db:"artifact_id"`
-	ArtifactName     string         `db:"artifact_name"`
-	ProviderGroup    string         `db:"provider_group"`
-	FeedName         string         `db:"feed_name"`
-	FeedType         string         `db:"feed_type"`
-	RequestedVersion string         `db:"requested_version"`
+	ArtifactID       int    `db:"artifact_id"`
+	ArtifactName     string `db:"artifact_name"`
+	ProviderGroup    string `db:"provider_group"`
+	FeedName         string `db:"feed_name"`
+	FeedType         string `db:"feed_type"`
+	RequestedVersion string `db:"requested_version"`
 }
 
 func (ra *RequestArtifact) Path() string {

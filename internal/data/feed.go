@@ -69,7 +69,6 @@ func (r *Repo) PreviousFeedByPromotionOrderType(ctx context.Context, promotionOr
 	return &feed, nil
 }
 
-
 func (r *Repo) Feeds(ctx context.Context) ([]Feed, error) {
 	rows, err := r.db.QueryxContext(ctx, `
 		select 

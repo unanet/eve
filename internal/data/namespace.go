@@ -178,13 +178,13 @@ func (r *Repo) CreateNamespace(ctx context.Context, ns *Namespace) error {
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id, created_at
 	`,
-	ns.Name,
-	ns.Alias,
-	ns.EnvironmentID,
-	ns.RequestedVersion,
-	ns.ExplicitDeploy,
-	ns.ClusterID,
-	ns.CreatedAt).
+		ns.Name,
+		ns.Alias,
+		ns.EnvironmentID,
+		ns.RequestedVersion,
+		ns.ExplicitDeploy,
+		ns.ClusterID,
+		ns.CreatedAt).
 		StructScan(ns)
 
 	if err != nil {

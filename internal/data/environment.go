@@ -115,7 +115,7 @@ func (r *Repo) UpdateEnvironment(ctx context.Context, environment *Environment) 
 }
 
 func (r *Repo) CreateEnvironment(ctx context.Context, model *Environment) error {
-	err := r.db.QueryRowxContext(ctx,`
+	err := r.db.QueryRowxContext(ctx, `
 	INSERT INTO environment(id, name, alias, description)
 		VALUES ($1, $2, $3, $4)
 	`,

@@ -149,7 +149,6 @@ func (r *Repo) UpdateFinishedJobs(ctx context.Context) error {
 	return nil
 }
 
-
 func (r *Repo) DeploymentCronJobs(ctx context.Context) ([]DeploymentCronJob, error) {
 	rows, err := r.db.QueryxContext(ctx, `
 		select 
@@ -193,7 +192,7 @@ func (r *Repo) CreateDeploymentCronJob(ctx context.Context, m *DeploymentCronJob
 		Valid: true,
 	}
 
-	err := r.db.QueryRowxContext(ctx,`
+	err := r.db.QueryRowxContext(ctx, `
 	INSERT INTO deployment_cron(plan_options, schedule, state, last_run, disabled, description, exec_order)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
@@ -246,5 +245,3 @@ func (r *Repo) UpdateDeploymentCronJob(ctx context.Context, m *DeploymentCronJob
 func (r *Repo) DeleteDeploymentCronJob(ctx context.Context, id string) error {
 	return r.deleteWithQuery(ctx, "deployment_cron", fmt.Sprintf("id = '%s'", id))
 }
-
-

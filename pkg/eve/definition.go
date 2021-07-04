@@ -144,7 +144,7 @@ func (dr *DefinitionResult) LabelKeys() []string {
 func (dr *DefinitionResult) APIVersion() string {
 	// Some definitions dont have a Class (aka Group in K8s)
 	// So we trim the leading "/" when there isn't a Class
-	return strings.TrimPrefix(fmt.Sprintf("%s/%s", dr.Class, dr.Version),"/")
+	return strings.TrimPrefix(fmt.Sprintf("%s/%s", dr.Class, dr.Version), "/")
 }
 
 // Key is used to merge the data from slice to map in the service
@@ -331,7 +331,7 @@ func (m DefinitionJobMap) ValidateWithContext(ctx context.Context) error {
 }
 
 type DefinitionType struct {
-	ID              int    `json:"id"`
+	ID              int       `json:"id"`
 	Name            string    `json:"name"`
 	Description     string    `json:"description"`
 	Class           string    `json:"class"`

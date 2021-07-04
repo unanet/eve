@@ -19,8 +19,8 @@ func NewDeploymentsController(manager *crud.Manager) *DeploymentsController {
 	}
 }
 
-func (c DeploymentsController) Setup(r chi.Router) {
-	r.Get("/deployments/{deployment}", c.deployment)
+func (c DeploymentsController) Setup(r *Routers) {
+	r.Auth.Get("/deployments/{deployment}", c.deployment)
 }
 
 func (c DeploymentsController) deployment(w http.ResponseWriter, r *http.Request) {

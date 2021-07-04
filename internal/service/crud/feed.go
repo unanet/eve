@@ -7,7 +7,7 @@ import (
 	"gitlab.unanet.io/devops/go/pkg/errors"
 )
 
-func (m *Manager) Feeds(ctx context.Context) (models []eve.Feed, err error)  {
+func (m *Manager) Feeds(ctx context.Context) (models []eve.Feed, err error) {
 	dbModels, err := m.repo.Feeds(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -16,7 +16,7 @@ func (m *Manager) Feeds(ctx context.Context) (models []eve.Feed, err error)  {
 	return fromDataFeedList(dbModels), nil
 }
 
-func (m *Manager) CreateFeed(ctx context.Context, model *eve.Feed) error  {
+func (m *Manager) CreateFeed(ctx context.Context, model *eve.Feed) error {
 	dbModel := toDataFeed(*model)
 	if err := m.repo.CreateFeed(ctx, &dbModel); err != nil {
 		return errors.Wrap(err)
@@ -35,17 +35,17 @@ func (m *Manager) UpdateFeed(ctx context.Context, model *eve.Feed) (err error) {
 
 	return nil
 }
-func (m *Manager) DeleteFeed(ctx context.Context, id int) (err error)  {
+func (m *Manager) DeleteFeed(ctx context.Context, id int) (err error) {
 	return m.repo.DeleteFeed(ctx, id)
 }
 
 func fromDataFeed(dbModel data.Feed) eve.Feed {
 	return eve.Feed{
-		ID: dbModel.ID,
-		Name: dbModel.Name,
+		ID:             dbModel.ID,
+		Name:           dbModel.Name,
 		PromotionOrder: dbModel.PromotionOrder,
-		FeedType: dbModel.FeedType,
-		Alias: dbModel.Alias,
+		FeedType:       dbModel.FeedType,
+		Alias:          dbModel.Alias,
 	}
 }
 
@@ -59,11 +59,10 @@ func fromDataFeedList(dbModels data.Feeds) []eve.Feed {
 
 func toDataFeed(model eve.Feed) data.Feed {
 	return data.Feed{
-		ID: model.ID,
-		Name: model.Name,
+		ID:             model.ID,
+		Name:           model.Name,
 		PromotionOrder: model.PromotionOrder,
-		FeedType: model.FeedType,
-		Alias: model.Alias,
+		FeedType:       model.FeedType,
+		Alias:          model.Alias,
 	}
 }
-

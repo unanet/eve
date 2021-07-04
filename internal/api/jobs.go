@@ -23,14 +23,14 @@ func NewJobController(manager *crud.Manager) *JobController {
 	}
 }
 
-func (c JobController) Setup(r chi.Router) {
-	r.Get("/jobs", c.jobs)
-	r.Post("/jobs", c.create)
-	r.Get("/jobs/{job}", c.job)
-	r.Post("/jobs/{job}", c.updateJob)
-	r.Delete("/jobs/{job}", c.delete)
-	r.Get("/jobs/{job}/metadata", c.getJobMetadata)
-	r.Get("/jobs/{job}/metadata-maps", c.getJobMetadataMaps)
+func (c JobController) Setup(r *Routers) {
+	r.Auth.Get("/jobs", c.jobs)
+	r.Auth.Post("/jobs", c.create)
+	r.Auth.Get("/jobs/{job}", c.job)
+	r.Auth.Post("/jobs/{job}", c.updateJob)
+	r.Auth.Delete("/jobs/{job}", c.delete)
+	r.Auth.Get("/jobs/{job}/metadata", c.getJobMetadata)
+	r.Auth.Get("/jobs/{job}/metadata-maps", c.getJobMetadataMaps)
 }
 
 func (c JobController) job(w http.ResponseWriter, r *http.Request) {
@@ -119,7 +119,6 @@ func (c JobController) jobs(w http.ResponseWriter, r *http.Request) {
 
 	render.Respond(w, r, results)
 }
-
 
 func (c JobController) create(w http.ResponseWriter, r *http.Request) {
 

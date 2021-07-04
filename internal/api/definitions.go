@@ -23,31 +23,31 @@ func NewDefinitionsController(manager *crud.Manager) *DefinitionsController {
 	}
 }
 
-func (c DefinitionsController) Setup(r chi.Router) {
-	r.Get("/definitions", c.definitions)
-	r.Put("/definitions", c.upsertDefinition)
-	r.Patch("/definitions", c.upsertMergeDefinition)
+func (c DefinitionsController) Setup(r *Routers) {
+	r.Auth.Get("/definitions", c.definitions)
+	r.Auth.Put("/definitions", c.upsertDefinition)
+	r.Auth.Patch("/definitions", c.upsertMergeDefinition)
 
 	// Sorted here to go above thee definitions by id
-	r.Get("/definitions/job-maps", c.definitionJobMaps)
-	r.Get("/definitions/service-maps", c.definitionServiceMaps)
+	r.Auth.Get("/definitions/job-maps", c.definitionJobMaps)
+	r.Auth.Get("/definitions/service-maps", c.definitionServiceMaps)
 
-	r.Delete("/definitions/{definition}/{key}", c.deleteDefinitionKey)
-	r.Delete("/definitions/{definition}", c.deleteDefinition)
-	r.Get("/definitions/{definition}", c.getDefinition)
+	r.Auth.Delete("/definitions/{definition}/{key}", c.deleteDefinitionKey)
+	r.Auth.Delete("/definitions/{definition}", c.deleteDefinition)
+	r.Auth.Get("/definitions/{definition}", c.getDefinition)
 
-	r.Put("/definitions/{definition}/service-maps", c.upsertDefinitionServiceMap)
-	r.Delete("/definitions/{definition}/service-maps/{description}", c.deleteServiceDefinitionMap)
-	r.Get("/definitions/{definition}/service-maps", c.getServiceDefinitionMapsByDefinitionID)
+	r.Auth.Put("/definitions/{definition}/service-maps", c.upsertDefinitionServiceMap)
+	r.Auth.Delete("/definitions/{definition}/service-maps/{description}", c.deleteServiceDefinitionMap)
+	r.Auth.Get("/definitions/{definition}/service-maps", c.getServiceDefinitionMapsByDefinitionID)
 
-	r.Put("/definitions/{definition}/job-maps", c.upsertDefinitionJobMap)
-	r.Delete("/definitions/{definition}/job-maps/{description}", c.deleteJobDefinitionMap)
-	r.Get("/definitions/{definition}/job-maps", c.getJobDefinitionMapsByDefinitionID)
+	r.Auth.Put("/definitions/{definition}/job-maps", c.upsertDefinitionJobMap)
+	r.Auth.Delete("/definitions/{definition}/job-maps/{description}", c.deleteJobDefinitionMap)
+	r.Auth.Get("/definitions/{definition}/job-maps", c.getJobDefinitionMapsByDefinitionID)
 
-	r.Get("/definition-types", c.definitionTypes)
-	r.Post("/definition-types", c.createDefinitionType)
-	r.Put("/definition-types/{definitionType}", c.updateDefinitionType)
-	r.Delete("/definition-types/{definitionType}", c.deleteDefinitionType)
+	r.Auth.Get("/definition-types", c.definitionTypes)
+	r.Auth.Post("/definition-types", c.createDefinitionType)
+	r.Auth.Put("/definition-types/{definitionType}", c.updateDefinitionType)
+	//r.Auth.Delete("/definition-types/{definitionType}", c.deleteDefinitionType)
 }
 
 func (c DefinitionsController) definitions(w http.ResponseWriter, r *http.Request) {
@@ -270,7 +270,6 @@ func (c DefinitionsController) getJobDefinitionMapsByDefinitionID(w http.Respons
 	render.Respond(w, r, result)
 }
 
-
 func (c DefinitionsController) definitionTypes(w http.ResponseWriter, r *http.Request) {
 
 	results, err := c.manager.DefinitionTypes(r.Context())
@@ -300,7 +299,6 @@ func (c DefinitionsController) createDefinitionType(w http.ResponseWriter, r *ht
 	render.Status(r, http.StatusCreated)
 	render.Respond(w, r, m)
 }
-
 
 func (c DefinitionsController) updateDefinitionType(w http.ResponseWriter, r *http.Request) {
 
@@ -348,7 +346,6 @@ func (c DefinitionsController) deleteDefinitionType(w http.ResponseWriter, r *ht
 
 	render.Status(r, http.StatusNoContent)
 }
-
 
 func (c DefinitionsController) definitionJobMaps(w http.ResponseWriter, r *http.Request) {
 

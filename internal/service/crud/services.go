@@ -36,13 +36,13 @@ func fromDataServices(services []data.Service) []eve.Service {
 
 func toDataService(service eve.Service) data.Service {
 	s := data.Service{
-		ID:             service.ID,
-		NamespaceID:    service.NamespaceID,
-		NamespaceName:  service.NamespaceName,
-		ArtifactID:     service.ArtifactID,
-		ArtifactName:   service.ArtifactName,
-		Name:           service.Name,
-		Count:          service.Count,
+		ID:            service.ID,
+		NamespaceID:   service.NamespaceID,
+		NamespaceName: service.NamespaceName,
+		ArtifactID:    service.ArtifactID,
+		ArtifactName:  service.ArtifactName,
+		Name:          service.Name,
+		Count:         service.Count,
 	}
 
 	if service.OverrideVersion != "" {
@@ -113,7 +113,7 @@ func (m *Manager) UpdateService(ctx context.Context, s *eve.Service) (*eve.Servi
 	return &s2, nil
 }
 
-func (m *Manager) CreateService(ctx context.Context, model *eve.Service) error  {
+func (m *Manager) CreateService(ctx context.Context, model *eve.Service) error {
 
 	dbService := toDataService(*model)
 	if err := m.repo.CreateService(ctx, &dbService); err != nil {
@@ -125,7 +125,7 @@ func (m *Manager) CreateService(ctx context.Context, model *eve.Service) error  
 	return nil
 }
 
-func (m *Manager) DeleteService(ctx context.Context, id int) (err error)  {
+func (m *Manager) DeleteService(ctx context.Context, id int) (err error) {
 
 	if err := m.repo.DeleteService(ctx, id); err != nil {
 		return service.CheckForNotFoundError(err)

@@ -22,11 +22,11 @@ func NewArtifactController(manager *crud.Manager) *ArtifactController {
 	}
 }
 
-func (c ArtifactController) Setup(r chi.Router) {
-	r.Get("/artifacts", c.artifacts)
-	r.Post("/artifacts", c.createArtifact)
-	r.Put("/artifacts/{artifactID}", c.updateArtifact)
-	//r.Delete("/artifacts/{artifact}", c.deleteArtifact)
+func (c ArtifactController) Setup(r *Routers) {
+	r.Auth.Get("/artifacts", c.artifacts)
+	r.Auth.Post("/artifacts", c.createArtifact)
+	r.Auth.Put("/artifacts/{artifactID}", c.updateArtifact)
+	//r.Auth.Delete("/artifacts/{artifact}", c.deleteArtifact)
 }
 
 func (c ArtifactController) artifacts(w http.ResponseWriter, r *http.Request) {
@@ -86,7 +86,6 @@ func (c ArtifactController) updateArtifact(w http.ResponseWriter, r *http.Reques
 	render.Respond(w, r, m)
 }
 
-
 func (c ArtifactController) deleteArtifact(w http.ResponseWriter, r *http.Request) {
 	artifactID := chi.URLParam(r, "artifactID")
 	intID, err := strconv.Atoi(artifactID)
@@ -102,5 +101,3 @@ func (c ArtifactController) deleteArtifact(w http.ResponseWriter, r *http.Reques
 
 	render.Status(r, http.StatusNoContent)
 }
-
-
