@@ -196,6 +196,17 @@ func (a *Api) authenticationMiddleware() func(http.Handler) http.Handler {
 // This code is duped in cloud-api
 func extractRole(ctx context.Context, claims jwt.MapClaims) string {
 	middleware.Log(ctx).Debug("extract role from incoming claims", zap.Any("claims", claims))
+	if ra, ok := claims["resource_access"].(map[string]interface{}); ok {
+		if ca, ok := ra[config.Identity.ClientID].(map[string]interface{}); ok {
+			if roles, ok := ca["roles"].([]interface{}); ok {
+				middleware.Log(ctx).Debug("incoming claim roles slice found", zap.Any("role", roles))
+				if found, role := checkArrayForRoles(ctx, roles); found {
+					return role
+				}
+			}
+		}
+	}
+
 	if r, ok := claims["role"].(string); ok {
 		middleware.Log(ctx).Debug("incoming claim role", zap.String("role", r))
 		return r
@@ -203,25 +214,34 @@ func extractRole(ctx context.Context, claims jwt.MapClaims) string {
 
 	if groups, ok := claims["groups"].([]interface{}); ok {
 		middleware.Log(ctx).Debug("incoming claim groups slice found", zap.Any("groups", groups))
-		if contains(groups, "admin") {
-			middleware.Log(ctx).Debug("incoming claim groups contains admin role")
-			return string(AdminRole)
-		}
-		if contains(groups, "user") {
-			middleware.Log(ctx).Debug("incoming claim groups contains user role")
-			return string(UserRole)
-		}
-		if contains(groups, "service") {
-			middleware.Log(ctx).Debug("incoming claim groups contains service role")
-			return string(ServiceRole)
-		}
-		if contains(groups, "guest") {
-			middleware.Log(ctx).Debug("incoming claim groups contains guest role")
-			return string(GuestRole)
+		if found, role := checkArrayForRoles(ctx, groups); found {
+			return role
 		}
 	}
 	middleware.Log(ctx).Debug("unknown role extracted")
 	return "unknown"
+}
+
+func checkArrayForRoles(ctx context.Context, strings []interface{}) (bool, string) {
+	if contains(strings, "admin") {
+		middleware.Log(ctx).Debug("incoming claim contains admin role")
+		return true, string(AdminRole)
+	}
+	if contains(strings, "user") {
+		middleware.Log(ctx).Debug("incoming claim contains user role")
+		return true, string(UserRole)
+	}
+	if contains(strings, "service") {
+		middleware.Log(ctx).Debug("incoming claim contains service role")
+		return true, string(ServiceRole)
+	}
+	if contains(strings, "guest") {
+		middleware.Log(ctx).Debug("incoming claim contains guest role")
+		return true, string(GuestRole)
+	}
+
+	middleware.Log(ctx).Debug("unknown role extracted")
+	return false, ""
 }
 
 func contains(s []interface{}, e string) bool {
