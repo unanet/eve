@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	goErrors "errors"
 	"fmt"
+	"github.com/jmoiron/sqlx"
 
 	"gitlab.unanet.io/devops/go/pkg/errors"
 )
@@ -24,24 +25,32 @@ func (ra *RequestArtifact) Path() string {
 
 type RequestArtifacts []RequestArtifact
 
-func (r *Repo) RequestServiceArtifactByEnvironment(ctx context.Context, serviceName string, environmentID int) (*RequestArtifact, error) {
+func (r *Repo) RequestServiceArtifactByEnvironment(ctx context.Context, serviceName string, artifactName string, environmentID int, ns []int) (*RequestArtifact, error) {
 	var requestedArtifact RequestArtifact
 
-	row := r.db.QueryRowxContext(ctx, `
+	esql, args, err := sqlx.In(`
 		select a.id as artifact_id,
 		       a.name as artifact_name,
 		       a.feed_type as feed_type,
 		       a.provider_group as provider_group,
-		       f.name as feed_name
+		       f.name as feed_name,
+		       COALESCE(s.override_version, ns.requested_version) as requested_version 
 		from service as s
+		    left join namespace as ns on s.namespace_id = ns.id
 		    left join artifact as a on s.artifact_id = a.id
-		    left join environment e on e.id = $1
+		    left join environment e on e.id = ?
 		    left join environment_feed_map efm on e.id = efm.environment_id
 			left join feed f on efm.feed_id = f.id and f.feed_type = a.feed_type
-		where f.name is not null and s.name = $2
-	`, environmentID, serviceName)
+		where f.name is not null and (a.name = ? or s.name = ?) and s.namespace_id in (?)
+	`, environmentID, artifactName, serviceName, ns)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	esql = r.db.Rebind(esql)
 
-	err := row.StructScan(&requestedArtifact)
+	row := r.db.QueryRowxContext(ctx, esql, args...)
+
+	err = row.StructScan(&requestedArtifact)
 	if err != nil {
 		if goErrors.Is(err, sql.ErrNoRows) {
 			return nil, NotFoundErrorf("service with name: %s not found", serviceName)
@@ -52,24 +61,32 @@ func (r *Repo) RequestServiceArtifactByEnvironment(ctx context.Context, serviceN
 	return &requestedArtifact, nil
 }
 
-func (r *Repo) RequestJobArtifactByEnvironment(ctx context.Context, jobName string, environmentID int) (*RequestArtifact, error) {
+func (r *Repo) RequestJobArtifactByEnvironment(ctx context.Context, jobName string, artifactName string, environmentID int, ns []int) (*RequestArtifact, error) {
 	var requestedArtifact RequestArtifact
 
-	row := r.db.QueryRowxContext(ctx, `
+	esql, args, err := sqlx.In(`
 		select a.id as artifact_id,
 		       a.name as artifact_name,
 		       a.feed_type as feed_type,
 		       a.provider_group as provider_group,
-		       f.name as feed_name
+		       f.name as feed_name,
+		       COALESCE(j.override_version, ns.requested_version) as requested_version 
 		from job as j
+		    left join namespace as ns on j.namespace_id = ns.id
 		    left join artifact as a on j.artifact_id = a.id
-		    left join environment e on e.id = $1
+		    left join environment e on e.id = ?
 		    left join environment_feed_map efm on e.id = efm.environment_id
 			left join feed f on efm.feed_id = f.id and f.feed_type = a.feed_type
-		where f.name is not null and j.name = $2
-	`, environmentID, jobName)
+		where f.name is not null and (a.name = ? or j.name = ?) and j.namespace_id in (?)
+	`, environmentID, artifactName, jobName, ns)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	esql = r.db.Rebind(esql)
 
-	err := row.StructScan(&requestedArtifact)
+	row := r.db.QueryRowxContext(ctx, esql, args...)
+
+	err = row.StructScan(&requestedArtifact)
 	if err != nil {
 		if goErrors.Is(err, sql.ErrNoRows) {
 			return nil, NotFoundErrorf("job with name: %s not found", jobName)

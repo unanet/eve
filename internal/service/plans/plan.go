@@ -125,13 +125,17 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 			var err error
 			switch options.Type {
 			case eve.DeploymentPlanTypeApplication, eve.DeploymentPlanTypeRestart:
-				ra, err = d.repo.RequestServiceArtifactByEnvironment(ctx, x.Name, env.ID)
+				ra, err = d.repo.RequestServiceArtifactByEnvironment(ctx, x.Name, x.ArtifactName, env.ID, ns.ToIDs())
 			case eve.DeploymentPlanTypeJob:
-				ra, err = d.repo.RequestJobArtifactByEnvironment(ctx, x.Name, env.ID)
+				ra, err = d.repo.RequestJobArtifactByEnvironment(ctx, x.Name, x.ArtifactName, env.ID, ns.ToIDs())
 			}
 			if err != nil {
 				if _, ok := err.(data.NotFoundError); ok {
-					return errors.NotFoundf("service/database not found in db: %s", x.Name)
+					if len(x.Name) > 0 {
+						return errors.NotFoundf("service/job not found: %s", x.Name)
+					} else {
+						return errors.NotFoundf("artifact not found: %s", x.ArtifactName)
+					}
 				}
 				return errors.Wrap(err)
 			}
@@ -140,6 +144,11 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 			x.ArtifactoryFeed = ra.FeedName
 			x.ArtifactoryPath = ra.Path()
 			x.FeedType = ra.FeedType
+			// if you're only passing one namespace and you've passed artifacts/services that match, then we should just assume the version of the
+			// service/namespace.
+			if len(ns) == 1 {
+				x.RequestedVersion = ra.RequestedVersion
+			}
 		}
 	} else {
 		// If no services were supplied, we get all services for the supplied namespaces
