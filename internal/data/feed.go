@@ -3,7 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
-	"gitlab.unanet.io/devops/go/pkg/errors"
+	"github.com/unanet/go/pkg/errors"
 )
 
 type Feed struct {

@@ -13,9 +13,9 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 
-	"gitlab.unanet.io/devops/go/pkg/errors"
-	"gitlab.unanet.io/devops/go/pkg/json"
-	"gitlab.unanet.io/devops/go/pkg/log"
+	"github.com/unanet/go/pkg/errors"
+	"github.com/unanet/go/pkg/json"
+	"github.com/unanet/go/pkg/log"
 )
 
 const (

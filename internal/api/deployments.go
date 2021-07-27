@@ -6,7 +6,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"gitlab.unanet.io/devops/eve/internal/service/crud"
+	"github.com/unanet/eve/internal/service/crud"
 )
 
 type DeploymentsController struct {

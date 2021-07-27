@@ -6,7 +6,7 @@ import (
 	goErrors "errors"
 	"time"
 
-	"gitlab.unanet.io/devops/go/pkg/errors"
+	"github.com/unanet/go/pkg/errors"
 )
 
 type Namespace struct {

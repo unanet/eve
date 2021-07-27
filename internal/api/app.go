@@ -13,16 +13,16 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
-	"gitlab.unanet.io/devops/go/pkg/errors"
-	"gitlab.unanet.io/devops/go/pkg/identity"
+	"github.com/unanet/go/pkg/errors"
+	"github.com/unanet/go/pkg/identity"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"go.uber.org/zap"
 
-	"gitlab.unanet.io/devops/go/pkg/log"
-	"gitlab.unanet.io/devops/go/pkg/metrics"
-	"gitlab.unanet.io/devops/go/pkg/middleware"
+	"github.com/unanet/go/pkg/log"
+	"github.com/unanet/go/pkg/metrics"
+	"github.com/unanet/go/pkg/middleware"
 )
 
 var (

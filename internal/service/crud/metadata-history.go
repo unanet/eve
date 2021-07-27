@@ -2,10 +2,10 @@ package crud
 
 import (
 	"context"
-	"gitlab.unanet.io/devops/eve/internal/data"
-	"gitlab.unanet.io/devops/eve/pkg/eve"
-	"gitlab.unanet.io/devops/go/pkg/errors"
-	"gitlab.unanet.io/devops/go/pkg/json"
+	"github.com/unanet/eve/internal/data"
+	"github.com/unanet/eve/pkg/eve"
+	"github.com/unanet/go/pkg/errors"
+	"github.com/unanet/go/pkg/json"
 )
 
 func (m *Manager) MetadataHistory(ctx context.Context) (models []eve.MetadataHistory, err error) {

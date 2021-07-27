@@ -2,9 +2,9 @@ package crud
 
 import (
 	"context"
-	"gitlab.unanet.io/devops/eve/internal/data"
-	"gitlab.unanet.io/devops/eve/pkg/eve"
-	"gitlab.unanet.io/devops/go/pkg/errors"
+	"github.com/unanet/eve/internal/data"
+	"github.com/unanet/eve/pkg/eve"
+	"github.com/unanet/go/pkg/errors"
 )
 
 func (m *Manager) Feeds(ctx context.Context) (models []eve.Feed, err error) {

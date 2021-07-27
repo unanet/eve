@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"go.uber.org/zap"
 
-	"gitlab.unanet.io/devops/go/pkg/log"
+	"github.com/unanet/go/pkg/log"
 )
 
 // HandlerFunc is used to define the Handler that is run on for each message

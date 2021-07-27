@@ -1,9 +1,9 @@
 package api
 
 import (
-	"gitlab.unanet.io/devops/eve/internal/service/crud"
-	"gitlab.unanet.io/devops/eve/internal/service/plans"
-	"gitlab.unanet.io/devops/eve/internal/service/releases"
+	"github.com/unanet/eve/internal/service/crud"
+	"github.com/unanet/eve/internal/service/plans"
+	"github.com/unanet/eve/internal/service/releases"
 )
 
 func InitializeControllers(

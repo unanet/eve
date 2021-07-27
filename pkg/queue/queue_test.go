@@ -12,12 +12,12 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.unanet.io/devops/eve/pkg/queue"
-	"gitlab.unanet.io/devops/go/pkg/json"
+	"github.com/unanet/eve/pkg/queue"
+	"github.com/unanet/go/pkg/json"
 )
 
 const (
-	qURL = "https://sqs.us-east-2.amazonaws.com/580107804399/eve-api-prod.fifo"
+	qURL = os.GetEnv("EVE_Q_URL")
 )
 
 func GetQueue(t *testing.T) *queue.Q {

@@ -10,8 +10,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.unanet.io/devops/go/pkg/errors"
-	"gitlab.unanet.io/devops/go/pkg/json"
+	"github.com/unanet/go/pkg/errors"
+	"github.com/unanet/go/pkg/json"
 )
 
 type DeploymentCronState string

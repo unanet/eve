@@ -5,14 +5,14 @@ import (
 	"sync"
 	"time"
 
-	"gitlab.unanet.io/devops/go/pkg/identity"
+	"github.com/unanet/go/pkg/identity"
 
 	"github.com/kelseyhightower/envconfig"
-	"gitlab.unanet.io/devops/go/pkg/log"
+	"github.com/unanet/go/pkg/log"
 	"go.uber.org/zap"
 
-	"gitlab.unanet.io/devops/eve/pkg/artifactory"
-	"gitlab.unanet.io/devops/eve/pkg/gitlab"
+	"github.com/unanet/eve/pkg/artifactory"
+	"github.com/unanet/eve/pkg/gitlab"
 )
 
 var (

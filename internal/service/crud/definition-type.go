@@ -2,8 +2,8 @@ package crud
 
 import (
 	"context"
-	"gitlab.unanet.io/devops/eve/internal/data"
-	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"github.com/unanet/eve/internal/data"
+	"github.com/unanet/eve/pkg/eve"
 )
 
 func (m *Manager) DefinitionTypes(ctx context.Context) (models []eve.DefinitionType, err error) {

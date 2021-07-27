@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
-	"gitlab.unanet.io/devops/go/pkg/errors"
+	"github.com/unanet/go/pkg/errors"
 )
 
 type Downloader struct {

@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	goErrors "errors"
-	"gitlab.unanet.io/devops/go/pkg/errors"
-	"gitlab.unanet.io/devops/go/pkg/json"
+	"github.com/unanet/go/pkg/errors"
+	"github.com/unanet/go/pkg/json"
 	"time"
 )
 

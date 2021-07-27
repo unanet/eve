@@ -3,7 +3,7 @@ package data
 import (
 	"context"
 	"fmt"
-	"gitlab.unanet.io/devops/go/pkg/errors"
+	"github.com/unanet/go/pkg/errors"
 )
 
 type EnvironmentFeedMap struct {

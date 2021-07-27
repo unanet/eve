@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"gitlab.unanet.io/devops/eve/internal/api"
-	"gitlab.unanet.io/devops/eve/internal/data"
+	"github.com/unanet/eve/internal/api"
+	"github.com/unanet/eve/internal/data"
 )
 
 var (

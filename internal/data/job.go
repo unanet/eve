@@ -8,7 +8,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"gitlab.unanet.io/devops/go/pkg/errors"
+	"github.com/unanet/go/pkg/errors"
 )
 
 type DeployJob struct {

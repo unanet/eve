@@ -2,10 +2,10 @@ package crud
 
 import (
 	"context"
-	"gitlab.unanet.io/devops/go/pkg/errors"
+	"github.com/unanet/go/pkg/errors"
 
-	"gitlab.unanet.io/devops/eve/internal/data"
-	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"github.com/unanet/eve/internal/data"
+	"github.com/unanet/eve/pkg/eve"
 )
 
 func (m *Manager) Artifacts(ctx context.Context) (models []eve.Artifact, err error) {

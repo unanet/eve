@@ -7,8 +7,8 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.unanet.io/devops/eve/internal/data"
-	"gitlab.unanet.io/devops/eve/pkg/queue"
+	"github.com/unanet/eve/internal/data"
+	"github.com/unanet/eve/pkg/queue"
 )
 
 const (

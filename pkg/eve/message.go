@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	uuid "github.com/satori/go.uuid"
-	"gitlab.unanet.io/devops/eve/pkg/s3"
-	"gitlab.unanet.io/devops/go/pkg/errors"
+	"github.com/unanet/eve/pkg/s3"
+	"github.com/unanet/go/pkg/errors"
 )
 
 type CloudUploader interface {

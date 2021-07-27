@@ -2,12 +2,12 @@ package crud
 
 import (
 	"context"
-	"gitlab.unanet.io/devops/go/pkg/errors"
+	"github.com/unanet/go/pkg/errors"
 	"strconv"
 
-	"gitlab.unanet.io/devops/eve/internal/data"
-	"gitlab.unanet.io/devops/eve/internal/service"
-	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"github.com/unanet/eve/internal/data"
+	"github.com/unanet/eve/internal/service"
+	"github.com/unanet/eve/pkg/eve"
 )
 
 func fromDataService(service data.Service) eve.Service {

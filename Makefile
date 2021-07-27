@@ -52,7 +52,7 @@ build: check_version
 	docker pull ${BUILD_IMAGE}
 	docker pull unanet-docker.jfrog.io/alpine-base
 	mkdir -p bin
-	$(docker-exec) go build -ldflags="-X 'gitlab.unanet.io/devops/eve/internal/api/api.Version=${VERSION}'" \
+	$(docker-exec) go build -ldflags="-X 'github.com/unanet/eve/internal/api/api.Version=${VERSION}'" \
 		-o ./bin/eve-api ./cmd/eve-api/main.go	
 	docker build . -t ${IMAGE_NAME}:${PATCH_VERSION}
 	$(docker-helm-exec) package --version ${PATCH_VERSION} --app-version ${VERSION} ./.helm

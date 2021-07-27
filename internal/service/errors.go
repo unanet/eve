@@ -1,8 +1,8 @@
 package service
 
 import (
-	"gitlab.unanet.io/devops/eve/internal/data"
-	"gitlab.unanet.io/devops/go/pkg/errors"
+	"github.com/unanet/eve/internal/data"
+	"github.com/unanet/go/pkg/errors"
 )
 
 func CheckForNotFoundError(err error) error {

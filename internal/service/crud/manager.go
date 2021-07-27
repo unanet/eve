@@ -1,8 +1,8 @@
 package crud
 
 import (
-	"gitlab.unanet.io/devops/eve/internal/data"
-	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"github.com/unanet/eve/internal/data"
+	"github.com/unanet/eve/pkg/eve"
 )
 
 func NewManager(r *data.Repo) *Manager {

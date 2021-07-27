@@ -3,8 +3,8 @@ package data
 import (
 	"context"
 	"database/sql"
-	"gitlab.unanet.io/devops/go/pkg/errors"
-	"gitlab.unanet.io/devops/go/pkg/json"
+	"github.com/unanet/go/pkg/errors"
+	"github.com/unanet/go/pkg/json"
 )
 
 type MetadataHistory struct {

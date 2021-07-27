@@ -7,15 +7,15 @@ import (
 	"strings"
 
 	goerrors "github.com/pkg/errors"
-	"gitlab.unanet.io/devops/go/pkg/errors"
-	"gitlab.unanet.io/devops/go/pkg/log"
+	"github.com/unanet/go/pkg/errors"
+	"github.com/unanet/go/pkg/log"
 	"go.uber.org/zap"
 
-	"gitlab.unanet.io/devops/eve/internal/data"
-	"gitlab.unanet.io/devops/eve/internal/service"
-	"gitlab.unanet.io/devops/eve/pkg/artifactory"
-	"gitlab.unanet.io/devops/eve/pkg/eve"
-	"gitlab.unanet.io/devops/eve/pkg/gitlab"
+	"github.com/unanet/eve/internal/data"
+	"github.com/unanet/eve/internal/service"
+	"github.com/unanet/eve/pkg/artifactory"
+	"github.com/unanet/eve/pkg/eve"
+	"github.com/unanet/eve/pkg/gitlab"
 )
 
 type ReleaseSvc struct {

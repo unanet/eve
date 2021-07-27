@@ -1,11 +1,11 @@
 package api
 
 import (
-	"gitlab.unanet.io/devops/eve/pkg/eve"
+	"github.com/unanet/eve/pkg/eve"
 	"net/http"
 
-	"gitlab.unanet.io/devops/eve/internal/service/crud"
-	"gitlab.unanet.io/devops/go/pkg/json"
+	"github.com/unanet/eve/internal/service/crud"
+	"github.com/unanet/go/pkg/json"
 
 	"github.com/go-chi/render"
 )
