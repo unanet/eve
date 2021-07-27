@@ -32,6 +32,28 @@ type ArtifactDefinition struct {
 	Matched          bool   `json:"-"`
 }
 
+type ArtifactDefinitionCloneOption func(definition *ArtifactDefinition)
+
+func (ad ArtifactDefinition) Clone(options ...ArtifactDefinitionCloneOption) *ArtifactDefinition {
+	a := &ArtifactDefinition{
+		ID:               ad.ID,
+		Name:             ad.Name,
+		ArtifactName:     ad.ArtifactName,
+		RequestedVersion: ad.RequestedVersion,
+		AvailableVersion: ad.AvailableVersion,
+		ArtifactoryFeed:  ad.ArtifactoryFeed,
+		ArtifactoryPath:  ad.ArtifactoryPath,
+		FeedType:         ad.FeedType,
+		Matched:          ad.Matched,
+	}
+
+	for _, x := range options {
+		x(a)
+	}
+
+	return a
+}
+
 func (ad ArtifactDefinition) ArtifactoryRequestedVersion() string {
 	if ad.RequestedVersion == "latest" {
 		return "*"

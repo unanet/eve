@@ -120,35 +120,41 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 	// required info needed to lookup in Artifactory
 	// It's important to note here that we're matching on the service/database name that's configured in the database which can be different than the artifact name
 	if len(options.Artifacts) > 0 {
+		var artifacts eve.ArtifactDefinitions
+
 		for _, x := range options.Artifacts {
-			var ra *data.RequestArtifact
+			var ras data.RequestArtifacts
 			var err error
 			switch options.Type {
 			case eve.DeploymentPlanTypeApplication, eve.DeploymentPlanTypeRestart:
-				ra, err = d.repo.RequestServiceArtifactByEnvironment(ctx, x.Name, x.ArtifactName, env.ID, ns.ToIDs())
+				ras, err = d.repo.RequestServiceArtifactByEnvironment(ctx, x.Name, env.ID, ns.ToIDs())
 			case eve.DeploymentPlanTypeJob:
-				ra, err = d.repo.RequestJobArtifactByEnvironment(ctx, x.Name, x.ArtifactName, env.ID, ns.ToIDs())
+				ras, err = d.repo.RequestJobArtifactByEnvironment(ctx, x.Name, env.ID, ns.ToIDs())
 			}
 			if err != nil {
 				if _, ok := err.(data.NotFoundError); ok {
-					if len(x.Name) > 0 {
-						return errors.NotFoundf("service/job not found: %s", x.Name)
-					} else {
-						return errors.NotFoundf("artifact not found: %s", x.ArtifactName)
-					}
+					return errors.NotFoundf("service/job not found: %s", x.Name)
 				}
 				return errors.Wrap(err)
 			}
-			x.ID = ra.ArtifactID
-			x.ArtifactName = ra.ArtifactName
-			x.ArtifactoryFeed = ra.FeedName
-			x.ArtifactoryPath = ra.Path()
-			x.FeedType = ra.FeedType
-			// if you're only passing one namespace and you've passed artifacts/services that match, then we should just assume the version of the
-			// service/namespace.
-			if len(ns) == 1 {
-				x.RequestedVersion = ra.RequestedVersion
+
+			for _, y := range ras {
+				artifacts = append(artifacts, x.Clone(func(d *eve.ArtifactDefinition) {
+					d.ID = y.ArtifactID
+					d.ArtifactName = y.ArtifactName
+					d.ArtifactoryFeed = y.FeedName
+					d.ArtifactoryPath = y.Path()
+					d.FeedType = y.FeedType
+					// we're defaulting to the namespace/service version that's configured if it's not specified and
+					// the data query returns it, it should be noted, that the data query only returns the requested version
+					// when the namespace count is 1.
+					if len(y.RequestedVersion) > 0 && len(d.RequestedVersion) == 0 {
+						d.RequestedVersion = y.RequestedVersion
+					}
+				}))
 			}
+
+			options.Artifacts = artifacts
 		}
 	} else {
 		// If no services were supplied, we get all services for the supplied namespaces
