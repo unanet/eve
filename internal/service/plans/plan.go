@@ -127,9 +127,9 @@ func (d *PlanGenerator) validateArtifactDefinitions(ctx context.Context, env *da
 			var err error
 			switch options.Type {
 			case eve.DeploymentPlanTypeApplication, eve.DeploymentPlanTypeRestart:
-				ras, err = d.repo.RequestServiceArtifactByEnvironment(ctx, x.Name, env.ID, ns.ToIDs())
+				ras, err = d.repo.RequestServiceArtifactByEnvironment(ctx, x.Name, x.ArtifactName, env.ID, ns.ToIDs())
 			case eve.DeploymentPlanTypeJob:
-				ras, err = d.repo.RequestJobArtifactByEnvironment(ctx, x.Name, env.ID, ns.ToIDs())
+				ras, err = d.repo.RequestJobArtifactByEnvironment(ctx, x.Name, x.ArtifactName, env.ID, ns.ToIDs())
 			}
 			if err != nil {
 				if _, ok := err.(data.NotFoundError); ok {

@@ -24,7 +24,7 @@ func (ra *RequestArtifact) Path() string {
 
 type RequestArtifacts []RequestArtifact
 
-func (r *Repo) RequestServiceArtifactByEnvironment(ctx context.Context, serviceName string, environmentID int, ns []int) (RequestArtifacts, error) {
+func (r *Repo) RequestServiceArtifactByEnvironment(ctx context.Context, serviceName, artifactName string, environmentID int, ns []int) (RequestArtifacts, error) {
 	esql, args, err := sqlx.In(`
 		select distinct a.id as artifact_id,
 		       			a.name as artifact_name,
@@ -40,8 +40,8 @@ func (r *Repo) RequestServiceArtifactByEnvironment(ctx context.Context, serviceN
 		    left join environment e on e.id = ?
 		    left join environment_feed_map efm on e.id = efm.environment_id
 			left join feed f on efm.feed_id = f.id and f.feed_type = a.feed_type
-		where f.name is not null and s.name = ? and s.namespace_id in (?)
-	`, len(ns) == 1, environmentID, serviceName, ns)
+		where f.name is not null and (a.name = ? or s.name = ?) and s.namespace_id in (?)
+	`, len(ns) == 1, environmentID, artifactName, serviceName, ns)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
@@ -66,7 +66,7 @@ func (r *Repo) RequestServiceArtifactByEnvironment(ctx context.Context, serviceN
 	return services, nil
 }
 
-func (r *Repo) RequestJobArtifactByEnvironment(ctx context.Context, jobName string, environmentID int, ns []int) (RequestArtifacts, error) {
+func (r *Repo) RequestJobArtifactByEnvironment(ctx context.Context, jobName, artifactName string, environmentID int, ns []int) (RequestArtifacts, error) {
 	esql, args, err := sqlx.In(`
 		select distinct a.id as artifact_id,
 		       			a.name as artifact_name,
@@ -82,8 +82,8 @@ func (r *Repo) RequestJobArtifactByEnvironment(ctx context.Context, jobName stri
 		    left join environment e on e.id = ?
 		    left join environment_feed_map efm on e.id = efm.environment_id
 			left join feed f on efm.feed_id = f.id and f.feed_type = a.feed_type
-		where f.name is not null and j.name = ? and j.namespace_id in (?)
-	`, len(ns) == 1, environmentID, jobName, ns)
+		where f.name is not null and (a.name = ? or j.name = ?) and j.namespace_id in (?)
+	`, len(ns) == 1, environmentID, artifactName, jobName, ns)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
