@@ -3,7 +3,7 @@ module github.com/unanet/eve
 go 1.16
 
 require (
-	github.com/aws/aws-sdk-go v1.40.9
+	github.com/aws/aws-sdk-go v1.40.11
 	github.com/casbin/casbin/v2 v2.34.1
 	github.com/cychiuae/casbin-pg-adapter v0.0.6
 	github.com/dghubble/sling v1.3.0
