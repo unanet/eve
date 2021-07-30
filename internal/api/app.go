@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/casbin/casbin/v2"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
+	"github.com/golang-jwt/jwt"
 	"github.com/unanet/go/pkg/errors"
 	"github.com/unanet/go/pkg/identity"
 
