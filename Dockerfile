@@ -1,4 +1,5 @@
-FROM unanet-docker.jfrog.io/alpine-base
+# FROM unanet-docker.jfrog.io/alpine-base
+FROM alpine
 
 ENV EVE_PORT 3000
 ENV EVE_METRICS_PORT 3001
