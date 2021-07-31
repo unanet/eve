@@ -3,6 +3,7 @@ package gitlab
 import (
 	"context"
 	"fmt"
+	"github.com/unanet/eve/pkg/scm/types"
 	"net/http"
 	"strings"
 	"time"
@@ -18,9 +19,9 @@ const (
 )
 
 type Config struct {
-	GitlabApiKey  string        `split_words:"true" required:"true"`
-	GitlabBaseUrl string        `split_words:"true" required:"true"`
-	GitlabTimeout time.Duration `split_words:"true" default:"20s"`
+	GitlabApiKey  string        `envconfig:"GITLAB_API_KEY"`
+	GitlabBaseUrl string        `envconfig:"GITLAB_BASE_URL"`
+	GitlabTimeout time.Duration `envconfig:"GITLAB_TIMEOUT" default:"20s"`
 }
 
 type Client struct {
@@ -44,9 +45,9 @@ func NewClient(config Config) *Client {
 	return &Client{sling: s}
 }
 
-func (c *Client) TagCommit(ctx context.Context, options TagOptions) (*Tag, error) {
-	var success Tag
-	var failure ErrorResponse
+func (c *Client) TagCommit(ctx context.Context, options types.TagOptions) (*types.Tag, error) {
+	var success types.Tag
+	var failure types.ErrorResponse
 	r, err := c.sling.New().Post(fmt.Sprintf("v4/projects/%d/repository/tags", options.ProjectID)).QueryStruct(options).Request()
 	if err != nil {
 		return nil, err
@@ -62,9 +63,9 @@ func (c *Client) TagCommit(ctx context.Context, options TagOptions) (*Tag, error
 	}
 }
 
-func (c *Client) GetTag(ctx context.Context, options TagOptions) (*Tag, error) {
-	var success Tag
-	var failure ErrorResponse
+func (c *Client) GetTag(ctx context.Context, options types.TagOptions) (*types.Tag, error) {
+	var success types.Tag
+	var failure types.ErrorResponse
 	r, err := c.sling.New().Get(fmt.Sprintf("v4/projects/%d/repository/tags/%s", options.ProjectID, options.TagName)).Request()
 	if err != nil {
 		return nil, err

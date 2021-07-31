@@ -1,13 +1,13 @@
-package gitlab
+package types
 
-import (
-	"time"
-)
+import "time"
 
 type TagOptions struct {
 	ProjectID int    `url:"-"`
 	TagName   string `url:"tag_name,omitempty"`
 	GitHash   string `url:"ref,omitempty"`
+	Owner     string `url:"owner,omitempty"`
+	Repo      string `url:"repo,omitempty"`
 }
 
 type Tag struct {
@@ -31,6 +31,7 @@ type Tag struct {
 	} `json:"commit"`
 	Release   interface{} `json:"release"`
 	Protected bool        `json:"protected"`
+	Repo      string `json:"repo"`
 }
 
 type Release struct {

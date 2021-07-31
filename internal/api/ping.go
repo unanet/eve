@@ -36,7 +36,13 @@ func (c PingController) internalError(w http.ResponseWriter, r *http.Request) {
 
 func (c PingController) ping(w http.ResponseWriter, r *http.Request) {
 	render.Respond(w, r, render.M{
-		"message": "pong",
-		"version": Version,
+		"Version":    Version,
+		"Branch":     Branch,
+		"SHA":        SHA,
+		"ShortSHA":   ShortSHA,
+		"Author":     Author,
+		"BuildHost":  BuildHost,
+		"Date":       Date,
+		"Prerelease": Prerelease,
 	})
 }

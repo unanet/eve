@@ -4,12 +4,12 @@ package gitlab_test
 
 import (
 	"context"
+	"github.com/unanet/eve/internal/config"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/unanet/eve/internal/api"
-	"github.com/unanet/eve/pkg/gitlab"
+	"github.com/unanet/eve/pkg/scm/gitlab"
 )
 
 var (
@@ -20,7 +20,7 @@ func client(t *testing.T) *gitlab.Client {
 	if c != nil {
 		return c
 	}
-	c = gitlab.NewClient(api.GetConfig().GitlabConfig)
+	c = gitlab.NewClient(config.GetConfig().GitlabConfig)
 	require.NotNil(t, c)
 	return c
 }
