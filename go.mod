@@ -8,6 +8,7 @@ require (
 	github.com/dghubble/sling v1.3.0
 	github.com/go-chi/chi v4.1.0+incompatible
 	github.com/go-chi/cors v1.2.0
+	github.com/go-chi/jwtauth v4.0.4+incompatible
 	github.com/go-chi/render v1.0.1
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/golang-migrate/migrate/v4 v4.14.1
