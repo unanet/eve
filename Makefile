@@ -39,6 +39,8 @@ build: check_version
 
 helm: check_version
 	$(docker-helm-exec) package --version ${PATCH_VERSION} --app-version ${VERSION} ./.helm
+	curl --fail -H "X-JFrog-Art-Api:${JFROG_API_KEY}" \
+		-T eve-api-${PATCH_VERSION}.tgz "https://plainsight.jfrog.io/artifactory/helm-local/eve-api/eve-api-${PATCH_VERSION}.tgz"
 
 test:
 	docker pull ${BUILD_IMAGE}

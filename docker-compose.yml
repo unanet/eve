@@ -5,19 +5,19 @@ services:
     image: tjsampson/eve:0.18.4
     ports:
       - "3000:3000"
-      - "8080:8080"
+      - "3001:3001"
     networks:
       - eve-net
-    environment: 
+    environment:
       - DB_HOST=db
       - DB_PORT=5432
       - DB_USERNAME=eve
       - DB_PASSWORD=${EVE_DB_PASSWORD}
       - DB_NAME=eve
       - DB_CONNECTION_TIMEOUT=30s
-      - LOG_LEVEL=debug
+      - LOG_LEVEL=debub
       - EVE_PORT=3000
-      - EVE_METRICS_PORT=8080
+      - EVE_METRICS_PORT=3001
       - EVE_SERVER_FLAG=true
       - EVE_MIGRATE_FLAG=true
       - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
