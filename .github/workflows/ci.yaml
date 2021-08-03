@@ -90,7 +90,6 @@ jobs:
             tjsampson/eve:${{ env.VERSION }}
             plainsight.jfrog.io/docker-int/ops/eve-api-v1:${{ env.VERSION }}
 
-
       - name: Add JFrog Props 🐸
         run: |
             curl --fail -H "X-JFrog-Art-Api:${{ secrets.JFROG_CI_RWO_API_KEY }}" \

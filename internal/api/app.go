@@ -13,8 +13,11 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/jwtauth"
+	"github.com/go-chi/render"
 	"go.uber.org/zap"
 
+	"github.com/unanet/go/pkg/errors"
 	"github.com/unanet/go/pkg/log"
 	"github.com/unanet/go/pkg/metrics"
 	"github.com/unanet/go/pkg/middleware"
@@ -157,13 +160,16 @@ func (a *Api) authenticationMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		hfn := func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-
 			// Admin token, you shall PASS!!!
-			//if jwtauth.TokenFromHeader(r) == a.adminToken {
-			//	next.ServeHTTP(w, r.WithContext(ctx))
-			//	return
-			//}
-			//
+			if jwtauth.TokenFromHeader(r) == a.adminToken {
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			} else {
+				middleware.Log(ctx).Debug("not authorized")
+				render.Respond(w, r, errors.NewRestError(403, "Forbidden"))
+				return
+			}
+
 			//claims, err := a.idSvc.TokenVerification(r)
 			//if err != nil {
 			//	middleware.Log(ctx).Debug("failed token verification", zap.Error(err))
@@ -189,7 +195,7 @@ func (a *Api) authenticationMiddleware() func(http.Handler) http.Handler {
 			//	return
 			//}
 
-			next.ServeHTTP(w, r.WithContext(ctx))
+			// next.ServeHTTP(w, r.WithContext(ctx))
 		}
 		return http.HandlerFunc(hfn)
 	}
