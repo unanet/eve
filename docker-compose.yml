@@ -49,12 +49,12 @@ services:
     networks:
       - eve-net
     volumes: 
-      - /tmp/creds.json:/var/credentials.json
+      - /tmp/keys:/var/keys
     environment:
-      - GOOGLE_APPLICATION_CREDENTIALS=/var/credentials.json
+      - GOOGLE_APPLICATION_CREDENTIALS=/var/keys/creds.json
       - PROJECT_ID=plainsight-ops
       - REGION=us-central1
-      - INSTANCE_NAME=test-instance-1
+      - INSTANCE_NAME=test-instance
 
 networks:
   eve-net:

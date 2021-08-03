@@ -89,3 +89,10 @@ jobs:
             tjsampson/eve:latest
             tjsampson/eve:${{ env.VERSION }}
             plainsight.jfrog.io/docker-int/ops/eve-api-v1:${{ env.VERSION }}
+
+
+      - name: Add JFrog Props 🐸
+        run: |
+            curl --fail -H "X-JFrog-Art-Api:${{ secrets.JFROG_CI_RWO_API_KEY }}" \
+                -X PUT \
+                https://plainsight.jfrog.io/artifactory/api/storage/docker-int-local/ops/eve-api-v1/${{ env.VERSION }}\?properties=version=${{ env.VERSION }}.${{ github.run_number }}%7Cgit-build-properties.project-id=${{ github.repository }}%7Cgit-build-properties.git-sha=${{ github.sha }}%7Cgit-build-properties.git-branch=${{ github.ref }}
