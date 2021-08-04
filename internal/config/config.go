@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -117,4 +118,17 @@ func GetFlagsConfig() FlagConfig {
 	}
 	flagConfig = &c
 	return *flagConfig
+}
+
+// BuildPropertyID returns the Build Property Identifier that is used up in Artifactory
+// ideally we'd just settle on "git" and not differentiate between gitlab and github
+// but we could also split on the type and perform more specific operations
+func BuildPropertyID() string {
+	if config == nil {
+		_ = GetConfig()
+	}
+	if strings.ToLower(config.SourceControlProvider) == "github" {
+		return "git"
+	}
+	return config.SourceControlProvider
 }

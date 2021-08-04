@@ -58,6 +58,8 @@ spec:
               value: {{ .Values.eveGitlabAPIKey }}
             - name: GITHUB_ACCESS_TOKEN
               value: {{ .Values.eveGithubAccessToken }}
+            - name: GITHUB_BASE_URL
+              value: {{ .Values.eveGithubBaseURL }}              
             - name: VAULT_ROLE
               value: {{ .Values.vaultRole }}
             - name: VAULT_ADDR
