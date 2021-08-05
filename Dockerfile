@@ -51,7 +51,8 @@ RUN \
 ######################################
 # STEP 2 build a smaller runtime image
 ######################################
-FROM scratch
+# FROM scratch
+FROM plainsight.jfrog.io/docker/alpine:3.1
 
 ENV EVE_PORT 3000
 ENV EVE_METRICS_PORT 3001
@@ -71,8 +72,7 @@ WORKDIR /bin
 USER appuser
 
 # Set the entrypoint to the golang executable binary
-ENTRYPOINT ["/bin/eve-api"]
-
+CMD ["/bin/eve-api"]
 
 HEALTHCHECK --interval=1m --timeout=2s --start-period=60s \
     CMD curl -f http://localhost:${EVE_METRICS_PORT}/ || exit 1
