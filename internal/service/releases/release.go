@@ -123,7 +123,6 @@ func (svc *ReleaseSvc) releaseInfo(ctx context.Context, release eve.Release) (*a
 		projectIDBuildProp = fmt.Sprintf("%s-build-properties.project-id", scmId)
 		gitBranchBuildProp = fmt.Sprintf("%s-build-properties.git-branch", scmId)
 		gitShaBuildProp    = fmt.Sprintf("%s-build-properties.git-sha", scmId)
-		gitShaBuildProp    = fmt.Sprintf("%s-build-properties.git-owner", scmId)
 	)
 
 	if projectID, err = strconv.Atoi(projectIDBuildProp); err != nil {
