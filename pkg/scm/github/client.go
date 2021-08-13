@@ -3,6 +3,8 @@ package github
 import (
 	"context"
 	"fmt"
+	"github.com/unanet/go/pkg/log"
+	"go.uber.org/zap"
 	"time"
 
 	gogithub "github.com/google/go-github/v38/github"
@@ -39,21 +41,12 @@ func NewClient(cfg Config) *Client {
 }
 
 func (c *Client) TagCommit(ctx context.Context, options types.TagOptions) (*types.Tag, error) {
-	def := time.Now().UTC()
-	author := "eve"
+	log.Logger.Info("tag git commit", zap.Any("opts",options))
 	tag, resp, err := c.c.Git.CreateTag(ctx, options.Owner, options.Repo, &gogithub.Tag{
 		Tag: &options.TagName,
-		Object: &gogithub.GitObject{
-			Type: "commit",
-			SHA:  &options.GitHash,
-		},
 		SHA:     &options.GitHash,
 		URL:     nil,
-		Message: nil,
-		Tagger: &gogithub.CommitAuthor{
-			Date: &def,
-			Name: &author
-		},
+		Message: &options.TagName,
 	})
 	if err != nil {
 		return nil, err
