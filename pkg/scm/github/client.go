@@ -68,7 +68,7 @@ func (c *Client) TagCommit(ctx context.Context, options types.TagOptions) (*type
 		Tagger:  Tagger{
 			Name:  "eve",
 			Email: "ops@plainsight.ai",
-			Date:  time.Now().UTC().String(),
+			Date:  time.Now().UTC().Format(time.RFC3339),
 		},
 		Type:    "commit",
 	})
