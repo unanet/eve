@@ -1,16 +1,17 @@
 package github
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/unanet/eve/pkg/scm/types"
+	"github.com/unanet/go/pkg/errors"
+	"github.com/unanet/go/pkg/http"
 	"github.com/unanet/go/pkg/log"
 	"go.uber.org/zap"
+	gohttp "net/http"
 	"time"
-
-	gogithub "github.com/google/go-github/v38/github"
-	"github.com/unanet/eve/pkg/scm/types"
-	"github.com/unanet/go/pkg/http"
-	"golang.org/x/oauth2"
 )
 
 const userAgent = "ava-github"
@@ -22,54 +23,143 @@ type Config struct {
 }
 
 type Client struct {
-	c *gogithub.Client
+	cfg Config
+	cli *gohttp.Client
 }
 
 func NewClient(cfg Config) *Client {
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: cfg.GithubAccessToken},
-	)
-	tc := oauth2.NewClient(context.TODO(), ts)
-	tc.Transport = http.LoggingTransport
-
-	c := gogithub.NewClient(tc)
-	c.UserAgent = userAgent
-
 	return &Client{
-		c: c,
+		cli: &gohttp.Client{
+			Transport: http.LoggingTransport,
+		},
+		cfg: cfg,
 	}
 }
 
+type Tagger struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Date  string `json:"date"`
+}
+
+type TagData struct {
+	Tag     string `json:"tag"`
+	Object  string `json:"object"`
+	Message string `json:"message"`
+	Tagger  Tagger `json:"tagger"`
+	Type string `json:"type"`
+}
+
+type RefData struct {
+	Ref string `json:"ref"`
+	Sha string `json:"sha"`
+}
+
+
 func (c *Client) TagCommit(ctx context.Context, options types.TagOptions) (*types.Tag, error) {
 	log.Logger.Info("tag git commit", zap.Any("opts",options))
-	tag, resp, err := c.c.Git.CreateTag(ctx, options.Owner, options.Repo, &gogithub.Tag{
-		Tag: &options.TagName,
-		SHA:     &options.GitHash,
-		URL:     nil,
-		Message: &options.TagName,
+
+	var auth = fmt.Sprintf("token %s",c.cfg.GithubAccessToken)
+
+	b,err := json.Marshal(TagData{
+		Tag:     options.TagName,
+		Object:  options.GitHash,
+		Message: options.TagName,
+		Tagger:  Tagger{
+			Name:  "eve",
+			Email: "ops@plainsight.ai",
+			Date:  time.Now().UTC().String(),
+		},
+		Type:    "commit",
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err,"failed to marshall tag data")
 	}
-	if tag == nil || resp.StatusCode > 299 {
+
+	url := fmt.Sprintf("%s/repos/%s/%s/git/tags",c.cfg.GithubBaseUrl,options.Owner,options.Repo)
+	log.Logger.Info("github tags url", zap.String("url", url))
+
+	req,err := gohttp.NewRequest("POST", url,bytes.NewBuffer(b))
+	if err != nil {
+		return nil, errors.Wrap(err,"failed to create tag request")
+	}
+	req.Header.Set("Authorization", auth)
+
+	resp, err := c.cli.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err,"failed to issue tag request")
+	}
+	defer func() {
+		if err := resp.Body.Close(); err!= nil{
+			log.Logger.Error("failed to close the git tag body resp",zap.Error(err))
+		}
+	}()
+	if resp.StatusCode > 299 {
 		return nil, fmt.Errorf("failed to tag github commit: %v", resp.Status)
 	}
+
+	bRef,err := json.Marshal(RefData{
+		Ref: fmt.Sprintf("refs/tags/%s",options.TagName),
+		Sha: options.GitHash,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err,"failed to marshall tag data")
+	}
+	rurl := fmt.Sprintf("%s/repos/%s/%s/git/refs",c.cfg.GithubBaseUrl, options.Owner,options.Repo)
+	log.Logger.Info("github refs url", zap.String("url", rurl))
+
+	reqRef,err := gohttp.NewRequest("POST",rurl ,bytes.NewBuffer(bRef))
+	if err != nil {
+		return nil, errors.Wrap(err,"failed to create tag request")
+	}
+	reqRef.Header.Set("Authorization", auth)
+
+	refResp, err := c.cli.Do(reqRef)
+	if err != nil {
+		return nil, errors.Wrap(err,"failed to issue tag request")
+	}
+	defer func() {
+		if err := refResp.Body.Close(); err!= nil{
+			log.Logger.Error("failed to close the git ref body resp",zap.Error(err))
+		}
+	}()
+	if refResp.StatusCode > 299 {
+		return nil, fmt.Errorf("failed to create tag ref github commit: %v", resp.Status)
+	}
+
 	return &types.Tag{
-		Name: tag.GetTag(),
+		Name: options.TagName,
 		Repo: options.Repo,
 	}, nil
 }
 
 func (c *Client) GetTag(ctx context.Context, options types.TagOptions) (*types.Tag, error) {
-	tag, resp, err := c.c.Git.GetTag(ctx, options.Owner, options.Repo, options.GitHash)
+	var auth = fmt.Sprintf("token %s",c.cfg.GithubAccessToken)
+
+	url := fmt.Sprintf("%s/repos/%s/%s/git/ref/tags/%s",c.cfg.GithubBaseUrl,options.Owner,options.Repo,options.TagName)
+	log.Logger.Info("github get tag ref url", zap.String("url", url))
+
+	req,err := gohttp.NewRequest("GET", url,nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err,"failed to create get tag request")
 	}
-	if tag == nil || resp.StatusCode > 299 {
-		return nil, fmt.Errorf("failed to get github tag: %v", resp.Status)
+	req.Header.Set("Authorization", auth)
+
+	resp, err := c.cli.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err,"failed to issue get tag request")
 	}
+	defer func() {
+		if err := resp.Body.Close(); err!= nil{
+			log.Logger.Error("failed to close the get tag ref body resp",zap.Error(err))
+		}
+	}()
+	if resp.StatusCode > 299 {
+		return nil, fmt.Errorf("failed to get tag github commit: %v", resp.Status)
+	}
+
 	return &types.Tag{
-		Name: tag.GetTag(),
+		Name: options.TagName,
 		Repo: options.Repo,
 	}, nil
 }
