@@ -12,7 +12,7 @@ require (
 	github.com/go-chi/render v1.0.1
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/golang-migrate/migrate/v4 v4.14.1
-	github.com/google/go-github/v38 v38.1.0
+	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
@@ -21,6 +21,5 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/unanet/go v0.0.0-20210731164003-a222e7bdc32c
 	go.uber.org/zap v1.18.1
-	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/tools v0.0.0-20210114065538-d78b04bdf963 // indirect
 )
