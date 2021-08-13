@@ -130,8 +130,8 @@ func (svc *ReleaseSvc) releaseInfo(ctx context.Context, release eve.Release) (*a
 	}
 
 	relInfo := artifactReleaseInfo{
-		GitBranch:      gitBranchBuildProp,
-		GitSHA:         gitShaBuildProp,
+		GitBranch:      artifactProps.Property(gitBranchBuildProp),
+		GitSHA:         artifactProps.Property(gitShaBuildProp),
 		BuildVersion:   artifactProps.Property("version"),
 		ReleaseVersion: parseVersion(artifactProps.Property("version")),
 		FromPath:       fromPath,
