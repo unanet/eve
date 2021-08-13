@@ -16,43 +16,49 @@ import (
 
 const userAgent = "ava-github"
 
-type Config struct {
-	GithubAccessToken string        `envconfig:"GITHUB_ACCESS_TOKEN"`
-	GithubBaseUrl     string        `envconfig:"GITHUB_BASE_URL"`
-	GithubTimeout     time.Duration `envconfig:"GITHUB_TIMEOUT" default:"20s"`
-}
+type (
+	Config struct {
+		GithubAccessToken string        `envconfig:"GITHUB_ACCESS_TOKEN"`
+		GithubBaseUrl     string        `envconfig:"GITHUB_BASE_URL"`
+		GithubTimeout     time.Duration `envconfig:"GITHUB_TIMEOUT" default:"20s"`
+	}
 
-type Client struct {
-	cfg Config
-	cli *gohttp.Client
-}
+	Client struct {
+		cfg Config
+		cli *gohttp.Client
+	}
+	ReleaseData struct {
+		TagName string `json:"tag_name"`
+	}
+
+	Tagger struct {
+		Name  string `json:"name"`
+		Email string `json:"email"`
+		Date  string `json:"date"`
+	}
+
+	TagData struct {
+		Tag     string `json:"tag"`
+		Object  string `json:"object"`
+		Message string `json:"message"`
+		Tagger  Tagger `json:"tagger"`
+		Type    string `json:"type"`
+	}
+
+	RefData struct {
+		Ref string `json:"ref"`
+		Sha string `json:"sha"`
+	}
+)
 
 func NewClient(cfg Config) *Client {
 	return &Client{
 		cli: &gohttp.Client{
 			Transport: http.LoggingTransport,
+			Timeout:   cfg.GithubTimeout,
 		},
 		cfg: cfg,
 	}
-}
-
-type Tagger struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Date  string `json:"date"`
-}
-
-type TagData struct {
-	Tag     string `json:"tag"`
-	Object  string `json:"object"`
-	Message string `json:"message"`
-	Tagger  Tagger `json:"tagger"`
-	Type    string `json:"type"`
-}
-
-type RefData struct {
-	Ref string `json:"ref"`
-	Sha string `json:"sha"`
 }
 
 func (c *Client) createTag(options types.TagOptions) error {
@@ -107,7 +113,6 @@ func (c *Client) createRef(options types.TagOptions) error {
 		return errors.Wrap(err, "failed to marshall tag data")
 	}
 	rurl := fmt.Sprintf("%s/repos/%s/%s/git/refs", c.cfg.GithubBaseUrl, options.Owner, options.Repo)
-	log.Logger.Info("github refs url", zap.String("url", rurl))
 
 	reqRef, err := gohttp.NewRequest("POST", rurl, bytes.NewBuffer(bRef))
 	if err != nil {
@@ -126,6 +131,37 @@ func (c *Client) createRef(options types.TagOptions) error {
 	}()
 	if refResp.StatusCode > 299 {
 		return fmt.Errorf("failed to create tag ref github commit: %v", refResp.Status)
+	}
+	return nil
+}
+
+func (c *Client) createRelease(options types.TagOptions) error {
+	var auth = fmt.Sprintf("token %s", c.cfg.GithubAccessToken)
+
+	rurl := fmt.Sprintf("%s/repos/%s/%s/releases", c.cfg.GithubBaseUrl, options.Owner, options.Repo)
+
+	bRef, err := json.Marshal(ReleaseData{TagName: options.TagName})
+	if err != nil {
+		return errors.Wrap(err, "failed to marshall release data")
+	}
+
+	reqRef, err := gohttp.NewRequest("POST", rurl, bytes.NewBuffer(bRef))
+	if err != nil {
+		return errors.Wrap(err, "failed to create release request")
+	}
+	reqRef.Header.Set("Authorization", auth)
+
+	refResp, err := c.cli.Do(reqRef)
+	if err != nil {
+		return errors.Wrap(err, "failed to issue release request")
+	}
+	defer func() {
+		if err := refResp.Body.Close(); err != nil {
+			log.Logger.Error("failed to close the git release body resp", zap.Error(err))
+		}
+	}()
+	if refResp.StatusCode > 299 {
+		return fmt.Errorf("failed to create release: %v", refResp.Status)
 	}
 	return nil
 }
@@ -153,9 +189,7 @@ func (c *Client) TagCommit(ctx context.Context, options types.TagOptions) (*type
 
 func (c *Client) GetTag(ctx context.Context, options types.TagOptions) (*types.Tag, error) {
 	var auth = fmt.Sprintf("token %s", c.cfg.GithubAccessToken)
-
 	url := fmt.Sprintf("%s/repos/%s/%s/git/ref/tags/%s", c.cfg.GithubBaseUrl, options.Owner, options.Repo, options.TagName)
-	log.Logger.Info("github get tag ref url", zap.String("url", url))
 
 	req, err := gohttp.NewRequest("GET", url, nil)
 	if err != nil {
@@ -180,42 +214,4 @@ func (c *Client) GetTag(ctx context.Context, options types.TagOptions) (*types.T
 		Name: options.TagName,
 		Repo: options.Repo,
 	}, nil
-}
-
-type ReleaseData struct {
-	TagName string `json:"tag_name"`
-}
-
-func (c *Client) createRelease(options types.TagOptions) error {
-	var auth = fmt.Sprintf("token %s", c.cfg.GithubAccessToken)
-
-	rurl := fmt.Sprintf("%s/repos/%s/%s/releases", c.cfg.GithubBaseUrl, options.Owner, options.Repo)
-	log.Logger.Info("github refs url", zap.String("url", rurl))
-
-	bRef, err := json.Marshal(ReleaseData{
-		TagName: options.TagName,
-	})
-	if err != nil {
-		return errors.Wrap(err, "failed to marshall release data")
-	}
-
-	reqRef, err := gohttp.NewRequest("POST", rurl, bytes.NewBuffer(bRef))
-	if err != nil {
-		return errors.Wrap(err, "failed to create release request")
-	}
-	reqRef.Header.Set("Authorization", auth)
-
-	refResp, err := c.cli.Do(reqRef)
-	if err != nil {
-		return errors.Wrap(err, "failed to issue release request")
-	}
-	defer func() {
-		if err := refResp.Body.Close(); err != nil {
-			log.Logger.Error("failed to close the git release body resp", zap.Error(err))
-		}
-	}()
-	if refResp.StatusCode > 299 {
-		return fmt.Errorf("failed to create release: %v", refResp.Status)
-	}
-	return nil
 }
