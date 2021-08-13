@@ -123,6 +123,7 @@ func (svc *ReleaseSvc) releaseInfo(ctx context.Context, release eve.Release) (*a
 		projectIDBuildProp = fmt.Sprintf("%s-build-properties.project-id", scmId)
 		gitBranchBuildProp = fmt.Sprintf("%s-build-properties.git-branch", scmId)
 		gitShaBuildProp    = fmt.Sprintf("%s-build-properties.git-sha", scmId)
+		gitShaBuildProp    = fmt.Sprintf("%s-build-properties.git-owner", scmId)
 	)
 
 	if projectID, err = strconv.Atoi(projectIDBuildProp); err != nil {
@@ -176,6 +177,11 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 		GitHash:   relInfo.GitSHA,
 	}
 
+	if len(relInfo.ProjectName) > 0 && len(strings.Split(relInfo.ProjectName, "/")) == 2 {
+		gitTagOpts.Owner = strings.Split(relInfo.ProjectName, "/")[0]
+		gitTagOpts.Repo = strings.Split(relInfo.ProjectName, "/")[1]
+	}
+
 	// Check if tag already exists
 	tag, _ := svc.scm.GetTag(ctx, gitTagOpts)
 	if tag != nil && tag.Name != "" {
@@ -201,7 +207,7 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 	if strings.ToLower(relInfo.ToFeed.Alias) == "prod" {
 		_, gErr := svc.scm.TagCommit(ctx, gitTagOpts)
 		if gErr != nil {
-			return success, goerrors.Wrapf(gErr, "failed to tag the gitlab commit")
+			return success, goerrors.Wrapf(gErr, "failed to tag the commit")
 		}
 	}
 
