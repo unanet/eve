@@ -125,8 +125,8 @@ func (svc *ReleaseSvc) releaseInfo(ctx context.Context, release eve.Release) (*a
 		gitShaBuildProp    = fmt.Sprintf("%s-build-properties.git-sha", scmId)
 	)
 
-	if projectID, err = strconv.Atoi(projectIDBuildProp); err != nil {
-		projectName = projectIDBuildProp
+	if projectID, err = strconv.Atoi(artifactProps.Property(projectIDBuildProp)); err != nil {
+		projectName = artifactProps.Property(projectIDBuildProp)
 	}
 
 	relInfo := artifactReleaseInfo{
