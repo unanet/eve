@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	gogithub "github.com/google/go-github/github"
+	gogithub "github.com/google/go-github/v38/github"
 	"github.com/unanet/eve/pkg/scm/types"
 	"github.com/unanet/go/pkg/http"
 	"golang.org/x/oauth2"
@@ -39,13 +39,21 @@ func NewClient(cfg Config) *Client {
 }
 
 func (c *Client) TagCommit(ctx context.Context, options types.TagOptions) (*types.Tag, error) {
+	def := time.Now().UTC()
+	author := "eve"
 	tag, resp, err := c.c.Git.CreateTag(ctx, options.Owner, options.Repo, &gogithub.Tag{
 		Tag: &options.TagName,
-		SHA: &options.GitHash,
-		//URL:          nil,
-		//Message:      nil,
-		//Tagger:       nil,
-		//Object:       nil,
+		Object: &gogithub.GitObject{
+			Type: "commit",
+			SHA:  &options.GitHash,
+		},
+		SHA:     &options.GitHash,
+		URL:     nil,
+		Message: nil,
+		Tagger: &gogithub.CommitAuthor{
+			Date: &def,
+			Name: &author
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -55,7 +63,7 @@ func (c *Client) TagCommit(ctx context.Context, options types.TagOptions) (*type
 	}
 	return &types.Tag{
 		Name: tag.GetTag(),
-		Repo:    options.Repo,
+		Repo: options.Repo,
 	}, nil
 }
 
@@ -69,6 +77,6 @@ func (c *Client) GetTag(ctx context.Context, options types.TagOptions) (*types.T
 	}
 	return &types.Tag{
 		Name: tag.GetTag(),
-		Repo:    options.Repo,
+		Repo: options.Repo,
 	}, nil
 }

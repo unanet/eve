@@ -12,7 +12,7 @@ require (
 	github.com/go-chi/render v1.0.1
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/golang-migrate/migrate/v4 v4.14.1
-	github.com/google/go-github v17.0.0+incompatible
+	github.com/google/go-github/v38 v38.1.0
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
