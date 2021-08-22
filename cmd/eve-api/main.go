@@ -3,7 +3,9 @@ package main
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
+	casbinpgadapter "github.com/cychiuae/casbin-pg-adapter"
 	"github.com/unanet/eve/internal/config"
 	"github.com/unanet/eve/pkg/s3"
 	"github.com/unanet/eve/pkg/scm"
@@ -16,6 +18,7 @@ import (
 	"github.com/unanet/eve/internal/service/releases"
 	"github.com/unanet/eve/pkg/artifactory"
 	"github.com/unanet/eve/pkg/queue"
+	"github.com/unanet/go/pkg/identity"
 	"github.com/unanet/go/pkg/log"
 )
 
@@ -77,26 +80,26 @@ func main() {
 		log.Logger.Panic("Unable to Initialize the Controllers")
 	}
 
-	//identitySvc, err := identity.NewService(config.Identity)
-	//if err != nil {
-	//	log.Logger.Panic("Unable to Initialize the Identity Service Manager", zap.Error(err))
-	//}
+	identitySvc, err := identity.NewService(config.Identity)
+	if err != nil {
+		log.Logger.Panic("Unable to Initialize the Identity Service Manager", zap.Error(err))
+	}
 
-	//adapter, err := casbinpgadapter.NewAdapter(db.DB, "policies")
-	//if err != nil {
-	//	log.Logger.Panic("failed to create casbin adaptor", zap.Error(err))
-	//}
-	//enforcer, err := casbin.NewEnforcer(GetPolicyModel(), adapter)
-	//if err != nil {
-	//	log.Logger.Panic("failed to create casbin enforcer", zap.Error(err))
-	//}
+	adapter, err := casbinpgadapter.NewAdapter(db.DB, "policies")
+	if err != nil {
+		log.Logger.Panic("failed to create casbin adaptor", zap.Error(err))
+	}
+	enforcer, err := casbin.NewEnforcer(GetPolicyModel(), adapter)
+	if err != nil {
+		log.Logger.Panic("failed to create casbin enforcer", zap.Error(err))
+	}
 
-	//err = enforcer.LoadPolicy()
-	//if err != nil {
-	//	log.Logger.Panic("failed to load casbin policy", zap.Error(err))
-	//}
+	err = enforcer.LoadPolicy()
+	if err != nil {
+		log.Logger.Panic("failed to load casbin policy", zap.Error(err))
+	}
 
-	apiServer, err := api.NewApi(controllers, config)
+	apiServer, err := api.NewApi(controllers, identitySvc, enforcer, config)
 	if err != nil {
 		log.Logger.Panic("Failed to Create Api App", zap.Error(err))
 	}

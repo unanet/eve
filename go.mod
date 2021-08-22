@@ -5,12 +5,14 @@ go 1.16
 require (
 	github.com/aws/aws-sdk-go v1.40.11
 	github.com/casbin/casbin/v2 v2.34.1
+	github.com/cychiuae/casbin-pg-adapter v0.0.6
 	github.com/dghubble/sling v1.3.0
 	github.com/go-chi/chi v4.1.0+incompatible
 	github.com/go-chi/cors v1.2.0
 	github.com/go-chi/jwtauth v4.0.4+incompatible
 	github.com/go-chi/render v1.0.1
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
+	github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/golang-migrate/migrate/v4 v4.14.1
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/jmoiron/sqlx v1.3.4

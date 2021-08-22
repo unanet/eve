@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/unanet/go/pkg/identity"
 	"github.com/unanet/go/pkg/log"
 	"go.uber.org/zap"
 
@@ -45,14 +46,14 @@ func (c DBConfig) MigrationConnectionString() string {
 	return fmt.Sprintf("postgres://%s:%d/%s?sslmode=disable&user=%s&password=%s", c.DBHost, c.DBPort, c.DBName, c.DBUsername, c.DBPassword)
 }
 
-//type IdentityConfig = identity.Config
+type IdentityConfig = identity.Config
 
 type Config struct {
 	LogConfig
 	ArtifactoryConfig
 	GitLabConfig
 	GitHubConfig
-	//Identity               IdentityConfig
+	Identity               IdentityConfig
 	LocalDev               bool          `envconfig:"LOCAL_DEV" default:"false"`
 	ApiQUrl                string        `envconfig:"API_Q_URL" required:"true"`
 	SourceControlProvider  string        `envconfig:"SCM_PROVIDER" default:"gitlab"`
