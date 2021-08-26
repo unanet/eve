@@ -52,7 +52,12 @@ func NewClient(config Config) *Client {
 func (c *Client) GetLatestVersion(ctx context.Context, repository string, path string, version string) (string, error) {
 	var success VersionResponse
 	var failure ErrorResponse
-	r, err := c.sling.New().Get(fmt.Sprintf("versions/%s/%s", repository, path)).Request()
+
+	full_path := fmt.Sprintf("versions/%s/%s", repository, path)
+
+	log.Logger.Info("get latest artifact version", zap.String("full_path", full_path))
+
+	r, err := c.sling.New().Get(full_path).Request()
 	if err != nil {
 		return "", errors.Wrap(err)
 	}
