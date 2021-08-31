@@ -3,6 +3,9 @@ package plans
 import (
 	"context"
 	"encoding/json"
+	"strconv"
+	"time"
+
 	uuid "github.com/satori/go.uuid"
 	"github.com/unanet/eve/internal/data"
 	"github.com/unanet/eve/internal/service/crud"
@@ -10,8 +13,6 @@ import (
 	"github.com/unanet/eve/pkg/queue"
 	"github.com/unanet/go/pkg/errors"
 	"go.uber.org/zap"
-	"strconv"
-	"time"
 )
 
 type QWriter interface {
@@ -295,7 +296,7 @@ func (dq *Queue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 	if len(options.CallbackURL) > 0 {
 		cErr := dq.callback.Post(ctx, options.CallbackURL, nsDeploymentPlan)
 		if cErr != nil {
-			dq.Logger(ctx).Warn("callback failed", zap.String("callback_url", options.CallbackURL), zap.Error(cErr))
+			dq.Logger(ctx).Warn("schedule deployment callback failed", zap.String("callback_url", options.CallbackURL), zap.Error(cErr))
 		}
 	}
 
@@ -387,7 +388,7 @@ func (dq *Queue) updateDeployment(ctx context.Context, m *queue.M) error {
 	if len(plan.CallbackURL) > 0 {
 		cErr := dq.callback.Post(ctx, plan.CallbackURL, plan)
 		if cErr != nil {
-			dq.Logger(ctx).Warn("callback failed", zap.String("callback_url", plan.CallbackURL))
+			dq.Logger(ctx).Warn("update deployment callback failed", zap.String("callback_url", plan.CallbackURL))
 		}
 	}
 
@@ -451,7 +452,7 @@ func (dq *Queue) callbackMessage(ctx context.Context, m *queue.M) error {
 	if len(options.CallbackURL) > 0 {
 		cErr := dq.callback.Post(ctx, options.CallbackURL, dcm)
 		if cErr != nil {
-			dq.Logger(ctx).Warn("callback failed", zap.String("callback_url", options.CallbackURL), zap.Error(cErr), zap.String("id", d.ID.String()))
+			dq.Logger(ctx).Warn("callback message callback failed", zap.String("callback_url", options.CallbackURL), zap.Error(cErr), zap.String("id", d.ID.String()))
 		}
 	} else {
 		dq.Logger(ctx).Warn("message callback came in for a deployment without a registered callback, skipping...", zap.String("id", d.ID.String()))
