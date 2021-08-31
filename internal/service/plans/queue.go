@@ -314,6 +314,9 @@ func (dq *Queue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 	}
 
 	mBody, err := eve.MarshalNSDeploymentPlanToS3LocationBody(ctx, dq.uploader, nsDeploymentPlan)
+	if err != nil {
+		return errors.Wrap(err)
+	}
 
 	err = dq.worker.Message(ctx, nsDeploymentPlan.SchQueueUrl, &queue.M{
 		ID:      deployment.ID,
