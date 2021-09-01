@@ -295,7 +295,11 @@ func (dq *Queue) scheduleDeployment(ctx context.Context, m *queue.M) error {
 
 	if len(options.CallbackURL) > 0 {
 		if cErr := dq.callback.Post(ctx, options.CallbackURL, nsDeploymentPlan); cErr != nil {
-			dq.Logger(ctx).Warn("schedule deployment callback failed", zap.Any("plan", nsDeploymentPlan), zap.Error(cErr))
+			dq.Logger(ctx).Warn("schedule deployment callback failed",
+				zap.Error(cErr),
+				zap.String("plan_callback_url", nsDeploymentPlan.CallbackURL),
+				zap.String("options_callback_url", options.CallbackURL),
+			)
 		}
 	}
 
@@ -389,7 +393,10 @@ func (dq *Queue) updateDeployment(ctx context.Context, m *queue.M) error {
 
 	if len(plan.CallbackURL) > 0 {
 		if cErr := dq.callback.Post(ctx, plan.CallbackURL, plan); cErr != nil {
-			dq.Logger(ctx).Warn("update deployment callback failed", zap.Any("plan", plan), zap.Error(cErr))
+			dq.Logger(ctx).Warn("update deployment callback failed",
+				zap.Error(cErr),
+				zap.String("plan_callback_url", plan.CallbackURL),
+			)
 		}
 	}
 
