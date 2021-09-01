@@ -14,8 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0      
       - uses: actions/setup-go@v2
         with:
           go-version: '^1.16.6'
@@ -31,6 +29,9 @@ jobs:
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
           BUILD_HOST=$(hostname)
           echo "BUILD_HOST=$BUILD_HOST" >> $GITHUB_ENV
+
+      - name: Fetch tags
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*          
 
       - name: Check SemVer Tag 🖖
         run: |
