@@ -5,22 +5,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	gohttp "net/http"
+	"time"
+
 	"github.com/unanet/eve/pkg/scm/types"
 	"github.com/unanet/go/pkg/errors"
 	"github.com/unanet/go/pkg/http"
 	"github.com/unanet/go/pkg/log"
 	"go.uber.org/zap"
-	gohttp "net/http"
-	"time"
 )
-
-const userAgent = "ava-github"
 
 type (
 	Config struct {
-		GithubAccessToken string        `envconfig:"GITHUB_ACCESS_TOKEN"`
-		GithubBaseUrl     string        `envconfig:"GITHUB_BASE_URL"`
-		GithubTimeout     time.Duration `envconfig:"GITHUB_TIMEOUT" default:"20s"`
+		GithubAccessToken  string        `envconfig:"GITHUB_ACCESS_TOKEN"`
+		GithubBaseUrl      string        `envconfig:"GITHUB_BASE_URL"`
+		GithubTimeout      time.Duration `envconfig:"GITHUB_TIMEOUT" default:"20s"`
+		GithubEmailAddress string        `envconfig:"GITHUB_EMAIL_ADDRESS" default:"ghost@unknown.tld"`
 	}
 
 	Client struct {
@@ -70,7 +70,7 @@ func (c *Client) createTag(options types.TagOptions) error {
 		Message: options.TagName,
 		Tagger: Tagger{
 			Name:  "eve",
-			Email: "ops@plainsight.ai",
+			Email: c.cfg.GithubEmailAddress,
 			Date:  time.Now().UTC().Format(time.RFC3339),
 		},
 		Type: "commit",
