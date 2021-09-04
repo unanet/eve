@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 create type feed_type as enum ('docker', 'generic');
 
-create type provider_group as enum ('', 'plainsight', 'ops', 'portal', 'innovation');
+create type provider_group as enum ('', 'ops', 'portal');
 
 create type deployment_state as enum ('queued', 'scheduled', 'completed');
 
