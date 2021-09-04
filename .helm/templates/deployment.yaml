@@ -30,34 +30,48 @@ spec:
           env:
             - name: EVE_ARTIFACTORY_BASE_URL
               value: {{ .Values.eveArtifactoryBaseURL }}
-            - name: EVE_GITLAB_BASE_URL
-              value: {{ .Values.eveGitlabBaseURL }}
-            - name: EVE_API_Q_URL
-              value: {{ .Values.eveApiQUrl }}
-            - name: EVE_S3_BUCKET
-              value: {{ .Values.eveS3Bucket }}
-            - name: EVE_AWS_REGION
-              value: {{ .Values.eveAWSRegion }}
-            - name: EVE_DB_HOST
-              value: {{ .Values.eveDBHost }}
-            - name: EVE_DB_NAME
-              value: {{ .Values.eveDBName }}
-            - name: EVE_LOG_LEVEL
-              value: {{ .Values.eveLogLevel }}
             - name: EVE_ARTIFACTORY_API_KEY
               value: {{ .Values.eveArtifactoryAPIKey }}
-            - name: EVE_DB_PASSWORD
+            - name: GITLAB_BASE_URL
+              value: {{ .Values.eveGitlabBaseURL }}
+            - name: API_Q_URL
+              value: {{ .Values.eveApiQUrl }}
+            - name: S3_BUCKET
+              value: {{ .Values.eveS3Bucket }}
+            - name: DB_HOST
+              value: {{ .Values.eveDBHost }}
+            - name: DB_NAME
+              value: {{ .Values.eveDBName }}
+            - name: DB_PASSWORD
               value: {{ .Values.eveDBPassword }}
-            - name: EVE_DB_USERNAME
+            - name: DB_USERNAME
               value: {{ .Values.eveDBUsername }}
-            - name: EVE_GITLAB_API_KEY
+            - name: AWS_ACCESS_KEY
+              value: {{ .Values.eveAWSAccessKey }}
+            - name: AWS_SECRET_KEY
+              value: {{ .Values.eveAWSSecretKey }}
+            - name: AWS_REGION
+              value: {{ .Values.eveAWSRegion }}
+            - name: LOG_LEVEL
+              value: {{ .Values.eveLogLevel }}
+            - name: GITLAB_API_KEY
               value: {{ .Values.eveGitlabAPIKey }}
+            - name: GITHUB_ACCESS_TOKEN
+              value: {{ .Values.eveGithubAccessToken }}
+            - name: GITHUB_BASE_URL
+              value: {{ .Values.eveGithubBaseURL }}
             - name: VAULT_ROLE
               value: {{ .Values.vaultRole }}
             - name: VAULT_ADDR
               value: {{ .Values.vaultAddr }}
             - name: VAULT_K8S_MOUNT
-              value: {{ .Values.vaultK8sMount }}              
+              value: {{ .Values.vaultK8sMount }}
+            - name: ADMIN_TOKEN
+              value: {{ .Values.eveAdminToken }}
+            - name: PROVIDER_TYPE
+              value: {{ .Values.secretsProviderType }}
+            - name: DYNAMIC_SECRETS_ENABLED
+              value: {{ .Values.dynamicSecretsEnabled | quote }}              
           ports:
             - containerPort: 3000
               name: api

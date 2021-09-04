@@ -11,24 +11,26 @@ import (
 	"github.com/unanet/go/pkg/log"
 	"go.uber.org/zap"
 
+	"github.com/unanet/eve/internal/config"
 	"github.com/unanet/eve/internal/data"
 	"github.com/unanet/eve/internal/service"
 	"github.com/unanet/eve/pkg/artifactory"
 	"github.com/unanet/eve/pkg/eve"
-	"github.com/unanet/eve/pkg/gitlab"
+	"github.com/unanet/eve/pkg/scm"
+	"github.com/unanet/eve/pkg/scm/types"
 )
 
 type ReleaseSvc struct {
 	repo              *data.Repo
 	artifactoryClient *artifactory.Client
-	gitlabClient      *gitlab.Client
+	scm               scm.SourceController
 }
 
-func NewReleaseSvc(r *data.Repo, a *artifactory.Client, g *gitlab.Client) *ReleaseSvc {
+func NewReleaseSvc(r *data.Repo, a *artifactory.Client, g scm.SourceController) *ReleaseSvc {
 	return &ReleaseSvc{
 		repo:              r,
 		artifactoryClient: a,
-		gitlabClient:      g,
+		scm:               g,
 	}
 }
 
@@ -67,6 +69,7 @@ type artifactReleaseInfo struct {
 	GitBranch, GitSHA, BuildVersion, ReleaseVersion string
 	FromPath, ToPath                                string
 	FromRepo, ToRepo                                string
+	ProjectName                                     string
 	FromFeed, ToFeed                                *data.Feed
 	Artifact                                        *data.Artifact
 	ProjectID                                       int
@@ -110,14 +113,25 @@ func (svc *ReleaseSvc) releaseInfo(ctx context.Context, release eve.Release) (*a
 		return nil, errors.Wrap(perr)
 	}
 
-	projectID, cErr := strconv.Atoi(artifactProps.Property("gitlab-build-properties.project-id"))
-	if cErr != nil {
-		return nil, errors.Wrap(cErr)
+	var (
+		projectID   int
+		projectName string
+	)
+
+	var (
+		scmId              = config.BuildPropertyID()
+		projectIDBuildProp = fmt.Sprintf("%s-build-properties.project-id", scmId)
+		gitBranchBuildProp = fmt.Sprintf("%s-build-properties.git-branch", scmId)
+		gitShaBuildProp    = fmt.Sprintf("%s-build-properties.git-sha", scmId)
+	)
+
+	if projectID, err = strconv.Atoi(artifactProps.Property(projectIDBuildProp)); err != nil {
+		projectName = artifactProps.Property(projectIDBuildProp)
 	}
 
 	relInfo := artifactReleaseInfo{
-		GitBranch:      artifactProps.Property("gitlab-build-properties.git-branch"),
-		GitSHA:         artifactProps.Property("gitlab-build-properties.git-sha"),
+		GitBranch:      artifactProps.Property(gitBranchBuildProp),
+		GitSHA:         artifactProps.Property(gitShaBuildProp),
 		BuildVersion:   artifactProps.Property("version"),
 		ReleaseVersion: parseVersion(artifactProps.Property("version")),
 		FromPath:       fromPath,
@@ -128,6 +142,7 @@ func (svc *ReleaseSvc) releaseInfo(ctx context.Context, release eve.Release) (*a
 		FromFeed:       fromFeed,
 		Artifact:       artifact,
 		ProjectID:      projectID,
+		ProjectName:    projectName,
 	}
 
 	log.Logger.Info("release artifact info", zap.Any("release_info", relInfo))
@@ -155,14 +170,19 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 		return success, errors.BadRequestf("invalid version: %v", relInfo.ReleaseVersion)
 	}
 
-	gitlabTagOpts := gitlab.TagOptions{
+	gitTagOpts := types.TagOptions{
 		ProjectID: relInfo.ProjectID,
 		TagName:   relInfo.ReleaseVersion,
 		GitHash:   relInfo.GitSHA,
 	}
 
+	if len(relInfo.ProjectName) > 0 && len(strings.Split(relInfo.ProjectName, "/")) == 2 {
+		gitTagOpts.Owner = strings.Split(relInfo.ProjectName, "/")[0]
+		gitTagOpts.Repo = strings.Split(relInfo.ProjectName, "/")[1]
+	}
+
 	// Check if tag already exists
-	tag, _ := svc.gitlabClient.GetTag(ctx, gitlabTagOpts)
+	tag, _ := svc.scm.GetTag(ctx, gitTagOpts)
 	if tag != nil && tag.Name != "" {
 		return success, errors.BadRequestf("the version: %v has already been tagged", tag.Name)
 	}
@@ -184,9 +204,9 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 
 	// If we are releasing to prod we tag the commit in GitLab
 	if strings.ToLower(relInfo.ToFeed.Alias) == "prod" {
-		_, gErr := svc.gitlabClient.TagCommit(ctx, gitlabTagOpts)
+		_, gErr := svc.scm.TagCommit(ctx, gitTagOpts)
 		if gErr != nil {
-			return success, goerrors.Wrapf(gErr, "failed to tag the gitlab commit")
+			return success, goerrors.Wrapf(gErr, "failed to tag the commit")
 		}
 	}
 

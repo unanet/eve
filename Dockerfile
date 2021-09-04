@@ -1,18 +1,77 @@
-# FROM unanet-docker.jfrog.io/alpine-base
-FROM alpine
+##########################################
+# STEP 1 build binary in Build Stage Image
+##########################################
+FROM golang:1.16.7 AS builder
+
+# Build ARGS
+ARG VERSION=0.0.0
+ARG SHA=""
+ARG SHORT_SHA=""
+ARG AUTHOR=""
+ARG BUILD_HOST=""
+ARG BRANCH=""
+ARG BUILD_DATE=""
+ARG PRERELEASE=""
+
+
+ENV LDFLAGS "-X 'github.com/unanet/go/pkg/version.Version=${VERSION}' \
+               -X 'github.com/unanet/go/pkg/version.SHA=${SHA}' \ 
+               -X 'github.com/unanet/go/pkg/version.ShortSHA=${SHORT_SHA}' \
+               -X 'github.com/unanet/go/pkg/version.Author=${AUTHOR}' \
+               -X 'github.com/unanet/go/pkg/version.BuildHost=${BUILD_HOST}' \
+               -X 'github.com/unanet/go/pkg/version.Branch=${BRANCH}' \
+               -X 'github.com/unanet/go/pkg/version.Date=${BUILD_DATE}' \
+               -X 'github.com/unanet/go/pkg/version.Prerelease=${PRERELEASE}'"
+
+# Install git + SSL ca certificates.
+# Git is required for fetching the dependencies.
+# Ca-certificates is required to call HTTPS endpoints.
+# tzdata is for timezone data
+RUN apk update && apk add --no-cache git ca-certificates tzdata && update-ca-certificates
+
+# create appuser.
+RUN adduser -D -g '' appuser
+
+# set app working dir
+WORKDIR /src
+
+COPY go.mod go.sum ./
+
+RUN \
+    go mod tidy && \
+    go mod download
+
+COPY . .
+
+RUN \
+    CGO_ENABLED=0 \
+    GOOS=linux GOARCH=amd64 \
+    go build -ldflags="${LDFLAGS}" -o /bin/eve-api ./cmd/eve-api/main.go
+
+######################################
+# STEP 2 build a smaller runtime image
+######################################
+FROM scratch
 
 ENV EVE_PORT 3000
 ENV EVE_METRICS_PORT 3001
-ENV EVE_SERVICE_NAME eve-api
 ENV EVE_SERVER_FLAG true
 ENV EVE_MIGRATE_FLAG true
-ENV VAULT_ADDR https://vault.unanet.io
-ENV VAULT_ROLE k8s-devops
 
-ADD ./bin/eve-api /app/eve-api
-ADD ./migrations /app/migrations
-WORKDIR /app
-CMD ["/app/eve-api"]
+# Import assets from the build stage image
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /bin/eve-api /bin/eve-api
+COPY --from=builder /src/migrations /bin/migrations
+
+WORKDIR /bin
+
+# Use the unprivileged user (created in the build stage image)
+USER appuser
+
+# Set the entrypoint to the golang executable binary
+CMD ["/bin/eve-api"]
 
 HEALTHCHECK --interval=1m --timeout=2s --start-period=60s \
     CMD curl -f http://localhost:${EVE_METRICS_PORT}/ || exit 1

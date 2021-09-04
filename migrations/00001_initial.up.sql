@@ -2,13 +2,36 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 create type feed_type as enum ('docker', 'generic');
 
-create type provider_group as enum ('unanet', 'clearview', 'ops', 'cosential', 'connect');
+create type provider_group as enum ('', 'ops', 'portal');
 
 create type deployment_state as enum ('queued', 'scheduled', 'completed');
 
 create type deployment_cron_state as enum ('idle', 'running');
 
 create type definition_order as enum ('main', 'pre', 'post');
+
+CREATE TABLE IF NOT EXISTS policies (
+     p_type character varying(256) DEFAULT ''::character varying NOT NULL,
+     v0 character varying(256) DEFAULT ''::character varying NOT NULL,
+     v1 character varying(256) DEFAULT ''::character varying NOT NULL,
+     v2 character varying(256) DEFAULT ''::character varying NOT NULL,
+     v3 character varying(256) DEFAULT ''::character varying NOT NULL,
+     v4 character varying(256) DEFAULT ''::character varying NOT NULL,
+     v5 character varying(256) DEFAULT ''::character varying NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_policies_p_type ON public.policies USING btree (p_type);
+CREATE INDEX IF NOT EXISTS idx_policies_v0 ON public.policies USING btree (v0);
+CREATE INDEX IF NOT EXISTS idx_policies_v1 ON public.policies USING btree (v1);
+CREATE INDEX IF NOT EXISTS idx_policies_v2 ON public.policies USING btree (v2);
+CREATE INDEX IF NOT EXISTS idx_policies_v3 ON public.policies USING btree (v3);
+CREATE INDEX IF NOT EXISTS idx_policies_v4 ON public.policies USING btree (v4);
+CREATE INDEX IF NOT EXISTS idx_policies_v5 ON public.policies USING btree (v5);
+
+INSERT INTO public.policies (p_type, v0, v1, v2, v3, v4, v5) VALUES ('p', 'user', '/*', 'GET', '', '', '');
+INSERT INTO public.policies (p_type, v0, v1, v2, v3, v4, v5) VALUES ('p', 'service', '/*', '*', '', '', '');
+INSERT INTO public.policies (p_type, v0, v1, v2, v3, v4, v5) VALUES ('p', 'admin', '/*', '*', '', '', '');
+
 
 create table if not exists feed
 (
@@ -33,10 +56,6 @@ create table if not exists artifact
     image_tag        varchar(25) default '$version'::character varying not null,
     service_port     integer     default 8080                          not null,
     metrics_port     integer     default 0                             not null,
-    service_account  varchar(50) default 'unanet'::character varying   not null,
-    run_as           integer     default 1101                          not null,
-    liveliness_probe jsonb       default '{}'::json                    not null,
-    readiness_probe  jsonb       default '{}'::json                    not null,
     constraint artifact_pk
         primary key (id)
 );
@@ -108,7 +127,6 @@ create table if not exists service
     created_at         timestamp    default now()                     not null,
     updated_at         timestamp    default now()                     not null,
     name               varchar(50)  default 'blah'::character varying not null,
-    sticky_sessions    boolean      default false                     not null,
     count              integer      default 2                         not null,
     success_exit_codes varchar(100) default '0'::character varying    not null,
     explicit_deploy    boolean      default false                     not null,
@@ -214,7 +232,6 @@ create table if not exists metadata
     value         jsonb     default '{}'::json not null,
     created_at    timestamp default now()      not null,
     updated_at    timestamp default now()      not null,
-    migrated_from integer,
     constraint metadata_pk
         primary key (id)
 );
@@ -549,3 +566,4 @@ create trigger metadata_update_trigger
     on metadata
     for each row
 execute procedure metadata_update();
+

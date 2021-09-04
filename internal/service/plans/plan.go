@@ -10,6 +10,7 @@ import (
 	"github.com/unanet/go/pkg/errors"
 	"github.com/unanet/go/pkg/json"
 	"github.com/unanet/go/pkg/log"
+	"go.uber.org/zap"
 
 	"github.com/unanet/eve/internal/data"
 	"github.com/unanet/eve/pkg/artifactory"
@@ -236,6 +237,11 @@ func (d *PlanGenerator) setArtifactoryVersions(ctx context.Context, options *eve
 	var artifacts eve.ArtifactDefinitions
 	for _, a := range options.Artifacts {
 		// if you didn't pass a full version, we need to add a wildcard so it work correctly to query artifactory
+		log.Logger.Info("get artifact",
+			zap.String("feed", a.ArtifactoryFeed),
+			zap.String("path", a.ArtifactoryPath),
+			zap.String("version", a.ArtifactoryRequestedVersion()),
+		)
 		version, err := d.vq.GetLatestVersion(ctx, a.ArtifactoryFeed, a.ArtifactoryPath, a.ArtifactoryRequestedVersion())
 		if err != nil {
 			if _, ok := err.(artifactory.NotFoundError); ok {

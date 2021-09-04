@@ -1,16 +1,45 @@
 version: "3.7"
 
 services:
-  eve-db:
-    image: postgres:11.4
-    container_name: eve_db
+  eve:
+    image: unanet/eve:latest
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    networks:
+      - eve-net
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=postgres
+      - DB_CONNECTION_TIMEOUT=30s
+      - LOG_LEVEL=debub
+      - EVE_PORT=3000
+      - EVE_METRICS_PORT=3001
+      - EVE_SERVER_FLAG=true
+      - EVE_MIGRATE_FLAG=true
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - EVE_ARTIFACTORY_API_KEY=${EVE_ARTIFACTORY_API_KEY}
+      - EVE_ARTIFACTORY_BASE_URL=${EVE_ARTIFACTORY_BASE_URL}
+      - API_Q_URL=${API_Q_URL}
+      - S3_BUCKET=${S3_BUCKET}
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
+    links: 
+      - db:db
+
+  db:
+    image: postgres:13
     ports:
       - "5432:5432"
     networks:
       - eve-net
     environment:
-      - POSTGRES_USER=eve-api
-      - POSTGRES_PASSWORD=eve-api
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
 
 networks:
   eve-net:

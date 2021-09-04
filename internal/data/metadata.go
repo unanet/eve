@@ -11,12 +11,11 @@ import (
 )
 
 type Metadata struct {
-	ID           int          `db:"id"`
-	Description  string       `db:"description"`
-	Value        json.Object  `db:"value"`
-	MigratedFrom int          `db:"migrated_from"`
-	CreatedAt    sql.NullTime `db:"created_at"`
-	UpdatedAt    sql.NullTime `db:"updated_at"`
+	ID          int          `db:"id"`
+	Description string       `db:"description"`
+	Value       json.Object  `db:"value"`
+	CreatedAt   sql.NullTime `db:"created_at"`
+	UpdatedAt   sql.NullTime `db:"updated_at"`
 }
 
 type MetadataServiceMap struct {

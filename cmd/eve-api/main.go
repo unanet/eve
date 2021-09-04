@@ -6,8 +6,9 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
 	casbinpgadapter "github.com/cychiuae/casbin-pg-adapter"
+	"github.com/unanet/eve/internal/config"
 	"github.com/unanet/eve/pkg/s3"
-	"github.com/unanet/go/pkg/identity"
+	"github.com/unanet/eve/pkg/scm"
 	"go.uber.org/zap"
 
 	"github.com/unanet/eve/internal/api"
@@ -16,8 +17,8 @@ import (
 	"github.com/unanet/eve/internal/service/plans"
 	"github.com/unanet/eve/internal/service/releases"
 	"github.com/unanet/eve/pkg/artifactory"
-	"github.com/unanet/eve/pkg/gitlab"
 	"github.com/unanet/eve/pkg/queue"
+	"github.com/unanet/go/pkg/identity"
 	"github.com/unanet/go/pkg/log"
 )
 
@@ -31,14 +32,14 @@ func GetPolicyModel() model.Model {
 }
 
 func main() {
-	dbConfig := api.GetDBConfig()
+	dbConfig := config.GetDBConfig()
 	// Try to get a DB Connection
 	db, err := data.GetDBWithTimeout(dbConfig.DbConnectionString(), dbConfig.DBConnectionTimeout)
 	if err != nil {
 		log.Logger.Panic("Failed to open Connection to DB.", zap.Error(err))
 	}
 
-	flags := api.GetFlagsConfig()
+	flags := config.GetFlagsConfig()
 
 	if flags.MigrateFlag {
 		err = data.MigrateDB(dbConfig.MigrationConnectionString(), dbConfig.LogLevel)
@@ -51,10 +52,11 @@ func main() {
 		return
 	}
 
-	config := api.GetConfig()
+	config := config.GetConfig()
 
 	awsSession, err := session.NewSession(&aws.Config{
-		Region: aws.String(config.AWSRegion)},
+		Region: aws.String(config.AWSRegion),
+	},
 	)
 	if err != nil {
 		log.Logger.Panic("Failed to create AWS Session", zap.Error(err))
@@ -70,8 +72,8 @@ func main() {
 	artifactoryClient := artifactory.NewClient(config.ArtifactoryConfig)
 	deploymentPlanGenerator := plans.NewPlanGenerator(repo, artifactoryClient, apiQueue)
 	crudManager := crud.NewManager(repo)
-	gitlabClient := gitlab.NewClient(config.GitlabConfig)
-	releaseSvc := releases.NewReleaseSvc(repo, artifactoryClient, gitlabClient)
+	scmClient := scm.New()
+	releaseSvc := releases.NewReleaseSvc(repo, artifactoryClient, scmClient)
 
 	controllers, err := api.InitializeControllers(deploymentPlanGenerator, crudManager, releaseSvc)
 	if err != nil {

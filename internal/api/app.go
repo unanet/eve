@@ -10,23 +10,32 @@ import (
 	"time"
 
 	"github.com/casbin/casbin/v2"
-	"github.com/go-chi/jwtauth"
-	"github.com/go-chi/render"
 	"github.com/golang-jwt/jwt"
-	"github.com/unanet/go/pkg/errors"
-	"github.com/unanet/go/pkg/identity"
+	"github.com/unanet/eve/internal/config"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/jwtauth"
+	"github.com/go-chi/render"
 	"go.uber.org/zap"
 
+	"github.com/unanet/go/pkg/errors"
+	"github.com/unanet/go/pkg/identity"
 	"github.com/unanet/go/pkg/log"
 	"github.com/unanet/go/pkg/metrics"
 	"github.com/unanet/go/pkg/middleware"
+	"github.com/unanet/go/pkg/version"
 )
 
 var (
-	Version = "unset"
+	Branch     = version.Branch
+	SHA        = version.SHA
+	ShortSHA   = version.ShortSHA
+	Author     = version.Author
+	BuildHost  = version.BuildHost
+	Version    = version.Version
+	Date       = version.Date
+	Prerelease = version.Prerelease
 )
 
 type Api struct {
@@ -38,7 +47,7 @@ type Api struct {
 	enforcer    *casbin.Enforcer
 	done        chan bool
 	sigChannel  chan os.Signal
-	config      *Config
+	config      *config.Config
 	onShutdown  []func()
 	adminToken  string
 }
@@ -47,7 +56,7 @@ func NewApi(
 	controllers []Controller,
 	svc *identity.Service,
 	enforcer *casbin.Enforcer,
-	c Config,
+	c config.Config,
 ) (*Api, error) {
 	router := chi.NewMux()
 
@@ -103,9 +112,10 @@ func (a *Api) gracefulShutdown() {
 	if err := a.server.Shutdown(ctx); err != nil {
 		panic("HTTP API Server Failed Graceful Shutdown")
 	}
-	if err := log.Logger.Sync(); err != nil {
-		// not much to do here
-	}
+
+	// not much to do here
+	_ = log.Logger.Sync()
+
 	close(a.done)
 }
 
@@ -155,7 +165,6 @@ func (a *Api) authenticationMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		hfn := func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-
 			// Admin token, you shall PASS!!!
 			if jwtauth.TokenFromHeader(r) == a.adminToken {
 				next.ServeHTTP(w, r.WithContext(ctx))
@@ -196,8 +205,9 @@ func (a *Api) authenticationMiddleware() func(http.Handler) http.Handler {
 // This code is duped in cloud-api
 func extractRole(ctx context.Context, claims jwt.MapClaims) string {
 	middleware.Log(ctx).Debug("extract role from incoming claims", zap.Any("claims", claims))
+	cfg := config.GetConfig()
 	if ra, ok := claims["resource_access"].(map[string]interface{}); ok {
-		if ca, ok := ra[config.Identity.ClientID].(map[string]interface{}); ok {
+		if ca, ok := ra[cfg.Identity.ClientID].(map[string]interface{}); ok {
 			if roles, ok := ca["roles"].([]interface{}); ok {
 				middleware.Log(ctx).Debug("incoming claim roles slice found", zap.Any("role", roles))
 				if found, role := checkArrayForRoles(ctx, roles); found {

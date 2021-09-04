@@ -14,14 +14,14 @@ require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/golang-migrate/migrate/v4 v4.14.1
+	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.7.0
-	github.com/unanet/go v0.0.0-20210730015423-b60bee8d0033
+	github.com/unanet/go v0.0.0-20210731164003-a222e7bdc32c
 	go.uber.org/zap v1.18.1
-	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
 	golang.org/x/tools v0.0.0-20210114065538-d78b04bdf963 // indirect
 )

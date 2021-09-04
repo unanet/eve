@@ -16,21 +16,32 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
-          go-version: '^1.16.6'
+          go-version: '^1.16.7'
       - run: go version
 
       - name: Set variables ✨
-        run: |
+        run: |          
           VER=$(cat VERSION)
           echo "VERSION=$VER" >> $GITHUB_ENV
           TS=$(date -u +%F_%TUTC)
           echo "BUILD_TIME=$TS" >> $GITHUB_ENV
-      - name: Test & Build 🧠
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+          BUILD_HOST=$(hostname)
+          echo "BUILD_HOST=$BUILD_HOST" >> $GITHUB_ENV
+
+      - name: Fetch tags
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*          
+
+      - name: Check SemVer Tag 🖖
+        run: |
+          echo "${{ env.VERSION }}"
+          make check_version          
+
+      - name: Test 🧠
         run: |
           go get ./...
           go test ./... -v -race
-          mkdir bin
-          CGO_ENABLED=0 go build -ldflags="-X 'github.com/unanet/eve/internal/api/api.Version=${{ env.VERSION }}.${{ github.run_number }}'" -o ./bin/eve-api ./cmd/eve-api/main.go
 
       - name: Set up Docker Buildx 🐳
         id: buildx
@@ -48,11 +59,6 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
 
-      - name: Check SemVer Tag 🖖
-        run: |
-          echo "${{ env.VERSION }}"
-          make check_version
-
       - name: Docker Image 🐳
         if: ${{ contains(github.ref, 'master') }}
         uses: docker/build-push-action@v2
@@ -60,6 +66,15 @@ jobs:
           context: .
           file: Dockerfile
           push: true
+          buildArgs: |
+            VERSION=${{ env.VERSION }}
+            SHA=${{ github.sha }}
+            SHORT_SHA=${{ env.SHORT_SHA }}
+            AUTHOR='${{ github.actor }}' 
+            BUILD_HOST='${{ env.BUILD_HOST }}' 
+            BRANCH=${{ github.ref }}
+            BUILD_DATE='${{ env.BUILD_TIME }}' 
+            PRERELEASE=''            
           tags: |
             unanet/eve:latest
-            unanet/eve:${{ env.VERSION }}
+            unanet/eve:${{ env.VERSION }}            
