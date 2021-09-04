@@ -11,9 +11,9 @@ services:
     environment:
       - DB_HOST=db
       - DB_PORT=5432
-      - DB_USERNAME=eve
-      - DB_PASSWORD=${EVE_DB_PASSWORD}
-      - DB_NAME=eve
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=postgres
       - DB_CONNECTION_TIMEOUT=30s
       - LOG_LEVEL=debub
       - EVE_PORT=3000
