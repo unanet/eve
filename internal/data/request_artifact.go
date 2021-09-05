@@ -61,7 +61,7 @@ func (r *Repo) RequestServiceArtifactByEnvironment(ctx context.Context, serviceN
 	}
 
 	if len(services) == 0 {
-		return nil, errors.Wrapf("service with name: %s not found", serviceName)
+		return nil, NotFoundErrorf("service with name: %s not found", serviceName)
 	}
 	return services, nil
 }
@@ -103,7 +103,7 @@ func (r *Repo) RequestJobArtifactByEnvironment(ctx context.Context, jobName, art
 	}
 
 	if len(jobs) == 0 {
-		return nil, errors.Wrapf("job with name: %s not found", jobName)
+		return nil, NotFoundErrorf("job with name: %s not found", jobName)
 	}
 	return jobs, nil
 }
