@@ -52,24 +52,24 @@ func main() {
 		return
 	}
 
-	config := config.GetConfig()
+	cfg := config.GetConfig()
 
 	awsSession, err := session.NewSession(&aws.Config{
-		Region: aws.String(config.AWSRegion),
+		Region: aws.String(cfg.AWSRegion),
 	},
 	)
 	if err != nil {
 		log.Logger.Panic("Failed to create AWS Session", zap.Error(err))
 	}
 	apiQueue := queue.NewQ(awsSession, queue.Config{
-		MaxNumberOfMessage: config.ApiQMaxNumberOfMessage,
-		QueueURL:           config.ApiQUrl,
-		WaitTimeSecond:     config.ApiQWaitTimeSecond,
-		VisibilityTimeout:  config.ApiQVisibilityTimeout,
+		MaxNumberOfMessage: cfg.ApiQMaxNumberOfMessage,
+		QueueURL:           cfg.ApiQUrl,
+		WaitTimeSecond:     cfg.ApiQWaitTimeSecond,
+		VisibilityTimeout:  cfg.ApiQVisibilityTimeout,
 	})
 
 	repo := data.NewRepo(db)
-	artifactoryClient := artifactory.NewClient(config.ArtifactoryConfig)
+	artifactoryClient := artifactory.NewClient(cfg.ArtifactoryConfig)
 	deploymentPlanGenerator := plans.NewPlanGenerator(repo, artifactoryClient, apiQueue)
 	crudManager := crud.NewManager(repo)
 	scmClient := scm.New()
@@ -80,7 +80,7 @@ func main() {
 		log.Logger.Panic("Unable to Initialize the Controllers")
 	}
 
-	identitySvc, err := identity.NewService(config.Identity)
+	identitySvc, err := identity.NewService(cfg.Identity)
 	if err != nil {
 		log.Logger.Panic("Unable to Initialize the Identity Service Manager", zap.Error(err))
 	}
@@ -99,22 +99,22 @@ func main() {
 		log.Logger.Panic("failed to load casbin policy", zap.Error(err))
 	}
 
-	apiServer, err := api.NewApi(controllers, identitySvc, enforcer, config)
+	apiServer, err := api.NewApi(controllers, identitySvc, enforcer, cfg)
 	if err != nil {
 		log.Logger.Panic("Failed to Create Api App", zap.Error(err))
 	}
 
 	deploymentQueue := plans.NewQueue(
-		queue.NewWorker("eve-api", apiQueue, config.ApiQWorkerTimeout),
+		queue.NewWorker("eve-api", apiQueue, cfg.ApiQWorkerTimeout),
 		repo,
 		crudManager,
-		s3.NewUploader(awsSession, s3.Config{Bucket: config.S3Bucket}),
+		s3.NewUploader(awsSession, s3.Config{Bucket: cfg.S3Bucket}),
 		s3.NewDownloader(awsSession),
-		plans.NewCallback(config.HttpCallbackTimeout),
+		plans.NewCallback(cfg.HttpCallbackTimeout),
 	)
 
-	cron := plans.NewDeploymentCron(repo, deploymentPlanGenerator, config.CronTimeout)
-	if !config.LocalDev {
+	cron := plans.NewDeploymentCron(repo, deploymentPlanGenerator, cfg.CronTimeout)
+	if !cfg.LocalDev {
 		cron.Start()
 		deploymentQueue.Start()
 	}
