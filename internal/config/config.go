@@ -72,8 +72,8 @@ type Config struct {
 }
 
 type FlagConfig struct {
-	MigrateFlag bool `split_words:"true" default:"false"`
-	ServerFlag  bool `split_words:"true" default:"true"`
+	MigrateFlag bool `envconfig:"MIGRATE_FLAG" default:"false"`
+	ServerFlag  bool `envconfig:"SERVER_FLAG" default:"true"`
 }
 
 func GetDBConfig() DBConfig {

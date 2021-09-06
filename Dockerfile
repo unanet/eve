@@ -53,10 +53,10 @@ RUN \
 ######################################
 FROM scratch
 
-ENV EVE_PORT 3000
-ENV EVE_METRICS_PORT 3001
-ENV EVE_SERVER_FLAG true
-ENV EVE_MIGRATE_FLAG true
+ENV PORT 3000
+ENV METRICS_PORT 3001
+ENV SERVER_FLAG true
+ENV MIGRATE_FLAG true
 
 # Import assets from the build stage image
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
@@ -74,4 +74,4 @@ USER appuser
 CMD ["/bin/eve-api"]
 
 HEALTHCHECK --interval=1m --timeout=2s --start-period=60s \
-    CMD curl -f http://localhost:${EVE_METRICS_PORT}/ || exit 1
+    CMD curl -f http://localhost:${METRICS_PORT}/ || exit 1
