@@ -73,7 +73,6 @@ type artifactReleaseInfo struct {
 	FromFeed, ToFeed                                *data.Feed
 	Artifact                                        *data.Artifact
 	ProjectID                                       int
-	MultiArtifact                                   bool
 }
 
 func (svc *ReleaseSvc) releaseInfo(ctx context.Context, release eve.Release) (*artifactReleaseInfo, error) {
@@ -120,14 +119,11 @@ func (svc *ReleaseSvc) releaseInfo(ctx context.Context, release eve.Release) (*a
 	)
 
 	var (
-		scmId                      = config.BuildPropertyID()
-		projectIDBuildProp         = fmt.Sprintf("%s-build-properties.project-id", scmId)
-		gitBranchBuildProp         = fmt.Sprintf("%s-build-properties.git-branch", scmId)
-		gitShaBuildProp            = fmt.Sprintf("%s-build-properties.git-sha", scmId)
-		multiArtifactRepoBuildProp = fmt.Sprintf("%s-build-properties.multi-artifact", scmId)
+		scmId              = config.BuildPropertyID()
+		projectIDBuildProp = fmt.Sprintf("%s-build-properties.project-id", scmId)
+		gitBranchBuildProp = fmt.Sprintf("%s-build-properties.git-branch", scmId)
+		gitShaBuildProp    = fmt.Sprintf("%s-build-properties.git-sha", scmId)
 	)
-
-	multiArtifactRepo, _ := strconv.ParseBool(artifactProps.Property(multiArtifactRepoBuildProp))
 
 	if projectID, err = strconv.Atoi(artifactProps.Property(projectIDBuildProp)); err != nil {
 		projectName = artifactProps.Property(projectIDBuildProp)
@@ -137,7 +133,6 @@ func (svc *ReleaseSvc) releaseInfo(ctx context.Context, release eve.Release) (*a
 		GitBranch:      artifactProps.Property(gitBranchBuildProp),
 		GitSHA:         artifactProps.Property(gitShaBuildProp),
 		BuildVersion:   artifactProps.Property("version"),
-		MultiArtifact:  multiArtifactRepo,
 		ReleaseVersion: parseVersion(artifactProps.Property("version")),
 		FromPath:       fromPath,
 		ToPath:         toPath,
@@ -177,7 +172,7 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 
 	gitTagOpts := types.TagOptions{
 		ProjectID: relInfo.ProjectID,
-		TagName:   relInfo.ReleaseVersion,
+		TagName:   fmt.Sprintf("%v/%v", relInfo.Artifact.Name, relInfo.ReleaseVersion),
 		GitHash:   relInfo.GitSHA,
 	}
 
@@ -186,13 +181,10 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 		gitTagOpts.Repo = strings.Split(relInfo.ProjectName, "/")[1]
 	}
 
-	// Capture Multi Artifact Repo Scenario
-	if !relInfo.MultiArtifact {
-		// Check if tag already exists
-		tag, _ := svc.scm.GetTag(ctx, gitTagOpts)
-		if tag != nil && tag.Name != "" {
-			return success, errors.BadRequestf("the version: %v has already been tagged", tag.Name)
-		}
+	// Check if tag already exists
+	tag, _ := svc.scm.GetTag(ctx, gitTagOpts)
+	if tag != nil && tag.Name != "" {
+		return success, errors.BadRequestf("the version: %v has already been tagged", tag.Name)
 	}
 
 	// Delete the destination first
