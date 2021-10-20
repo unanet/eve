@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	MessageAttributeReqID   string = "eve_req_id"
+	MessageAttributeReqID   string = "x_req_id"
 	MessageAttributeCommand string = "eve_cmd"
 	MessageAttributeID      string = "eve_id"
 )
