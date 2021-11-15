@@ -59,6 +59,7 @@ func (m *Manager) NamespacesByEnvironment(ctx context.Context, environmentID str
 	return fromDataNamespaces(dNamespaces), nil
 }
 
+// Namespace id can be an int or the namespace name
 func (m *Manager) Namespace(ctx context.Context, id string) (*eve.Namespace, error) {
 	var dNamespace *data.Namespace
 	if intID, err := strconv.Atoi(id); err == nil {

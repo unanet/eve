@@ -14,6 +14,7 @@ import (
 	"github.com/unanet/eve/internal/config"
 	"github.com/unanet/eve/internal/data"
 	"github.com/unanet/eve/internal/service"
+	"github.com/unanet/eve/internal/service/crud"
 	"github.com/unanet/eve/pkg/artifactory"
 	"github.com/unanet/eve/pkg/eve"
 	"github.com/unanet/eve/pkg/scm"
@@ -24,13 +25,19 @@ type ReleaseSvc struct {
 	repo              *data.Repo
 	artifactoryClient *artifactory.Client
 	scm               scm.SourceController
+	crud              *crud.Manager
 }
 
-func NewReleaseSvc(r *data.Repo, a *artifactory.Client, g scm.SourceController) *ReleaseSvc {
+func NewReleaseSvc(
+	r *data.Repo,
+	a *artifactory.Client,
+	g scm.SourceController,
+	crud *crud.Manager) *ReleaseSvc {
 	return &ReleaseSvc{
 		repo:              r,
 		artifactoryClient: a,
 		scm:               g,
+		crud:              crud,
 	}
 }
 
@@ -151,8 +158,9 @@ func (svc *ReleaseSvc) releaseInfo(ctx context.Context, release eve.Release) (*a
 
 }
 
-func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Release, error) {
-	success := eve.Release{}
+func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) ([]eve.Release, error) {
+	var success []eve.Release
+
 	if release.FromFeed == release.ToFeed {
 		return success, errors.BadRequest(fmt.Sprintf("source feed: %s and destination feed: %s cannot be equal", release.FromFeed, release.ToFeed))
 	}
@@ -160,6 +168,32 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 	if strings.ToLower(release.FromFeed) == "int" && strings.ToLower(release.ToFeed) == "qa" {
 		return success, errors.BadRequest("int and qa share the same feed so nothing to release")
 	}
+
+	var rel eve.Release
+	var err error
+
+	var isArtifactRelease bool
+	switch release.Type {
+		case eve.ReleaseTypeArtifact:
+			rel, err = svc.releaseArtifact(ctx, release)
+			isArtifactRelease = true
+		case eve.ReleaseTypeNamespace:
+			success, err = svc.releaseNamespace(ctx, release)
+	}
+
+	if err != nil {
+		return success, errors.BadRequestf("unable to release %s", release.Type)
+	}
+
+	if isArtifactRelease {
+		return []eve.Release{rel}, nil
+	}
+
+	return success, nil
+}
+
+func (svc *ReleaseSvc) releaseArtifact(ctx context.Context, release eve.Release) (eve.Release, error) {
+	success := eve.Release{}
 
 	relInfo, err := svc.releaseInfo(ctx, release)
 	if err != nil {
@@ -217,7 +251,37 @@ func (svc *ReleaseSvc) Release(ctx context.Context, release eve.Release) (eve.Re
 	success.Message = resp.ToString()
 
 	log.Logger.Info("artifact released", zap.Any("result", success))
+
 	return success, nil
+}
+
+func (svc *ReleaseSvc) releaseNamespace(ctx context.Context, release eve.Release) ([]eve.Release, error) {
+	var releases []eve.Release
+
+	eveServices, err := svc.crud.ServicesByNamespace(ctx, fmt.Sprintf("%s-%s", release.Environment, release.Namespace))
+	if err != nil {
+		return releases, err
+	}
+
+	var errs []error
+	for _, eveService := range eveServices {
+		release.Artifact = eveService.ArtifactName
+		release.Version = eveService.DeployedVersion
+
+		rel, err := svc.releaseArtifact(ctx, release)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		releases = append(releases, rel)
+	}
+
+	if len(errs) != 0 {
+		return releases, fmt.Errorf("unable to release all artifacts. %v", errs)
+	}
+
+	return releases, nil
 }
 
 func parseVersion(fullVersion string) string {
