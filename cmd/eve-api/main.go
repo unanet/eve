@@ -73,7 +73,7 @@ func main() {
 	deploymentPlanGenerator := plans.NewPlanGenerator(repo, artifactoryClient, apiQueue)
 	crudManager := crud.NewManager(repo)
 	scmClient := scm.New()
-	releaseSvc := releases.NewReleaseSvc(repo, artifactoryClient, scmClient)
+	releaseSvc := releases.NewReleaseSvc(repo, artifactoryClient, scmClient, crudManager)
 
 	controllers, err := api.InitializeControllers(deploymentPlanGenerator, crudManager, releaseSvc)
 	if err != nil {
