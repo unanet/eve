@@ -46,15 +46,15 @@ func (c DBConfig) MigrationConnectionString() string {
 	return fmt.Sprintf("postgres://%s:%d/%s?sslmode=disable&user=%s&password=%s", c.DBHost, c.DBPort, c.DBName, c.DBUsername, c.DBPassword)
 }
 
-type IdentityConfig = identity.Config
+type IdentityValidatorConfig = identity.ValidatorConfig
 
 type Config struct {
 	LogConfig
 	ArtifactoryConfig
 	GitLabConfig
 	GitHubConfig
-	Identity               IdentityConfig
-	LocalDev               bool          `envconfig:"LOCAL_DEV" default:"false"`
+	Identity 			   IdentityValidatorConfig
+	LocalDev 			   bool          `envconfig:"LOCAL_DEV" default:"false"`
 	ApiQUrl                string        `envconfig:"API_Q_URL" required:"true"`
 	SourceControlProvider  string        `envconfig:"SCM_PROVIDER" default:"gitlab"`
 	ApiQWaitTimeSecond     int64         `envconfig:"API_Q_WAIT_TIME_SECOND" default:"20"`

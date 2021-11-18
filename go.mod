@@ -21,7 +21,6 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.7.0
-	github.com/unanet/go v0.0.0-20210731164003-a222e7bdc32c
+	github.com/unanet/go v1.7.14
 	go.uber.org/zap v1.18.1
-	golang.org/x/tools v0.0.0-20210114065538-d78b04bdf963 // indirect
 )

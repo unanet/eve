@@ -80,7 +80,7 @@ func main() {
 		log.Logger.Panic("Unable to Initialize the Controllers")
 	}
 
-	identitySvc, err := identity.NewService(cfg.Identity)
+	identityValidatorSvc, err := identity.NewValidator(cfg.Identity)
 	if err != nil {
 		log.Logger.Panic("Unable to Initialize the Identity Service Manager", zap.Error(err))
 	}
@@ -99,7 +99,7 @@ func main() {
 		log.Logger.Panic("failed to load casbin policy", zap.Error(err))
 	}
 
-	apiServer, err := api.NewApi(controllers, identitySvc, enforcer, cfg)
+	apiServer, err := api.NewApi(controllers, identityValidatorSvc, enforcer, cfg)
 	if err != nil {
 		log.Logger.Panic("Failed to Create Api App", zap.Error(err))
 	}

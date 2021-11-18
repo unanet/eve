@@ -43,7 +43,7 @@ type Api struct {
 	controllers []Controller
 	server      *http.Server
 	mServer     *http.Server
-	idSvc       *identity.Service
+	idValidator       *identity.Validator
 	enforcer    *casbin.Enforcer
 	done        chan bool
 	sigChannel  chan os.Signal
@@ -54,7 +54,7 @@ type Api struct {
 
 func NewApi(
 	controllers []Controller,
-	svc *identity.Service,
+	idv *identity.Validator,
 	enforcer *casbin.Enforcer,
 	c config.Config,
 ) (*Api, error) {
@@ -62,7 +62,7 @@ func NewApi(
 
 	return &Api{
 		adminToken:  c.AdminToken,
-		idSvc:       svc,
+		idValidator:       idv,
 		enforcer:    enforcer,
 		r:           router,
 		config:      &c,
@@ -171,7 +171,7 @@ func (a *Api) authenticationMiddleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			claims, err := a.idSvc.TokenVerification(r)
+			claims, err := a.idValidator.Validate(r)
 			if err != nil {
 				middleware.Log(ctx).Debug("failed token verification", zap.Error(err))
 				render.Respond(w, r, err)
