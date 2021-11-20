@@ -2,10 +2,11 @@ package queue
 
 import (
 	"context"
-	goerrors "github.com/pkg/errors"
 	"strings"
 	"sync/atomic"
 	"time"
+
+	goerrors "github.com/pkg/errors"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -151,6 +152,10 @@ func (q *Q) Receive(ctx context.Context) ([]*mContext, error) {
 
 	var returnMs []*mContext
 	for _, x := range result.Messages {
+		if x == nil {
+			q.log.Warn("nil message received")
+			continue
+		}
 		id := uuid.FromStringOrNil(*x.MessageAttributes[MessageAttributeID].StringValue)
 		m := M{
 			ID:            id,
