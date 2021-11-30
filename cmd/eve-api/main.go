@@ -80,7 +80,13 @@ func main() {
 		log.Logger.Panic("Unable to Initialize the Controllers")
 	}
 
-	identityValidatorSvc, err := identity.NewValidator(cfg.Identity)
+	var validatorOptions []identity.ValidatorOption
+
+	if cfg.SigningKey != "" {
+		validatorOptions = append(validatorOptions, identity.JWTClientValidatorOpt(cfg.SigningKey))
+	}
+
+	identityValidatorSvc, err := identity.NewValidator(cfg.Identity, validatorOptions...)
 	if err != nil {
 		log.Logger.Panic("Unable to Initialize the Identity Service Manager", zap.Error(err))
 	}

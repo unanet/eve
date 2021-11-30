@@ -2,6 +2,8 @@ module github.com/unanet/eve
 
 go 1.16
 
+replace github.com/unanet/go => ../go
+
 require (
 	github.com/aws/aws-sdk-go v1.40.11
 	github.com/casbin/casbin/v2 v2.34.1
@@ -21,6 +23,6 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.7.0
-	github.com/unanet/go v1.7.14
+	github.com/unanet/go v1.7.15
 	go.uber.org/zap v1.18.1
 )

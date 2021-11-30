@@ -43,7 +43,7 @@ type Api struct {
 	controllers []Controller
 	server      *http.Server
 	mServer     *http.Server
-	idValidator       *identity.Validator
+	idValidator *identity.Validator
 	enforcer    *casbin.Enforcer
 	done        chan bool
 	sigChannel  chan os.Signal
