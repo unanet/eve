@@ -2,8 +2,6 @@ module github.com/unanet/eve
 
 go 1.16
 
-replace github.com/unanet/go => ../go
-
 require (
 	github.com/aws/aws-sdk-go v1.40.11
 	github.com/casbin/casbin/v2 v2.34.1
