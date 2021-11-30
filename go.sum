@@ -572,8 +572,8 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/tidwall/pretty v0.0.0-20180105212114-65a9db5fad51/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
-github.com/unanet/go v1.7.14 h1:HeI4ZlzR8j3dScFdpIIcaRyGZQcL7FsJN5sR2ppYGls=
-github.com/unanet/go v1.7.14/go.mod h1:77x24bs2aIo/GwAfhKIPthXEVdgj6ldfI1sAYQ0D/Io=
+github.com/unanet/go v1.7.15 h1:IC5u7cd7bunjLvMGfVpniAjzKlE3ETT1b4bIdSRlyHk=
+github.com/unanet/go v1.7.15/go.mod h1:77x24bs2aIo/GwAfhKIPthXEVdgj6ldfI1sAYQ0D/Io=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
 github.com/xanzy/go-gitlab v0.15.0/go.mod h1:8zdQa/ri1dfn8eS3Ir1SyfvOKlw7WBJ8DVThkpGiXrs=

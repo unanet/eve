@@ -69,6 +69,7 @@ type Config struct {
 	MetricsPort            int           `envconfig:"METRICS_PORT" default:"3001"`
 	ServiceName            string        `envconfig:"SERVICE_NAME" default:"eve"`
 	AdminToken             string        `envconfig:"ADMIN_TOKEN" required:"true"`
+	SigningKey             string        `envconfig:"SIGNING_KEY"`
 }
 
 type FlagConfig struct {
