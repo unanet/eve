@@ -2,7 +2,7 @@ create table if not exists definition_history
 (
     definition_id integer      not null,
     description varchar(100) not null,
-    value       jsonb        not null,
+    data       jsonb        not null,
     created     timestamp,
     created_by  varchar(32),
     deleted     timestamp,
@@ -15,8 +15,8 @@ as
 $$
 BEGIN
     INSERT INTO definition_history
-    (definition_id, description, value, created, created_by)
-    VALUES (NEW.id, NEW.description, NEW.value, current_timestamp, current_user);
+    (definition_id, description, data, created, created_by)
+    VALUES (NEW.id, NEW.description, NEW.data, current_timestamp, current_user);
     RETURN NEW;
 END;
 $$;
@@ -59,8 +59,8 @@ BEGIN
       and definition_id = OLD.id;
 
     INSERT INTO definition_history
-    (definition_id, description, value, created, created_by)
-    VALUES (NEW.id, NEW.description, NEW.value, current_timestamp, current_user);
+    (definition_id, description, data, created, created_by)
+    VALUES (NEW.id, NEW.description, NEW.data, current_timestamp, current_user);
     RETURN NEW;
 END;
 $$;
